@@ -1,4 +1,5 @@
 ignoredBuiltDependencies:
+  - '@tailwindcss/oxide'
   - esbuild
   - sharp
   - svelte-preprocess

@@ -12,6 +12,7 @@ const config = {
 		alias: {
 			'$assets': './src/assets',
 			'$components': './src/lib/components',
+			'@skeletonlabs/skeleton': './src/lib/compat/skeleton/index.ts',
 			'$svelte-kit': './.svelte-kit',
 			'$types': './src/types',
 		},

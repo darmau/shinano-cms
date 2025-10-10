@@ -81,12 +81,6 @@ importers:
       '@playwright/test':
         specifier: ^1.56.0
         version: 1.56.0
-      '@skeletonlabs/skeleton':
-        specifier: ^3.2.2
-        version: 3.2.2(tailwindcss@4.1.14)
-      '@skeletonlabs/tw-plugin':
-        specifier: ^0.4.1
-        version: 0.4.1(tailwindcss@4.1.14)
       '@sveltejs/adapter-cloudflare':
         specifier: ^7.2.4
         version: 7.2.4(@sveltejs/kit@2.46.4(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.39.11)(vite@7.1.9(@types/node@24.7.1)(jiti@2.6.1)(lightningcss@1.30.1)(yaml@2.5.0)))(svelte@5.39.11)(vite@7.1.9(@types/node@24.7.1)(jiti@2.6.1)(lightningcss@1.30.1)(yaml@2.5.0)))(wrangler@4.42.2(@cloudflare/workers-types@4.20251008.0))
@@ -858,16 +852,6 @@ packages:
   '@sindresorhus/is@7.1.0':
     resolution: {integrity: sha512-7F/yz2IphV39hiS2zB4QYVkivrptHHh0K8qJJd9HhuWSdvf8AN7NpebW3CcDZDBQsUPMoDKWsY2WWgW7bqOcfA==}
     engines: {node: '>=18'}
-
-  '@skeletonlabs/skeleton@3.2.2':
-    resolution: {integrity: sha512-dAunBAWqRMcNTGAvCKUgpADJdbtqL65eNEb7pDIKQZ6bI6qsxakR6MuF2E4B3jmUEpcaxaggDp0UdnUjlkAZ1Q==}
-    peerDependencies:
-      tailwindcss: ^4.0.0
-
-  '@skeletonlabs/tw-plugin@0.4.1':
-    resolution: {integrity: sha512-crrC8BGKis0GNTp7V2HF6mk1ECLUvAxgTTV26LMgt/rV3U6Xd7N7dL5qIL8fE4MTHvpKa1SBsdqsnMbEvATeEg==}
-    peerDependencies:
-      tailwindcss: '>=3.0.0'
 
   '@speed-highlight/core@1.2.7':
     resolution: {integrity: sha512-0dxmVj4gxg3Jg879kvFS/msl4s9F3T9UXC1InxgOf7t5NvcPD97u/WTA5vL/IxWHMn7qSxBozqrnnE2wvl1m8g==}
@@ -3029,14 +3013,6 @@ snapshots:
     optional: true
 
   '@sindresorhus/is@7.1.0': {}
-
-  '@skeletonlabs/skeleton@3.2.2(tailwindcss@4.1.14)':
-    dependencies:
-      tailwindcss: 4.1.14
-
-  '@skeletonlabs/tw-plugin@0.4.1(tailwindcss@4.1.14)':
-    dependencies:
-      tailwindcss: 4.1.14
 
   '@speed-highlight/core@1.2.7': {}
 

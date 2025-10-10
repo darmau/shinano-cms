@@ -5,12 +5,13 @@
 	import { onMount } from 'svelte';
 	import { getToastStore } from '@skeletonlabs/skeleton';
 	import { ProgressRadial } from '@skeletonlabs/skeleton';
+	import { browser } from '$app/environment';
+	import { getSupabaseBrowserClient } from '$lib/supabaseClient';
 
 	const toastStore = getToastStore();
 
 	export let data;
-	let { supabase } = data;
-	$: ({ supabase } = data);
+	const supabase = browser ? getSupabaseBrowserClient() : null;
 	$: languages = [];
 
 	// 获取所有语言
