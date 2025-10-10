@@ -4,13 +4,14 @@
   import type { LayoutData } from './$types';
 
   export let data: LayoutData;
+  const { message_count, comment_count } = data;
 </script>
 
 <svelte:head></svelte:head>
 
 <div class = "frame">
   <nav class = "sidebar">
-    <Navbar message={data.message_count} comment={data.comment_count}/>
+    <Navbar message={message_count} comment={comment_count}/>
   </nav>
   <main class = "main bg-white">
     <slot/>

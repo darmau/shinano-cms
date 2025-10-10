@@ -49,8 +49,8 @@
 	},
 	"type": "module",
 	"dependencies": {
-		"@supabase/ssr": "^0.4.0",
-		"@supabase/supabase-js": "^2.45.0",
+		"@supabase/ssr": "^0.7.0",
+		"@supabase/supabase-js": "^2.75.0",
 		"@tailwindcss/container-queries": "^0.1.1",
 		"@tiptap/core": "^2.5.8",
 		"@tiptap/extension-character-count": "^2.5.8",

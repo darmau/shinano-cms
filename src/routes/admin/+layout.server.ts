@@ -1,19 +1,33 @@
 import type { LayoutServerLoad } from './$types';
 
-export const load: LayoutServerLoad = async ({ locals: { supabase } }) => {
-	// 在message查询未读消息数
-	const {count: message} = await supabase
-	.from('message')
-	.select('count', { count: 'exact' })
-	.eq('is_read', false)
+export const load: LayoutServerLoad = async ({ locals }) => {
+	const { session, user } = await locals.safeGetSession();
 
-	const {count: comment} = await supabase
-	  .from('comment')
-	  .select('count', { count: 'exact' })
-	  .eq('is_public', false)
+	let messageCount = 0;
+	let commentCount = 0;
+
+	if (session) {
+		const supabase = locals.supabase;
+
+		const [{ count: messages }, { count: comments }] = await Promise.all([
+			supabase
+				.from('message')
+				.select('id', { count: 'exact', head: true })
+				.eq('is_read', false),
+			supabase
+				.from('comment')
+				.select('id', { count: 'exact', head: true })
+				.eq('is_public', false)
+		]);
+
+		messageCount = messages ?? 0;
+		commentCount = comments ?? 0;
+	}
 
 	return {
-		message_count: message ?? 0,
-		comment_count: comment ?? 0
-	}
-}
+		session,
+		user,
+		message_count: messageCount,
+		comment_count: commentCount
+	};
+};

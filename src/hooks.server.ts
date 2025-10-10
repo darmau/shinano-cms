@@ -5,27 +5,33 @@ import { sequence } from '@sveltejs/kit/hooks';
 
 const supabase: Handle = async ({ event, resolve }) => {
 	const supabaseClient = createServerClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
-		cookies: () => event.cookies
+		cookies: {
+			get: (name) => event.cookies.get(name),
+			set: (name, value, options) => event.cookies.set(name, value, { ...options, path: '/' }),
+			remove: (name, options) => event.cookies.delete(name, { ...options, path: '/' })
+		}
 	});
+
+	event.locals.supabase = supabaseClient;
 
 	event.locals.safeGetSession = async () => {
 		try {
 			const {
-				data: { session },
+				data: { user },
 				error
-			} = await supabaseClient.auth.getSession();
+			} = await supabaseClient.auth.getUser();
 
 			if (error) {
 				throw error;
 			}
 
-			if (!session) {
+			if (!user) {
 				return { session: null, user: null };
 			}
 
 			const {
-				data: { user }
-			} = await supabaseClient.auth.getUser();
+				data: { session }
+			} = await supabaseClient.auth.getSession();
 
 			return { session, user };
 		} catch (error) {

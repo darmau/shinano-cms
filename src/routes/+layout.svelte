@@ -1,14 +1,16 @@
 <script>
+	import { browser } from '$app/environment';
 	import { invalidate } from '$app/navigation';
 	import { onMount } from 'svelte';
-	import { browser } from '$app/environment';
 	import '../app.css';
-	import { SkeletonProvider, SkeletonToast } from '@skeletonlabs/skeleton';
+	import { initializeStores, Toast } from '@skeletonlabs/skeleton';
 	import { createBrowserClient } from '@supabase/ssr';
 	import { PUBLIC_SUPABASE_ANON_KEY, PUBLIC_SUPABASE_URL } from '$env/static/public';
 
+	initializeStores();
+
 	export let data;
-	let { session, userId } = data;
+	let { session, user, message_count, comment_count } = data;
 	let supabase;
 
 	if (browser) {
@@ -26,9 +28,9 @@
 
 		return () => authListener.subscription.unsubscribe();
 	});
+
+	$: ({ session, user, message_count, comment_count } = data);
 </script>
 
-<SkeletonProvider>
-	<SkeletonToast position="t" />
-	<slot {session} {userId} />
-</SkeletonProvider>
+<Toast position="t" />
+<slot {session} {user} {message_count} {comment_count} />
