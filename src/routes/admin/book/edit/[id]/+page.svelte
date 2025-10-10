@@ -1,4 +1,4 @@
-<script lang = "ts">
+<script lang="ts">
 	import { t } from '$lib/functions/i18n';
 	import ImagesModel from '$components/editor/ImagesModel.svelte';
 	import { getToastStore } from '@skeletonlabs/skeleton';

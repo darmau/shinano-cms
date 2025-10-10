@@ -1,4 +1,4 @@
-<script lang = "ts">
+<script lang="ts">
 	import Pagination from '$components/Pagination.svelte';
 	import { t } from '$lib/functions/i18n';
 	import PageTitle from '$components/PageTitle.svelte';

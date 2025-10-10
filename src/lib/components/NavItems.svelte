@@ -1,4 +1,4 @@
-<script lang = "ts">
+<script lang="ts">
 	import Home from '$assets/icons/home.svelte';
 	import Message from '$assets/icons/inbox.svelte';
 	import Media from '$assets/icons/photo.svelte';

@@ -1,4 +1,4 @@
-<script lang = "ts">
+<script lang="ts">
 	import InputField from '$components/InputField.svelte';
 	import { locale, locales, t } from '$lib/functions/i18n';
 

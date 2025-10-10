@@ -1,4 +1,4 @@
-<script lang = "ts">
+<script lang="ts">
 	import { getToastStore } from '@skeletonlabs/skeleton';
 	import Pagination from '$components/Pagination.svelte';
 	import { invalidateAll } from '$app/navigation';

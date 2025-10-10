@@ -1,5 +1,5 @@
-<script lang = "ts">
-	export let count;
+<script lang="ts">
+	const { count } = $props<{ count: number }>();
 </script>
 
 <span

@@ -1,9 +1,13 @@
 import adapter from '@sveltejs/adapter-cloudflare';
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
+import preprocess from 'svelte-preprocess';
 
 /** @type {import('@sveltejs/kit').Config} */
 const config = {
-	preprocess: vitePreprocess(),
+	compilerOptions: {
+		runes: false
+	},
+	preprocess: [vitePreprocess(), preprocess()],
 	kit: {
 		alias: {
 			'$assets': './src/assets',
