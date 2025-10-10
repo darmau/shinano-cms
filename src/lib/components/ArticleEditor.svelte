@@ -340,7 +340,10 @@
 				<input
 					type = "text" name = "title" id = "title"
 					value = {articleContent.title}
-					on:input = {() => {isChanged = true}}
+					on:input = {(event: Event) => {
+						isChanged = true
+						articleContent.title = (event.currentTarget as HTMLInputElement).value
+						}}
 					required
 					class =
 						"block w-full rounded-md border-0 p-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-cyan-600 sm:text-sm sm:leading-6"
@@ -359,7 +362,11 @@
 				<input
 					type = "text" name = "slug" id = "slug"
 					value = {articleContent.slug}
-					on:input = {() => {isChanged = true; checkSlug(articleContent.slug)}}
+					on:input = {(event: Event) => {
+						isChanged = true; 
+						checkSlug(articleContent.slug)
+						articleContent.slug = (event.currentTarget as HTMLInputElement).value
+						}}
 					required
 					class =
 						"block font-mono w-full rounded-md border-0 p-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-cyan-600 sm:text-sm sm:leading-6"
@@ -391,7 +398,10 @@
 				<input
 					type = "text" name = "subtitle" id = "subtitle"
 					value = {articleContent.subtitle}
-					on:input = {() => {isChanged = true}}
+					on:input = {(event: Event) => {
+						isChanged = true;
+						articleContent.subtitle = (event.currentTarget as HTMLInputElement).value
+						}}
 					required
 					class =
 						"block w-full rounded-md border-0 p-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-cyan-600 sm:text-sm sm:leading-6"
@@ -421,7 +431,10 @@
 				type="datetime-local"
 				class="mt-2 w-full rounded-md border-0 p-1.5 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-cyan-600 sm:text-sm sm:leading-6"
 				bind:value={localTime}
-				on:change = {() => {isChanged = true}}
+				on:change = {(event: Event) => {
+					isChanged = true
+					localTime = (event.currentTarget as HTMLInputElement).value
+					}}
 			/>
 		</div>
 
@@ -487,7 +500,10 @@
 			</header>
 			<select
 				bind:value={articleContent.category}
-				on:change = {() => {isChanged = true}}
+				on:change = {(event: Event) => {
+					isChanged = true;
+					articleContent.category = (event.currentTarget as HTMLSelectElement).value
+					}}
 				id="category"
 				name="category"
 				class="mt-2 block w-full rounded-md border-0 py-1.5 pl-3 pr-10 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-cyan-600 sm:text-sm sm:leading-6">
@@ -529,6 +545,9 @@
 					<input
 						type="text"
 						bind:value={topicInput}
+						on:input = {(event: Event) => {
+							topicInput = (event.currentTarget as HTMLInputElement).value
+							}}
 						on:keydown={handleKeydown}
 						class="peer border-none text-sm focus:ring-0 focus:outline-none bg-transparent"
 					/>
@@ -592,7 +611,10 @@
 				<textarea
 					name = "abstract" id = "abstract" rows = "5"
 					value = {articleContent.abstract}
-					on:input = {() => {isChanged = true}}
+					on:input = {(event: Event) => {
+						isChanged = true;
+						articleContent.abstract = (event.currentTarget as HTMLTextAreaElement).value
+						}}
 					placeholder = "使用AI为文章生成摘要"
 					class =
 						"block w-full rounded-md border-0 p-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-cyan-600 sm:text-sm sm:leading-6"
@@ -619,7 +641,10 @@
 			<div class = "flex h-6 items-center gap-2">
 				<input
 					checked = {articleContent.is_featured}
-					on:change = {() => {isChanged = true}}
+					on:change = {(event: Event) => {
+						isChanged = true;
+						articleContent.is_featured = (event.currentTarget as HTMLInputElement).checked
+					}}
 					id = "is_featured" aria-describedby = "是否设置为推荐文章"
 					name = "is_featured" type = "checkbox"
 					class =
@@ -633,7 +658,10 @@
 			<div class = "flex h-6 items-center gap-2">
 				<input
 					checked = {articleContent.is_premium}
-					on:change = {() => {isChanged = true}}
+					on:change = {(event: Event) => {
+						isChanged = true;
+						articleContent.is_premium = (event.currentTarget as HTMLInputElement).checked
+						}}
 					id = "is_premium" aria-describedby = "是否登录后可见"
 					name = "is_premium" type = "checkbox"
 					class =
