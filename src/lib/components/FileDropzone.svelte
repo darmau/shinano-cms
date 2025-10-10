@@ -7,11 +7,11 @@
 	export let fileInput: HTMLInputElement | undefined = undefined;
 	export let name: string;
 	/** Provide classes to set the border styles. */
-	export let border: CssClasses = 'border-2 border-dashed';
+	export let border = 'border-2 border-dashed';
 	/** Provide classes to set the padding styles. */
-	export let padding: CssClasses = 'p-4 py-8';
+	export let padding = 'p-4 py-8';
 	/** Provide classes to set the box radius styles. */
-	export let rounded: CssClasses = 'rounded-container-token';
+	export let rounded = 'rounded-md';
 
 	const cBase =
 		'textarea relative flex justify-center items-center bg-gray-200';

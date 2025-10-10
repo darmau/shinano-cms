@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { beforeUpdate, onDestroy, onMount, tick } from 'svelte';
+	import { onDestroy, onMount, tick } from 'svelte';
 	import type { Editor } from '$lib/functions/Editor';
 
 	let element: HTMLElement;
@@ -22,7 +22,6 @@
 	};
 
 	onMount(init);
-	beforeUpdate(init);
 
 	onDestroy(() => {
 		if (!editor) {

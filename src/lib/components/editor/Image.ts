@@ -1,35 +1,60 @@
 import { mergeAttributes, Node } from '@tiptap/core';
 
+type ImageAttributes = {
+	prefix?: string;
+	storage_key?: string;
+};
+
+const buildImageSrc = ({ prefix, storage_key }: ImageAttributes): string => {
+	if (!prefix || !storage_key) {
+		return '';
+	}
+
+	return `${prefix}/cdn-cgi/image/format=auto,width=960/${prefix}/${storage_key}`;
+};
+
 export default Node.create({
 	name: 'image',
 	group: 'block',
-	content: 'inline*',
+	atom: true,
 	draggable: true,
 	parseHTML() {
 		return [
 			{
-				tag: 'article-image',
+				tag: 'img[data-storage-key]',
 			},
 		];
 	},
 	renderHTML({ HTMLAttributes }) {
-		return ['img', mergeAttributes(HTMLAttributes, { class: 'w-1/2' }), 0];
+		const { prefix, storage_key, caption, ...rest } = HTMLAttributes;
+		const src = buildImageSrc({ prefix, storage_key }) || rest.src || '';
+		const classList = ['w-1/2', rest.class].filter(Boolean).join(' ');
+
+		return [
+			'img',
+			mergeAttributes(rest, {
+				src,
+				alt: rest.alt ?? '',
+				class: classList,
+				'data-prefix': prefix ?? '',
+				'data-storage-key': storage_key ?? '',
+				'data-caption': caption ?? '',
+			}),
+		];
 	},
 	addNodeView() {
 		return ({ node }) => {
 			const figure = document.createElement('figure');
 			figure.classList.add('w-1/3');
 
-			// 创建img元素
 			const img = document.createElement('img');
-			img.src = `${node.attrs.prefix}/cdn-cgi/image/format=auto,width=960/${node.attrs.prefix}/${node.attrs.storage_key}`;
-			img.alt = node.attrs.alt;
+			const computedSrc = buildImageSrc(node.attrs) || node.attrs.src || '';
+			img.src = computedSrc;
+			img.alt = node.attrs.alt ?? '';
 
-			// 创建figcaption元素
 			const figcaption = document.createElement('figcaption');
-			figcaption.textContent = node.attrs.caption;
+			figcaption.textContent = node.attrs.caption ?? '';
 
-			// 将img和figcaption添加到figure中
 			figure.appendChild(img);
 			figure.appendChild(figcaption);
 
@@ -42,19 +67,23 @@ export default Node.create({
 	addAttributes() {
 		return {
 			id: {
-				default: 0,
+				default: null,
 			},
 			alt: {
 				default: '',
+				parseHTML: (element) => element.getAttribute('alt') ?? '',
 			},
 			storage_key: {
 				default: '',
+				parseHTML: (element) => element.getAttribute('data-storage-key') ?? '',
 			},
 			prefix: {
 				default: '',
+				parseHTML: (element) => element.getAttribute('data-prefix') ?? '',
 			},
 			caption: {
-				default: ''
+				default: '',
+				parseHTML: (element) => element.getAttribute('data-caption') ?? '',
 			}
 		};
 	},

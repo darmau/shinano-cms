@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { getToastStore, ProgressRadial } from '$lib/toast';
 	import FileDropzone from '$components/FileDropzone.svelte';
-	import { error } from '@sveltejs/kit';
 
 	export let refresh: () => void;
 

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { createEventDispatcher, onMount } from 'svelte';
 	import type { Readable } from 'svelte/store';
+	import type { Content } from '@tiptap/core';
 	import StarterKit from '@tiptap/starter-kit';
 	import Highlight from '@tiptap/extension-highlight';
 	import { Link } from '@tiptap/extension-link';
@@ -55,6 +56,14 @@
 	let editor: Readable<Editor>;
 	let codeLanguage = 'javascript';
 	let isModalOpen = false;
+
+	type SelectedImage = {
+		id: number;
+		storage_key: string;
+		prefix: string;
+		alt?: string | null;
+		caption?: string | null;
+	};
 
 	onMount(() => {
 		editor = createEditor({
@@ -230,8 +239,19 @@
 	};
 
 	const setCodeLanguage = () => {
-		$editor.chain().focus().updateAttributes('customCodeBlock',
-			{ 'data-language': codeLanguage, 'language': codeLanguage }).run();
+		const language = codeLanguage.trim();
+		if (!language) {
+			return;
+		}
+
+		$editor
+			.chain()
+			.focus()
+			.updateAttributes('customCodeBlock', {
+				'data-language': language,
+				language
+			})
+			.run();
 	};
 
 	$: isActive = (name: string, attrs = {}) => $editor.isActive(name, attrs);
@@ -247,19 +267,19 @@
 			name: 'heading-2',
 			command: toggleHeading(2),
 			content: H2Icon,
-			active: () => isActive('heading-2', { level: 2 })
+			active: () => isActive('heading', { level: 2 })
 		},
 		{
 			name: 'heading-3',
 			command: toggleHeading(3),
 			content: H3Icon,
-			active: () => isActive('heading-3', { level: 3 })
+			active: () => isActive('heading', { level: 3 })
 		},
 		{
 			name: 'heading-4',
 			command: toggleHeading(4),
 			content: H4Icon,
-			active: () => isActive('heading-4', { level: 4 })
+			active: () => isActive('heading', { level: 4 })
 		},
 		{
 			name: 'bold',
@@ -301,7 +321,7 @@
 			name: 'unlink',
 			command: () => $editor.chain().focus().unsetLink().run(),
 			content: UnlinkIcon,
-			active: () => isActive('unlink')
+			active: () => isActive('link')
 		},
 		{
 			name: 'paragraph',
@@ -412,8 +432,8 @@
 		isModalOpen = false;
 	}
 
-	function handleSelect(images) {
-		const nodeLists = images.map(image => {
+	function handleSelect(images: SelectedImage[]) {
+		const nodeLists = images.map((image) => {
 			return {
 				type: 'image',
 				attrs: image
@@ -422,7 +442,7 @@
 		$editor.chain().focus().insertContent(nodeLists).run();
 	}
 
-	export function updateContent(content) {
+	export function updateContent(content: Content) {
 		$editor.chain().focus().setContent(content).run();
 	}
 </script>

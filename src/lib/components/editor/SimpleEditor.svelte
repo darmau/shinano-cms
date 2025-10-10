@@ -5,6 +5,7 @@
 	import Highlight from '@tiptap/extension-highlight';
 	import { Link } from '@tiptap/extension-link';
 	import { Editor } from '$lib/functions/Editor';
+	import type { Content } from '@tiptap/core';
 	import EditorContent from '$components/editor/EditorContent.svelte';
 	import createEditor from '$lib/functions/createEditor';
 	import H2Icon from '$assets/icons/editor/heading2.svelte';
@@ -23,7 +24,7 @@
 	import { Typography } from '@tiptap/extension-typography';
 	import { createEventDispatcher } from 'svelte';
 	import Gapcursor from '@tiptap/extension-gapcursor'
-	import Heading from '@tiptap/extension-heading';
+	import Heading, { type Level } from '@tiptap/extension-heading';
 
 	const dispatch = createEventDispatcher();
 	export let content;
@@ -63,7 +64,7 @@
 		});
 	});
 
-	const toggleHeading = (level: 2) => {
+	const toggleHeading = (level: Level = 2) => {
 		return () => {
 			$editor.chain().focus().toggleHeading({ level }).run();
 		};
@@ -184,7 +185,7 @@
 			name: 'unlink',
 			command: () => $editor.chain().focus().unsetLink().run(),
 			content: UnlinkIcon,
-			active: () => isActive('unlink')
+			active: () => isActive('link')
 		},
 		{
 			name: 'paragraph',
@@ -218,7 +219,7 @@
 		}
 	];
 
-	export function updateContent(content) {
+	export function updateContent(content: Content) {
 		$editor.chain().focus().setContent(content).run();
 	}
 </script>
