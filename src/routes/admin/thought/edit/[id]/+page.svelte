@@ -7,10 +7,11 @@
 	import { getToastStore } from '@skeletonlabs/skeleton';
 	import { goto } from '$app/navigation';
 	import { flip } from 'svelte/animate';
+	import { browser } from '$app/environment';
+	import { getSupabaseBrowserClient } from '$lib/supabaseClient';
 
 	export let data;
-	let { supabase } = data;
-	$: ({ supabase } = data);
+	const supabase = browser ? getSupabaseBrowserClient() : null;
 
 	const toastStore = getToastStore();
 

@@ -5,10 +5,11 @@
 	import { localTime } from '$lib/functions/localTime';
 	import { t } from '$lib/functions/i18n';
 	import PageTitle from '$components/PageTitle.svelte';
+	import { browser } from '$app/environment';
+	import { getSupabaseBrowserClient } from '$lib/supabaseClient';
 
 	export let data;
-	let { supabase } = data;
-	$: ({ supabase } = data);
+	const supabase = browser ? getSupabaseBrowserClient() : null;
 
 	const toastStore = getToastStore();
 

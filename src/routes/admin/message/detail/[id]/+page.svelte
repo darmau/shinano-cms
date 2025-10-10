@@ -2,10 +2,11 @@
 	import { getToastStore } from '@skeletonlabs/skeleton';
 	import { onMount } from 'svelte';
 	import getDateFormat from '$lib/functions/dateFormat';
+	import { browser } from '$app/environment';
+	import { getSupabaseBrowserClient } from '$lib/supabaseClient';
 
 	export let data;
-	let { supabase } = data;
-	$: ({ supabase } = data);
+	const supabase = browser ? getSupabaseBrowserClient() : null;
 	const toastStore = getToastStore();
 
 	const message = data.messageData;

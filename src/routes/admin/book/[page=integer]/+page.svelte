@@ -6,10 +6,11 @@
 	import getDateFormat from '$lib/functions/dateFormat';
 	import ArticleIcon from '$assets/icons/document-text.svelte';
 	import { invalidateAll } from '$app/navigation';
+	import { browser } from '$app/environment';
+	import { getSupabaseBrowserClient } from '$lib/supabaseClient';
 
 	export let data;
-	let { supabase } = data;
-	$: ({ supabase } = data);
+	const supabase = browser ? getSupabaseBrowserClient() : null;
 
 	const toastStore = getToastStore();
 

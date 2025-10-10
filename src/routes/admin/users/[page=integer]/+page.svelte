@@ -3,13 +3,13 @@
 	import { t } from '$lib/functions/i18n';
 	import PageTitle from '$components/PageTitle.svelte';
 	import getDateFormat from '$lib/functions/dateFormat';
-	import ArticleIcon from '$assets/icons/document-text.svelte';
 	import { getToastStore } from '@skeletonlabs/skeleton';
 	import { invalidateAll } from '$app/navigation';
+	import { browser } from '$app/environment';
+	import { getSupabaseBrowserClient } from '$lib/supabaseClient';
 
 	export let data;
-	let { supabase } = data;
-	$: ({ supabase } = data);
+	const supabase = browser ? getSupabaseBrowserClient() : null;
 
 	const toastStore = getToastStore();
 
@@ -155,8 +155,6 @@
 											on:click = {() => blockUser(user.id)}
 										>{$t('block_user')}
 										</button>
-									{:else}
-
 									{/if}
 								</td>
 							</tr>

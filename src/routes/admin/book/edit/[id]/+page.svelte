@@ -3,12 +3,13 @@
 	import ImagesModel from '$components/editor/ImagesModel.svelte';
 	import { getToastStore } from '@skeletonlabs/skeleton';
 	import PhotoIcon from '$assets/icons/photo.svelte';
-	import getDateFormat from '$lib/functions/dateFormat.ts';
+	import getDateFormat from '$lib/functions/dateFormat';
 	import { goto } from '$app/navigation';
+	import { browser } from '$app/environment';
+	import { getSupabaseBrowserClient } from '$lib/supabaseClient';
 
 	export let data;
-	let { supabase } = data;
-	$: ({ supabase } = data);
+	const supabase = browser ? getSupabaseBrowserClient() : null;
 
 	const toastStore = getToastStore();
 
