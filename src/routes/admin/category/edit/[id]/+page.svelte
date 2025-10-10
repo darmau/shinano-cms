@@ -4,31 +4,30 @@
 	import ImagesModel from '$components/editor/ImagesModel.svelte';
 	import { getToastStore } from '@skeletonlabs/skeleton';
 	import { invalidateAll } from '$app/navigation';
+	import { browser } from '$app/environment';
+	import { getSupabaseBrowserClient } from '$lib/supabaseClient';
+	import type { SelectedImage } from '$lib/types/images';
 
 	export let data;
-	let { supabase } = data;
-	$: ({ supabase } = data);
+	const supabase = browser ? getSupabaseBrowserClient() : null;
 
 	const toastStore = getToastStore();
 
-	let categoryData = data.category;
+	const categoryData: Record<string, any> = { ...data.category };
 
-	// 接收图片选择器返回的图片信息并显示
 	let isModalOpen = false;
-	let coverImage = categoryData.cover || {};
+	let coverImage: SelectedImage | null = categoryData.cover ?? null;
 
-	function selectCoverImage(images) {
-		// 只接收第一张图片
-		coverImage = {
-			id: images[0].id,
-			alt: images[0].alt,
-			storage_key: images[0].storage_key
-		};
-		categoryData.cover = coverImage.id;
+	function selectCoverImage(images: SelectedImage[]) {
+		const [image] = images;
+		if (!image) return;
+
+		coverImage = image;
+		categoryData.cover = image.id;
 	}
 
 	function resetCoverImage() {
-		coverImage = {};
+		coverImage = null;
 		categoryData.cover = null;
 	}
 
@@ -38,13 +37,13 @@
 
 	// 保存
 	async function saveCategory() {
-		categoryData.cover = coverImage.id || null;
+		categoryData.cover = coverImage?.id || null;
 
-		const { data: updateData, error: updateError } = await supabase
-		.from('category')
-		.update(categoryData)
-		.eq('id', categoryData.id)
-		.select();
+		const { error: updateError } = await supabase
+			?.from('category')
+			.update(categoryData)
+			.eq('id', categoryData.id)
+			.select();
 
 		if (updateError) {
 			console.error(updateError);
@@ -77,7 +76,11 @@
 			>{$t('title')}</label>
 			<div class = "mt-2">
 				<input
-					bind:value = {categoryData.title}
+					value = {categoryData.title}
+					on:input = {(event: Event) => {
+						const target = event.currentTarget as HTMLInputElement;
+						categoryData.title = target.value;
+					}}
 					type = "text" name = "title" id = "title"
 					class = "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-cyan-600 sm:text-sm sm:leading-6"
 				/>
@@ -89,7 +92,11 @@
 				class = "block text-sm font-medium leading-6 text-gray-900"
 			>{$t('type')}</label>
 			<select
-				bind:value = {categoryData.type}
+				value = {categoryData.type}
+				on:change = {(event: Event) => {
+					const target = event.currentTarget as HTMLSelectElement;
+					categoryData.type = target.value;
+				}}
 				id = "type"
 				name = "type"
 				class = "mt-2 block w-full rounded-md border-0 py-1.5 pl-3 pr-10 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-cyan-600 sm:text-sm sm:leading-6"
@@ -106,7 +113,11 @@
 			>Slug</label>
 			<div class = "mt-2">
 				<input
-					bind:value = {categoryData.slug}
+					value = {categoryData.slug}
+					on:input = {(event: Event) => {
+						const target = event.currentTarget as HTMLInputElement;
+						categoryData.slug = target.value;
+					}}
 					type = "text" name = "slug" id = "slug"
 					class = "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-cyan-600 sm:text-sm sm:leading-6"
 				/>
@@ -121,10 +132,14 @@
 			>{$t('description')}</label>
 			<div class = "mt-2">
 				<textarea
-					bind:value = {categoryData.description}
+				value = {categoryData.description}
+				on:change = {(event: Event) => {
+					const target = event.currentTarget as HTMLTextAreaElement;
+					categoryData.description = target.value;
+				}}
 					rows = "3" name = "description" id = "description"
 					class = "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-cyan-600 sm:text-sm sm:leading-6"
-				/>
+			></textarea>
 			</div>
 		</div>
 		<div>
@@ -133,7 +148,11 @@
 				class = "block text-sm font-medium leading-6 text-gray-900"
 			>{$t('language')}</label>
 			<select
-				bind:value = {categoryData.lang}
+				value = {categoryData.lang}
+				on:change = {(event: Event) => {
+					const target = event.currentTarget as HTMLSelectElement;
+					categoryData.lang = target.value;
+				}}
 				id = "language"
 				name = "language"
 				class = "mt-2 block w-full rounded-md border-0 py-1.5 pl-3 pr-10 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-cyan-600 sm:text-sm sm:leading-6"
@@ -151,7 +170,7 @@
 				<button
 					on:click = {resetCoverImage}
 					type = "button"
-					disabled = {Object.keys(coverImage).length === 0}
+					disabled = {coverImage === null}
 					class = "rounded bg-red-600 px-2 py-1 text-sm font-semibold text-white shadow-sm hover:bg-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600 disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed"
 				>
 					{$t('reset')}
@@ -170,9 +189,13 @@
 			>
 				<input
 					type = "hidden" name = "coverImageId"
-					bind:value = {categoryData.cover}
+					value = {categoryData.cover}
+					on:change = {(event: Event) => {
+						const target = event.currentTarget as HTMLInputElement;
+						categoryData.cover = target.value;
+					}}
 				>
-				{#if Object.keys(coverImage).length > 0}
+				{#if coverImage}
 					<img
 						src =
 							{`${data.prefix}/cdn-cgi/image/format=auto,width=480/${coverImage.storage_key}`}
