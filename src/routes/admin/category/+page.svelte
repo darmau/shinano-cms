@@ -3,14 +3,12 @@
 	import { t } from '$lib/functions/i18n';
 	import { invalidateAll } from '$app/navigation';
 	import { getToastStore } from '@skeletonlabs/skeleton';
+	import { deleteCategories, deleteCategory } from '$lib/api/categories';
 
 	export let data;
-	let { supabase } = data;
-	$: ({ supabase } = data);
 
 	const toastStore = getToastStore();
 
-	// 读取分类相应的内容数量
 	function getCountByType(category) {
 		if (category && category.type) {
 			return category[category.type][0].count;
@@ -18,14 +16,13 @@
 		return 0;
 	}
 
-	let selectedCategoryList = [];
+	let selectedCategoryList: number[] = [];
 	let deletable = true;
 
-	// 直接删除分类
-	async function deleteCategory(id: number) {
-		const { data: deleteData, error: deleteError } = await
-			supabase.from('category').delete().eq('id', id).select();
-		if (deleteError) {
+	async function handleDeleteCategory(id: number) {
+		const { error, deleted } = await deleteCategory(id);
+
+		if (error) {
 			toastStore.trigger({
 				message: '删除分类失败。',
 				hideDismiss: true,
@@ -33,19 +30,19 @@
 			});
 		} else {
 			toastStore.trigger({
-				message: `成功删除分类${deleteData.title}`,
+				message: `成功删除分类${deleted?.title ?? ''}`,
 				hideDismiss: true,
 				background: 'variant-filled-success'
 			});
 		}
+
 		await invalidateAll();
 	}
 
-	// 批量删除分类
-	async function deleteCategories() {
-		const { error: deleteError } = await
-			supabase.from('category').delete().in('id', selectedCategoryList);
-		if (deleteError) {
+	async function handleDeleteCategories() {
+		const { error } = await deleteCategories(selectedCategoryList);
+
+		if (error) {
 			toastStore.trigger({
 				message: '删除分类失败。',
 				hideDismiss: true,
@@ -60,12 +57,13 @@
 			});
 			selectedCategoryList = [];
 		}
+
 		await invalidateAll();
 	}
 
-	// 选中所有分类并添加到selectedCategoryList
 	function switchSelectAll() {
 		const checkboxes = document.querySelectorAll('.category-checkbox');
+
 		if (selectedCategoryList.length === data.categories.length) {
 			checkboxes.forEach((checkbox) => {
 				checkbox.checked = false;
@@ -76,7 +74,7 @@
 			checkboxes.forEach((checkbox) => {
 				checkbox.checked = true;
 			});
-			selectedCategoryList = data.categories.map((categories) => categories.id);
+			selectedCategoryList = data.categories.map((category) => category.id);
 			deletable = false;
 		}
 	}
@@ -88,7 +86,7 @@
 		<button
 			type = "button"
 			disabled = {deletable}
-			on:click = {deleteCategories}
+			on:click = {handleDeleteCategories}
 			class =
 				"inline-flex justify-center rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 sm:w-auto disabled:bg-gray-300"
 		>{$t('delete')}
@@ -218,9 +216,9 @@
 									>
 										{$t('edit')}
 									</a>
-									<button
-										type = "button"
-										on:click = {() => deleteCategory(category.id)}
+				<button
+					type = "button"
+					on:click = {() => handleDeleteCategory(category.id)}
 										class = "text-red-600 hover:text-red-900"
 									>
 										{$t('delete')}
