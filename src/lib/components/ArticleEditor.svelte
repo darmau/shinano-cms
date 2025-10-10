@@ -327,7 +327,7 @@
 	<ImagesModel {data} {closeModel} onSelect = {selectCoverImage} />
 {/if}
 
-<div class = "grid grid-cols-1 gap-6 3xl:grid-cols-4">
+<div class = "grid grid-cols-1 gap-6 xl:grid-cols-4">
 	<div class = "space-y-8 xl:col-span-3">
 
 		<!--title-->
@@ -339,11 +339,11 @@
 			<div class = "mt-2">
 				<input
 					type = "text" name = "title" id = "title"
-					bind:value = {articleContent.title}
+					value = {articleContent.title}
 					on:input = {() => {isChanged = true}}
 					required
 					class =
-						"block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-cyan-600 sm:text-sm sm:leading-6"
+						"block w-full rounded-md border-0 p-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-cyan-600 sm:text-sm sm:leading-6"
 					placeholder = "必须填写标题"
 				>
 			</div>
@@ -358,11 +358,11 @@
 			<div class = "mt-2 flex gap-4">
 				<input
 					type = "text" name = "slug" id = "slug"
-					bind:value = {articleContent.slug}
+					value = {articleContent.slug}
 					on:input = {() => {isChanged = true; checkSlug(articleContent.slug)}}
 					required
 					class =
-						"block font-mono w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-cyan-600 sm:text-sm sm:leading-6"
+						"block font-mono w-full rounded-md border-0 p-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-cyan-600 sm:text-sm sm:leading-6"
 				>
 				<button
 					type="button"
@@ -390,11 +390,11 @@
 			<div class = "mt-2">
 				<input
 					type = "text" name = "subtitle" id = "subtitle"
-					bind:value = {articleContent.subtitle}
+					value = {articleContent.subtitle}
 					on:input = {() => {isChanged = true}}
 					required
 					class =
-						"block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-cyan-600 sm:text-sm sm:leading-6"
+						"block w-full rounded-md border-0 p-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-cyan-600 sm:text-sm sm:leading-6"
 				>
 			</div>
 		</div>
@@ -407,7 +407,7 @@
 		<button
 			type="button"
 			on:click = {getTranslation}
-			class="rounded-md bg-cyan-50 px-3 py-2 text-sm font-semibold text-cyan-600 shadow-sm hover:bg-cyan-100"
+			class="rounded-md bg-cyan-50 p-2 text-sm font-semibold text-cyan-600 shadow-sm hover:bg-cyan-100"
 		>{$t('translate')}</button>
 	</div>
 
@@ -415,10 +415,11 @@
 		<!--发布时间-->
 		<div>
 			<label
+				for="publish-time"
 				class = "text-sm font-medium leading-6 text-gray-900">{$t('publish-time')}</label>
 			<input
 				type="datetime-local"
-				class="mt-2 w-full rounded-md border-0 py-1.5 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-cyan-600 sm:text-sm sm:leading-6"
+				class="mt-2 w-full rounded-md border-0 p-1.5 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-cyan-600 sm:text-sm sm:leading-6"
 				bind:value={localTime}
 				on:change = {() => {isChanged = true}}
 			/>
@@ -590,11 +591,12 @@
 			<div class = "mt-2">
 				<textarea
 					name = "abstract" id = "abstract" rows = "5"
-					bind:value = {articleContent.abstract}
+					value = {articleContent.abstract}
+					on:input = {() => {isChanged = true}}
 					placeholder = "使用AI为文章生成摘要"
 					class =
-						"block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-cyan-600 sm:text-sm sm:leading-6"
-				/>
+						"block w-full rounded-md border-0 p-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-cyan-600 sm:text-sm sm:leading-6"
+				></textarea>
 			</div>
 		</div>
 
@@ -602,7 +604,7 @@
 		<div class = "flex gap-4 flex-wrap my-4">
 			<div class = "flex h-6 items-center gap-2">
 				<input
-					bind:checked = {articleContent.is_top}
+					checked = {articleContent.is_top}
 					on:change = {() => {isChanged = true}}
 					id = "is_top" aria-describedby = "是否置顶文章"
 					name = "is_top" type = "checkbox"
@@ -616,7 +618,7 @@
 			</div>
 			<div class = "flex h-6 items-center gap-2">
 				<input
-					bind:checked = {articleContent.is_featured}
+					checked = {articleContent.is_featured}
 					on:change = {() => {isChanged = true}}
 					id = "is_featured" aria-describedby = "是否设置为推荐文章"
 					name = "is_featured" type = "checkbox"
@@ -630,7 +632,7 @@
 			</div>
 			<div class = "flex h-6 items-center gap-2">
 				<input
-					bind:checked = {articleContent.is_premium}
+					checked = {articleContent.is_premium}
 					on:change = {() => {isChanged = true}}
 					id = "is_premium" aria-describedby = "是否登录后可见"
 					name = "is_premium" type = "checkbox"
