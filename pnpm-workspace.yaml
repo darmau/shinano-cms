@@ -1,0 +1,5 @@
+ignoredBuiltDependencies:
+  - esbuild
+  - sharp
+  - svelte-preprocess
+  - workerd
