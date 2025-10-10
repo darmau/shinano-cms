@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { getToastStore } from '@skeletonlabs/skeleton';
+	import { getToastStore } from '$lib/toast';
 	import Edit from '$assets/icons/edit.svelte';
 	import EditImage from '$components/image/EditImage.svelte';
 	import UploadFile from '$components/image/UploadFile.svelte';

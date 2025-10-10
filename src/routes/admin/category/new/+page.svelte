@@ -2,7 +2,7 @@
 	import { t } from '$lib/functions/i18n';
 	import PhotoIcon from '$assets/icons/photo.svelte';
 	import ImagesModel from '$components/editor/ImagesModel.svelte';
-	import { getToastStore } from '@skeletonlabs/skeleton';
+	import { getToastStore } from '$lib/toast';
 	import { goto } from '$app/navigation';
 	import { browser } from '$app/environment';
 	import { getSupabaseBrowserClient } from '$lib/supabaseClient';

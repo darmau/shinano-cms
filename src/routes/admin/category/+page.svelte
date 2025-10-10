@@ -2,7 +2,7 @@
 	import PageTitle from '$components/PageTitle.svelte';
 	import { t } from '$lib/functions/i18n';
 	import { invalidateAll } from '$app/navigation';
-	import { getToastStore } from '@skeletonlabs/skeleton';
+	import { getToastStore } from '$lib/toast';
 	import { deleteCategories, deleteCategory } from '$lib/api/categories';
 
 	export let data;

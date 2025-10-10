@@ -3,7 +3,7 @@
 	import { t } from '$lib/functions/i18n';
 	import PageTitle from '$components/PageTitle.svelte';
 	import getDateFormat from '$lib/functions/dateFormat';
-	import { getToastStore } from '@skeletonlabs/skeleton';
+	import { getToastStore } from '$lib/toast';
 	import { invalidateAll } from '$app/navigation';
 	import { browser } from '$app/environment';
 	import { getSupabaseBrowserClient } from '$lib/supabaseClient';

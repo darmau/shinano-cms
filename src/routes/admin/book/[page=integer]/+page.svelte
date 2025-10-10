@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { getToastStore } from '@skeletonlabs/skeleton';
+	import { getToastStore } from '$lib/toast';
 	import PageTitle from '$components/PageTitle.svelte';
 	import { t } from '$lib/functions/i18n';
 	import Pagination from '$components/Pagination.svelte';

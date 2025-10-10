@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { t } from '$lib/functions/i18n';
-	import { getToastStore } from '@skeletonlabs/skeleton';
+	import { getToastStore } from '$lib/toast';
 	import { invalidateAll } from '$app/navigation'
 
 	export let data;

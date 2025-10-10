@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { t } from '$lib/functions/i18n';
 	import ImagesModel from '$components/editor/ImagesModel.svelte';
-	import { getToastStore } from '@skeletonlabs/skeleton';
+	import { getToastStore } from '$lib/toast';
 	import PhotoIcon from '$assets/icons/photo.svelte';
 	import getDateFormat from '$lib/functions/dateFormat';
 	import { goto } from '$app/navigation';

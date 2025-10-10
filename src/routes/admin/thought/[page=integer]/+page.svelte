@@ -3,7 +3,7 @@
 	import { t } from '$lib/functions/i18n';
 	import PageTitle from '$components/PageTitle.svelte';
 	import { invalidateAll } from '$app/navigation';
-	import { getToastStore } from '@skeletonlabs/skeleton';
+	import { getToastStore } from '$lib/toast';
 	import ArticleIcon from '$assets/icons/document-text.svelte';
 	import getDateFormat from '$lib/functions/dateFormat';
 	import { browser } from '$app/environment';

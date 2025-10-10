@@ -2,7 +2,7 @@
 	import SimpleEditor from '$components/editor/SimpleEditor.svelte';
 	import { t } from '$lib/functions/i18n';
 	import AddIcon from '$assets/icons/plus.svelte';
-	import { getToastStore } from '@skeletonlabs/skeleton';
+	import { getToastStore } from '$lib/toast';
 	import { beforeNavigate, goto } from '$app/navigation';
 	import getDateFormat from '$lib/functions/dateFormat';
 	import { onMount } from 'svelte';

@@ -4,15 +4,16 @@
 	import ImagesModel from '$components/editor/ImagesModel.svelte';
 	import PhotoIcon from '$assets/icons/photo.svelte';
 	import AddIcon from '$assets/icons/plus.svelte';
-	import { getToastStore } from '@skeletonlabs/skeleton';
+	import { getToastStore } from '$lib/toast';
 	import { beforeNavigate, goto } from '$app/navigation';
-	import getDateFormat from '$lib/functions/dateFormat.ts';
+	import getDateFormat from '$lib/functions/dateFormat';
 	import { onMount } from 'svelte';
+	import { browser } from '$app/environment';
+	import { getSupabaseBrowserClient } from '$lib/supabaseClient';
 
 	export let data;
 	export let isSaved: boolean = false;
-	let { supabase } = data;
-	$: ({ supabase } = data);
+	const supabase = browser ? getSupabaseBrowserClient() : null;
 
 	const toastStore = getToastStore();
 
@@ -243,12 +244,13 @@
 	}
 
 	// 话题
-	let topics = articleContent.topic;
+	let topics = articleContent.topic || [];
 	let topicInput = '';
 
 	function handleKeydown(event) {
 		if (event.key === 'Enter' && topicInput.trim() !== '') {
 			topics = [...topics, topicInput.trim()];
+			articleContent.topic = topics;
 			topicInput = '';
 			isChanged = true;
 		}
@@ -256,6 +258,7 @@
 
 	function removeTopic(index) {
 		topics = topics.filter((_, i) => i !== index);
+		articleContent.topic = topics;
 		isChanged = true;
 	}
 
@@ -270,6 +273,7 @@
 			body: JSON.stringify({ content })
 		}).then((res) => res.json());
 		topics = result.tags;
+		articleContent.topic = topics;
 		isChanged = true;
 	}
 

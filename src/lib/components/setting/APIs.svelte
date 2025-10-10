@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { t } from '$lib/functions/i18n';
 	import { onMount } from 'svelte';
-	import { getToastStore } from '@skeletonlabs/skeleton';
+	import { getToastStore } from '$lib/toast';
 	import { ThirdPartyAPIs } from '$lib/types/thirdPartyApi';
 
 	const toastStore = getToastStore();

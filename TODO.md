@@ -6,7 +6,7 @@
 | @sveltejs/kit | ^2.5.20 | ^2.7.x (latest 2.x) | Required for Cloudflare adapter and new auth helpers |
 | svelte | ^4.2.18 | ^5.x | Decide whether to adopt runes or opt out |
 | @sveltejs/vite-plugin-svelte | ^3.1.1 | ^4.x | Works with Svelte 5 + Vite 5/6 |
-| @skeletonlabs/skeleton | ^2.10.2 | ^3.x | Provider-based API replaces initializeStores |
+| Custom toast module | n/a | n/a | Replaced Skeleton toast usage with in-house component |
 | @skeletonlabs/tw-plugin | ^0.4.0 | ^1.x | Matches Skeleton v3 and Tailwind 3.4+ |
 | @supabase/ssr | ^0.4.0 | ^1.x | Cookie API changed to get/set/remove helpers |
 | @supabase/supabase-js | ^2.45.0 | ^2.latest | Peer dependency for ssr 1.x |

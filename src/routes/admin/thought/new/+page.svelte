@@ -4,7 +4,7 @@
 	import ImagesModel from '$components/editor/ImagesModel.svelte';
 	import AddIcon from '$assets/icons/plus.svelte';
 	import DeleteIcon from '$assets/icons/delete.svelte';
-	import { getToastStore } from '@skeletonlabs/skeleton';
+	import { getToastStore } from '$lib/toast';
 	import { goto } from '$app/navigation';
 	import { flip } from 'svelte/animate';
 	import { browser } from '$app/environment';

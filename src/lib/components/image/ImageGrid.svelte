@@ -3,7 +3,7 @@
 	import { t } from '$lib/functions/i18n';
 	import { localTime } from '$lib/functions/localTime';
 	import shutterSpeed from '$lib/functions/shutterSpeed';
-	import { getToastStore } from '@skeletonlabs/skeleton';
+	import { getToastStore } from '$lib/toast';
 	import { invalidateAll } from '$app/navigation';
 	import EditImage from '$components/image/EditImage.svelte';
 	import Edit from '$assets/icons/edit.svelte';

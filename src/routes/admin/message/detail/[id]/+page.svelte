@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { getToastStore } from '@skeletonlabs/skeleton';
+	import { getToastStore } from '$lib/toast';
 	import { onMount } from 'svelte';
 	import getDateFormat from '$lib/functions/dateFormat';
 	import { browser } from '$app/environment';

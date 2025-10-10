@@ -3,8 +3,8 @@
 	import { t } from '$lib/functions/i18n';
 	import AddLanguage from '$components/setting/AddLanguage.svelte';
 	import { onMount } from 'svelte';
-	import { getToastStore } from '@skeletonlabs/skeleton';
-	import { ProgressRadial } from '@skeletonlabs/skeleton';
+	import { getToastStore } from '$lib/toast';
+	import { ProgressRadial } from '$lib/toast';
 	import { browser } from '$app/environment';
 	import { getSupabaseBrowserClient } from '$lib/supabaseClient';
 

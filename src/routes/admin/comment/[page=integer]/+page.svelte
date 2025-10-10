@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { getToastStore } from '@skeletonlabs/skeleton';
+	import { getToastStore } from '$lib/toast';
 	import Pagination from '$components/Pagination.svelte';
 	import { invalidateAll } from '$app/navigation';
 	import { localTime } from '$lib/functions/localTime';

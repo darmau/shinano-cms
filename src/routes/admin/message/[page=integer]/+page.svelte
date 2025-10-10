@@ -3,7 +3,7 @@
 	import Pagination from '$components/Pagination.svelte';
 	import { t } from '$lib/functions/i18n';
 	import getDateFormat from '$lib/functions/dateFormat';
-	import { getToastStore } from '@skeletonlabs/skeleton';
+	import { getToastStore } from '$lib/toast';
 	import { invalidateAll } from '$app/navigation';
 	import ArticleIcon from '$assets/icons/document-text.svelte';
 	import { browser } from '$app/environment';
