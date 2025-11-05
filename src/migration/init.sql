@@ -1038,3 +1038,144 @@ $$;
 GRANT
 EXECUTE ON FUNCTION public.thought_page_view (BIGINT) TO authenticated,
 anon;
+
+-- 先删除旧函数（如果存在）
+DROP FUNCTION IF EXISTS get_photo_map_geojson(text);
+
+CREATE OR REPLACE FUNCTION public.get_photo_map_geojson(lang_code text)
+RETURNS jsonb
+LANGUAGE sql
+SECURITY INVOKER
+STABLE
+SET search_path TO public, pg_temp
+AS $$
+WITH image_with_coords AS (
+  SELECT
+    i.id AS image_id,
+    i.storage_key,
+    i.alt,
+    i.caption,
+    i.location,
+    COALESCE(i.width, 800) AS width,
+    COALESCE(i.height, 600) AS height,
+    COALESCE(
+      CASE
+        WHEN i.gps_location IS NOT NULL THEN public.ST_Y(i.gps_location::geometry)
+        ELSE NULLIF(i.exif->>'latitude', '')::double precision
+      END,
+      NULL
+    ) AS latitude,
+    COALESCE(
+      CASE
+        WHEN i.gps_location IS NOT NULL THEN public.ST_X(i.gps_location::geometry)
+        ELSE NULLIF(i.exif->>'longitude', '')::double precision
+      END,
+      NULL
+    ) AS longitude,
+    p.id AS photo_id,
+    p.slug AS photo_slug,
+    p.title AS photo_title,
+    p.published_at AS photo_published_at
+  FROM public.photo_image pi
+  INNER JOIN public.image i ON pi.image_id = i.id
+  INNER JOIN public.photo p ON pi.photo_id = p.id
+  INNER JOIN public.language l ON p.lang = l.id
+  WHERE
+    p.is_draft = false
+    AND l.lang = lang_code
+),
+filtered_images AS (
+  SELECT *
+  FROM image_with_coords
+  WHERE latitude BETWEEN -90 AND 90
+    AND longitude BETWEEN -180 AND 180
+),
+aggregated_images AS (
+  SELECT
+    image_id,
+    storage_key,
+    alt,
+    caption,
+    location,
+    width,
+    height,
+    latitude,
+    longitude,
+    jsonb_agg(
+      jsonb_strip_nulls(
+        jsonb_build_object(
+          'id', photo_id,
+          'slug', photo_slug,
+          'title', photo_title,
+          'publishedAt', photo_published_at
+        )
+      )
+      ORDER BY photo_published_at DESC
+    ) AS albums
+  FROM filtered_images
+  GROUP BY
+    image_id,
+    storage_key,
+    alt,
+    caption,
+    location,
+    width,
+    height,
+    latitude,
+    longitude
+)
+SELECT jsonb_build_object(
+  'type', 'FeatureCollection',
+  'features', COALESCE(
+    jsonb_agg(
+      jsonb_strip_nulls(
+        jsonb_build_object(
+          'type', 'Feature',
+          'geometry', jsonb_build_object(
+            'type', 'Point',
+            'coordinates', jsonb_build_array(longitude, latitude)
+          ),
+          'properties', jsonb_build_object(
+            'imageId', image_id,
+            'storageKey', storage_key,
+            'alt', alt,
+            'caption', caption,
+            'location', location,
+            'width', width,
+            'height', height,
+            'albums', COALESCE(albums, '[]'::jsonb)
+          )
+        )
+      )
+      ORDER BY image_id
+    ),
+    '[]'::jsonb
+  )
+)
+FROM aggregated_images;
+$$;
+
+-- 授予执行权限
+GRANT EXECUTE ON FUNCTION get_photo_map_geojson(text) TO authenticated, anon;
+
+-- 验证函数创建成功
+SELECT 'Function created successfully!' as status;
+
+-- 测试函数 - 查看各语言的图片数量
+SELECT 
+  'zh' as language,
+  jsonb_array_length(
+    (SELECT get_photo_map_geojson('zh')->'features')
+  ) as image_count
+UNION ALL
+SELECT 
+  'en' as language,
+  jsonb_array_length(
+    (SELECT get_photo_map_geojson('en')->'features')
+  ) as image_count
+UNION ALL
+SELECT 
+  'jp' as language,
+  jsonb_array_length(
+    (SELECT get_photo_map_geojson('jp')->'features')
+  ) as image_count;
