@@ -228,20 +228,34 @@ export const POST: RequestHandler = async({ request, locals: { supabase } }) => 
 	const gpsPoint = extractGpsPoint(workersResponse.exif);
 
 	// 存储到supabase
-	const { data, error: saveDataError } = await supabase.from('image').insert({
+	// 对于 PostGIS GEOGRAPHY 类型，使用 WKT 格式字符串
+	// 如果 Supabase 不支持直接插入 WKT，我们需要使用 RPC 调用
+	const insertData: Record<string, unknown> = {
 		folder: 'default',
 		file_name: file.name,
 		storage_key: workersResponse.storage_key,
 		location: workersResponse.location,
 		taken_at: workersResponse.taken_at,
 		exif: workersResponse.exif,
-		...(gpsPoint ? { gps_location: gpsPoint } : {}),
 		date: getDateFormat(dateString, false),
 		width,
 		height,
 		size: file.size,
 		format: file.type.split('/')[1]
-	}).select();
+	};
+
+	// 如果有 GPS 数据，使用 PostGIS 函数插入
+	if (gpsPoint) {
+		// 使用 RPC 调用 PostGIS 函数，或者直接使用 WKT 格式
+		// Supabase PostGIS 支持 WKT 格式字符串
+		const [longitude, latitude] = gpsPoint.coordinates;
+		insertData.gps_location = `POINT(${longitude} ${latitude})`;
+	}
+
+	const { data, error: saveDataError } = await supabase
+		.from('image')
+		.insert(insertData)
+		.select();
 
 	if (saveDataError) {
 		console.error(saveDataError);
