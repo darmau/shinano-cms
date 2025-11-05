@@ -10,11 +10,12 @@
 	import { flip } from 'svelte/animate';
 	import PhotoIcon from '$assets/icons/photo.svelte';
 	import DeleteIcon from '$assets/icons/delete.svelte';
+	import { browser } from '$app/environment';
+	import { getSupabaseBrowserClient } from '$lib/supabaseClient';
 
 	export let data;
 	export let isSaved = false;
-	let { supabase } = data;
-	$: ({ supabase } = data);
+	const supabase = browser ? getSupabaseBrowserClient() : null;
 
 	const toastStore = getToastStore();
 
@@ -27,6 +28,10 @@
 
   // 保存摄影
 	async function savePhoto() {
+		if (!supabase) {
+			return;
+		}
+
 		let newPhotoId = null;
 
 		// 存储photo信息
@@ -227,6 +232,10 @@
 
 	// 切换发布摄影
 	async function publishPhoto() {
+		if (!supabase) {
+			return;
+		}
+
 		await savePhoto();
 		if (photoContent.is_draft) {
 			photoContent.is_draft = false;
@@ -262,6 +271,10 @@
 
 	// 删除摄影
 	async function deletePhoto() {
+		if (!supabase) {
+			return;
+		}
+
 		if (!isSaved) {
 			toastStore.trigger({
 				message: 'Photo not saved yet.',
