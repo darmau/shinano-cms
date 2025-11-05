@@ -1,3 +1,5 @@
+CREATE EXTENSION IF NOT EXISTS postgis;
+
 CREATE TYPE ROLE AS ENUM('admin', 'reader', 'banned');
 
 CREATE TYPE CONTENT AS ENUM('article', 'photo', 'thought');
@@ -39,6 +41,7 @@ CREATE TABLE
     "format" TEXT,
     "exif" JSON,
     "taken_at" TIMESTAMPTZ,
+    "gps_location" GEOGRAPHY(POINT, 4326),
     "size" INT,
     "width" INT,
     "height" INT,
@@ -49,6 +52,8 @@ CREATE TABLE
 CREATE INDEX ON image ("taken_at");
 
 CREATE INDEX ON image ("date");
+
+CREATE INDEX ON image USING GIST ("gps_location");
 
 CREATE TABLE
   category (
