@@ -7,10 +7,11 @@
 	import { invalidateAll } from '$app/navigation';
 	import EditImage from '$components/image/EditImage.svelte';
 	import Edit from '$assets/icons/edit.svelte';
+	import { browser } from '$app/environment';
+	import { getSupabaseBrowserClient } from '$lib/supabaseClient';
 
 	export let data;
-	let { supabase } = data;
-	$: ({ supabase } = data);
+	const supabase = browser ? getSupabaseBrowserClient() : null;
 
 	const toastStore = getToastStore();
 
@@ -25,6 +26,10 @@
 
 	// 根据id，删除选中图片
 	async function deleteImages() {
+		if (!supabase) {
+			return;
+		}
+
 		try {
 			deletable = true;
 			// 从data.images中提取要删除的图片的storage_keys

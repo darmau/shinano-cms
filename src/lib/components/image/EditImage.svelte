@@ -1,11 +1,12 @@
 <script lang="ts">
 	import { t } from '$lib/functions/i18n';
 	import { getToastStore } from '$lib/toast';
-	import { invalidateAll } from '$app/navigation'
+	import { invalidateAll } from '$app/navigation';
+	import { browser } from '$app/environment';
+	import { getSupabaseBrowserClient } from '$lib/supabaseClient';
 
 	export let data;
-	let { supabase } = data;
-	$: ({ supabase } = data);
+	const supabase = browser ? getSupabaseBrowserClient() : null;
 	export let imageData;
 	export let closeEdit: () => void;
 
@@ -37,6 +38,11 @@
 	// 提交更新数据
 	async function submitForm(event: Event) {
 		event.preventDefault();
+		
+		if (!supabase) {
+			return;
+		}
+
 		const formData = new FormData(event.target as HTMLFormElement);
 		const updatedImage = Object.fromEntries(formData.entries());
 
