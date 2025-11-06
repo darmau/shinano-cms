@@ -44,7 +44,7 @@
 					on:click = {() => menuOpen = false}
 					data-sveltekit-preload-data = "tap"
 					class = {$page.url.pathname === item.href ?
-					'text-cyan-600 bg-gray-50 group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold' : 'text-gray-700 hover:text-cyan-600 hover:bg-gray-50 group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold'}
+					'text-cyan-600 bg-gray-50 group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold' : 'text-gray-700 hover:text-cyan-600 hover:bg-gray-50 group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold cursor-pointer'}
 				>
 					<svelte:component
 						this = {item.icon} classList = {
