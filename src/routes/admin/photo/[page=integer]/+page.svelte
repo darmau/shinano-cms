@@ -7,19 +7,27 @@
 	import ArticleIcon from '$assets/icons/document-text.svelte';
 	import { browser } from '$app/environment';
 	import { getSupabaseBrowserClient } from '$lib/supabaseClient';
+	import type { SupabaseClient } from '@supabase/supabase-js';
+	import type { PhotoListPageData } from '$lib/types/photo';
 
-	export let data;
-	const supabase = browser ? getSupabaseBrowserClient() : null;
+	export let data: PhotoListPageData;
+	const supabase: SupabaseClient | null = browser ? getSupabaseBrowserClient() : null;
 
 	const toastStore = getToastStore();
 
-	let selectedPhotosList = [];
+	let selectedPhotosList: number[] = [];
 	let deletable = true;
 
-	// 删除选中文章
-	async function deletePhotos() {
+	async function deletePhotos(): Promise<void> {
+		if (!supabase || !selectedPhotosList.length) {
+			return;
+		}
+
 		try {
-			await supabase.from('photo').delete().in('id', selectedPhotosList);
+			const { error } = await supabase.from('photo').delete().in('id', selectedPhotosList);
+			if (error) {
+				throw error;
+			}
 			selectedPhotosList = [];
 			deletable = true;
 			await invalidateAll();
@@ -28,20 +36,23 @@
 				hideDismiss: true,
 				background: 'variant-filled-success'
 			});
-		} catch (error) {
-			console.error('删除摄影时出错:', error);
+		} catch (err) {
+			console.error('删除摄影时出错:', err);
+			const message = err instanceof Error ? err.message : '删除摄影失败。';
 			toastStore.trigger({
-				message: error.message,
+				message,
 				hideDismiss: true,
 				background: 'variant-filled-error'
 			});
 		}
 	}
 
-	// 直接删除摄影
-	async function deletePhoto(id) {
-		const { error: deleteError } = await
-			supabase.from('photo').delete().eq('id', id);
+	async function deletePhoto(id: number): Promise<void> {
+		if (!supabase) {
+			return;
+		}
+
+		const { error: deleteError } = await supabase.from('photo').delete().eq('id', id);
 		if (deleteError) {
 			toastStore.trigger({
 				message: deleteError.message,
@@ -58,9 +69,8 @@
 		await invalidateAll();
 	}
 
-	// 选中所有文章并添加到selectedArticleList
-	function switchSelectAll() {
-		const checkboxes = document.querySelectorAll('.photo-checkbox');
+	function switchSelectAll(): void {
+		const checkboxes = document.querySelectorAll<HTMLInputElement>('.photo-checkbox');
 		if (selectedPhotosList.length === data.photos.length) {
 			checkboxes.forEach((checkbox) => {
 				checkbox.checked = false;
@@ -75,6 +85,17 @@
 			deletable = false;
 		}
 	}
+
+	function togglePhotoSelection(photoId: number, isChecked: boolean): void {
+		if (isChecked) {
+			if (!selectedPhotosList.includes(photoId)) {
+				selectedPhotosList = [...selectedPhotosList, photoId];
+			}
+		} else {
+			selectedPhotosList = selectedPhotosList.filter((id) => id !== photoId);
+		}
+		deletable = selectedPhotosList.length === 0;
+	}
 </script>
 
 <svelte:head>
@@ -87,8 +108,8 @@
 	<div class = "flex gap-4 items-center justify-between">
 		<button
 			type = "button"
-			disabled = {deletable}
-			on:click = {deletePhotos}
+			disabled={deletable}
+			on:click={deletePhotos}
 			class =
 				"inline-flex justify-center rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 sm:w-auto disabled:bg-gray-300"
 		>{$t('delete')}
@@ -109,7 +130,7 @@
 					class = "inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8"
 				>
 					<div
-						class = "overflow-hidden shadow ring-1 ring-black ring-opacity-5 sm:rounded-lg"
+						class = "overflow-hidden shadow ring-1 ring-gray-200 sm:rounded-lg"
 					>
 						<table class = "min-w-full divide-y divide-gray-300">
 							<thead class = "bg-zinc-100">
@@ -119,7 +140,7 @@
 									class = "px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
 								>
 									<input
-										on:click = {switchSelectAll}
+										on:click={switchSelectAll}
 										type = "checkbox"
 										class = "h-4 w-4 rounded border-gray-300 text-cyan-600 focus:ring-cyan-600"
 									/>
@@ -173,14 +194,9 @@
 								>
 									<td class = "px-3 py-4 text-sm text-gray-500">
 										<input
-											on:change = {() => {
-											if (selectedPhotosList.includes(photo.id)) {
-												selectedPhotosList = selectedPhotosList.filter((id) => id !== photo.id);
-												deletable = selectedPhotosList.length === 0;
-											} else {
-												selectedPhotosList.push(photo.id);
-												deletable = false;
-											}
+											on:change={(event) => {
+											const input = event.currentTarget as HTMLInputElement;
+											togglePhotoSelection(photo.id, input.checked);
 										}}
 											type = "checkbox"
 											class =
@@ -199,7 +215,7 @@
 													class = "rounded-full w-12 h-12 object-cover"
 													src =
 														{`${data.prefix}/cdn-cgi/image/format=auto,width=240/${photo.cover.storage_key}`}
-													alt = {photo.cover.alt}
+													alt = {photo.cover.alt ?? ''}
 												/>
 											{/if}
 										</div>
@@ -225,7 +241,7 @@
 									</td>
 									<td
 										class = "px-3 py-4 text-sm text-gray-500 lg:table-cell"
-									>{photo.photo_image[0].count}
+									>{photo.imageCount}
 									</td>
 									<td
 										class = "hidden px-3 py-4 text-sm text-gray-500 lg:table-cell"
@@ -238,7 +254,8 @@
 									</td>
 									<td
 										class = "hidden px-3 py-4 text-sm text-gray-500 lg:table-cell"
-									>{photo.category.title}</td>
+									>{photo.category ? photo.category.title : '-'}
+									</td>
 
 									<!--文章状态-->
 									<td
@@ -302,7 +319,7 @@
 											class = "text-cyan-600 hover:text-cyan-900"
 										>{$t('edit')}</a>
 										<button
-											on:click = {() => deletePhoto(photo.id)}
+											on:click={() => deletePhoto(photo.id)}
 											class = "text-red-600 hover:text-red-900"
 										>
 											{$t('delete')}
@@ -334,7 +351,7 @@
 	</div>
 </div>
 
-<Pagination
-	count = {data.count} page = {data.page} limit = {data.limit}
-	path = {data.path}
-/>
+			<Pagination
+				count={data.count} page={data.page} limit={data.limit}
+			path={data.path}
+			/>

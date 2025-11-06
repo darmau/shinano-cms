@@ -9,128 +9,197 @@
 	import { flip } from 'svelte/animate';
 	import { browser } from '$app/environment';
 	import { getSupabaseBrowserClient } from '$lib/supabaseClient';
+	import type { SupabaseClient } from '@supabase/supabase-js';
+	import type { SelectedImage } from '$lib/types/photo';
+	import type {
+		ThoughtContent,
+		ThoughtImage,
+		ThoughtImageInsert,
+		ThoughtPageData
+	} from '$lib/types/thought';
 
-	export let data;
-	const supabase = browser ? getSupabaseBrowserClient() : null;
+	type ImagesModalData = {
+		supabase: SupabaseClient | null;
+		prefix: string;
+	};
+
+	export let data: ThoughtPageData;
+	const supabase: SupabaseClient | null = browser ? getSupabaseBrowserClient() : null;
+
+	let imagesModelData: ImagesModalData = {
+		supabase,
+		prefix: data.prefix
+	};
+
+	$: imagesModelData = {
+		supabase,
+		prefix: data.prefix
+	};
 
 	const toastStore = getToastStore();
 
-	let thoughtContent = {
-		content_json: {},
-		content_html: '',
-		content_text: '',
-		images: [],
-		topic: []
+	let thoughtContent: ThoughtContent = {
+		...data.thoughtContent,
+		images: [...(data.thoughtContent.images ?? [])],
+		topic: [...(data.thoughtContent.topic ?? [])]
 	};
 
-	let contentJSON = {};
-	let contentHTML = '';
-	let contentText = '';
+	let contentJSON: Record<string, unknown> = thoughtContent.content_json ?? {};
+	let contentHTML: string = thoughtContent.content_html;
+	let contentText: string = thoughtContent.content_text;
 
-	// 监控正文变动
-	function handleContentUpdate(event) {
+	function handleContentUpdate(
+		event: CustomEvent<{ json: Record<string, unknown>; html: string; text: string }>
+	): void {
 		const { json, html, text } = event.detail;
 		contentJSON = json;
 		contentHTML = html;
 		contentText = text;
-		thoughtContent.content_json = contentJSON;
-		thoughtContent.content_html = contentHTML;
-		thoughtContent.content_text = contentText;
+		thoughtContent = {
+			...thoughtContent,
+			content_json: contentJSON,
+			content_html: contentHTML,
+			content_text: contentText
+		};
 	}
 
-	// 选择图片
 	let isModalOpen = false;
 
-	function closeModel() {
+	function closeModel(): void {
 		isModalOpen = false;
 	}
 
-	function selectPictures(images) {
-		thoughtContent.images = [...thoughtContent.images, ...images];
-		// 删除超过12张的图片
-		if (thoughtContent.images.length > 12) {
-			thoughtContent.images = thoughtContent.images.slice(0, 12);
-		}
+	function mapSelectedImageToThought(image: SelectedImage, order: number): ThoughtImage {
+		return {
+			order,
+			image: {
+				id: image.id,
+				alt: image.alt,
+				storage_key: image.storage_key,
+				caption: image.caption ?? null,
+				prefix: image.prefix
+			}
+		};
 	}
 
-	// 删除图片
-	function deleteImage(index) {
-		thoughtContent.images = thoughtContent.images.filter((_, i) => i !== index);
+	function selectPictures(images: SelectedImage[]): void {
+		const remainingSlots = Math.max(0, 12 - thoughtContent.images.length);
+		const imagesToAdd = images.slice(0, remainingSlots).map((image, index) =>
+			mapSelectedImageToThought(image, thoughtContent.images.length + index + 1)
+		);
+		thoughtContent = {
+			...thoughtContent,
+			images: [...thoughtContent.images, ...imagesToAdd]
+		};
 	}
 
-	// 更改顺序
-	let draggingIndex = null;
+	function deleteImage(index: number): void {
+		const updatedImages = thoughtContent.images
+			.filter((_, currentIndex) => currentIndex !== index)
+			.map((picture, orderIndex) => ({
+				...picture,
+				order: orderIndex + 1
+			}));
 
-	function dragStart(event, index) {
+		thoughtContent = {
+			...thoughtContent,
+			images: updatedImages
+		};
+	}
+
+	let draggingIndex: number | null = null;
+
+	function dragStart(event: DragEvent, index: number): void {
 		draggingIndex = index;
-		event.dataTransfer.setData('text/plain', index);
+		event.dataTransfer?.setData('text/plain', index.toString());
 	}
 
-	let timeoutId = null;
-	function dragOver(event, index) {
+	function dragOver(event: DragEvent, index: number): void {
 		event.preventDefault();
-		if (draggingIndex !== null && draggingIndex !== index) {
-			const newPictures = [...thoughtContent.images];
-			const [removed] = newPictures.splice(draggingIndex, 1);
-			newPictures.splice(index, 0, removed);
-			thoughtContent.images = newPictures;
-			draggingIndex = index;
+		if (draggingIndex === null || draggingIndex === index) {
+			return;
 		}
+
+		const newPictures = [...thoughtContent.images];
+		const [removed] = newPictures.splice(draggingIndex, 1);
+		if (!removed) {
+			return;
+		}
+		newPictures.splice(index, 0, removed);
+		thoughtContent = {
+			...thoughtContent,
+			images: newPictures.map((picture, orderIndex) => ({
+				...picture,
+				order: orderIndex + 1
+			}))
+		};
+		draggingIndex = index;
 	}
 
-	function dragEnd() {
+	function dragEnd(): void {
 		draggingIndex = null;
 	}
 
-	// 话题
 	let topicInput = '';
 
-	function handleKeydown(event) {
+	function handleKeydown(event: KeyboardEvent): void {
 		if (event.key === 'Enter' && topicInput.trim() !== '') {
-			thoughtContent.topic = [...thoughtContent.topic, topicInput.trim()];
+			thoughtContent = {
+				...thoughtContent,
+				topic: [...thoughtContent.topic, topicInput.trim()]
+			};
 			topicInput = '';
 		}
 	}
 
-	function removeTopic(index) {
-		thoughtContent.topic = thoughtContent.topic.filter((_, i) => i !== index);
+	function removeTopic(index: number): void {
+		thoughtContent = {
+			...thoughtContent,
+			topic: thoughtContent.topic.filter((_, currentIndex) => currentIndex !== index)
+		};
 	}
 
-	// 保存
-	async function postThought() {
-		// 保存thought
-		const { data: saveThoughtData, error: saveThoughtError } = await supabase
-		.from('thought')
-		.insert({
-			content_json: thoughtContent.content_json,
-			content_html: thoughtContent.content_html,
-			content_text: thoughtContent.content_text,
-			topic: thoughtContent.topic
-		})
-		.select();
-
-		if (saveThoughtError) {
-			console.error(saveThoughtError);
-			toastStore.trigger({
-				message: `保存thought失败。${saveThoughtError.message}`,
-				hideDismiss: true,
-				background: 'variant-filled-error'
-			});
-
+	async function postThought(): Promise<void> {
+		if (!supabase) {
 			return;
 		}
 
-		// 保存图片到thought_image
-		const thoughtImages = thoughtContent.images.map((image, index) => ({
-			thought_id: saveThoughtData[0].id,
-			image_id: image.id,
+		const {
+			data: saveThoughtData,
+			error: saveThoughtError
+		} = await supabase
+			.from('thought')
+			.insert({
+				content_json: thoughtContent.content_json,
+				content_html: thoughtContent.content_html,
+				content_text: thoughtContent.content_text,
+				topic: thoughtContent.topic
+			})
+			.select('id')
+			.limit(1);
+
+		const newThoughtId = saveThoughtData?.[0]?.id;
+
+		if (saveThoughtError || !newThoughtId) {
+			console.error(saveThoughtError);
+			toastStore.trigger({
+				message: `保存thought失败。${saveThoughtError?.message ?? ''}`.trim(),
+				hideDismiss: true,
+				background: 'variant-filled-error'
+			});
+			return;
+		}
+
+		const thoughtImages: ThoughtImageInsert[] = thoughtContent.images.map((image, index) => ({
+			thought_id: newThoughtId,
+			image_id: image.image.id,
 			order: index + 1
 		}));
 
 		if (thoughtImages.length) {
 			const { error: saveThoughtImageError } = await supabase
-			.from('thought_image')
-			.insert(thoughtImages);
+				.from('thought_image')
+				.insert(thoughtImages);
 
 			if (saveThoughtImageError) {
 				console.error(saveThoughtImageError);
@@ -153,7 +222,7 @@
 </script>
 
 {#if isModalOpen}
-	<ImagesModel {data} {closeModel} onSelect = {selectPictures} />
+	<ImagesModel data={imagesModelData} {closeModel} onSelect={selectPictures} />
 {/if}
 
 <div class = "max-w-3xl mx-auto">
@@ -199,10 +268,7 @@
 
 	<div class = "space-y-6">
 		<!--内容-->
-		<SimpleEditor
-			on:contentUpdate = {handleContentUpdate}
-			content = {data.thoughtContent.content_json}
-		/>
+		<SimpleEditor on:contentUpdate={handleContentUpdate} content={thoughtContent.content_json} />
 
 		<!--图片-->
 		<div>
@@ -215,7 +281,9 @@
 					<button
 						type = "button"
 						id = "add-image"
-						on:click = {() => isModalOpen = true}
+						on:click={() => {
+						isModalOpen = true;
+					}}
 						class = "border border-gray-200 rounded-md aspect-square flex justify-center items-center bg-white group hover:bg-gray-100"
 					>
 						<AddIcon
@@ -223,22 +291,22 @@
 						/>
 					</button>
 				{/if}
-				{#each thoughtContent.images as image, index (image.id)}
+				{#each thoughtContent.images as picture, index (picture.image.id)}
 					<div
 						class = "relative aspect-square rounded-md overflow-hidden border border-gray-100"
-						draggable = {true}
-						on:dragstart = {(event) => dragStart(event, index)}
-						on:dragover = {(event) => dragOver(event, index)}
-						on:dragend = {dragEnd}
-						animate:flip = {{ duration: 100 }}
+						draggable={true}
+						on:dragstart={(event) => dragStart(event, index)}
+						on:dragover={(event) => dragOver(event, index)}
+						on:dragend={dragEnd}
+						animate:flip={{ duration: 100 }}
 					>
 						<img
-							src = {`${data.prefix}/cdn-cgi/image/format=auto,width=480/${image.storage_key}`}
-							alt = {image.alt}
+							src={`${data.prefix}/cdn-cgi/image/format=auto,width=480/${picture.image.storage_key}`}
+							alt={picture.image.alt}
 							class = "img-bg h-full w-full object-contain"
 						/>
 						<button
-							on:click = {() => deleteImage(index)}
+							on:click={() => deleteImage(index)}
 							class = "absolute top-4 right-4"
 						>
 							<DeleteIcon
@@ -265,7 +333,8 @@
 					>
 						{topic}
 						<button
-							type = "button" on:click = {() => removeTopic(index)}
+							type = "button"
+							on:click={() => removeTopic(index)}
 							class = "group relative -mr-1 h-3.5 w-3.5 rounded-sm hover:bg-gray-500/20"
 						>
 							<span class = "sr-only">Remove</span>
@@ -281,8 +350,8 @@
 					{/each}
 					<input
 						type = "text"
-						bind:value = {topicInput}
-						on:keydown = {handleKeydown}
+						bind:value={topicInput}
+						on:keydown={handleKeydown}
 						class = "peer border-none text-sm focus:ring-0 focus:outline-none bg-transparent"
 					/>
 				</div>
@@ -292,7 +361,7 @@
 		<!--保存-->
 		<button
 			type = "button"
-			on:click = {postThought}
+			on:click={postThought}
 			class =
 				"flex w-full justify-center rounded-md bg-cyan-600 p-3 text-base font-semibold leading-6 text-white shadow-sm hover:bg-cyan-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-600"
 		>

@@ -64,3 +64,25 @@ export type PhotoImageInsert = {
 	image_id: number;
 	order: number;
 };
+
+export type PhotoListItem = {
+	id: number;
+	title: string;
+	slug: string;
+	lang: Language;
+	category: Category | null;
+	is_draft: boolean;
+	is_featured: boolean;
+	is_top: boolean;
+	cover: AlbumImage | null;
+	imageCount: number;
+};
+
+export type PhotoListPageData = {
+	prefix: string;
+	page: number;
+	count: number;
+	limit: number;
+	path: string;
+	photos: PhotoListItem[];
+};

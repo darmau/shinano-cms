@@ -1,8 +1,19 @@
 <script lang="ts">
 	import PhotoEditor from '$components/PhotoEditor.svelte';
 	import { t } from '$lib/functions/i18n';
+	import type { PageData as RoutePageData } from './$types';
+	import type { PageData as PhotoEditorData } from '$lib/types/photo';
 
-	export let data;
+	export let data: RoutePageData;
+
+	const editorData: PhotoEditorData = {
+		prefix: data.prefix,
+		currentLanguage: data.currentLanguage,
+		photoContent: data.photoContent,
+		categories: data.categories,
+		otherVersions: data.otherVersions,
+		allLanguages: data.allLanguages
+	};
 </script>
 
 <div class = "mx-auto p-8 max-w-6xl">
@@ -45,5 +56,5 @@
 		</ol>
 	</nav>
 
-	<PhotoEditor {data} isSaved = {true} />
+	<PhotoEditor data={editorData} isSaved={true} />
 </div>
