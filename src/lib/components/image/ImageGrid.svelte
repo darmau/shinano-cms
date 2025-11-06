@@ -18,6 +18,7 @@
 	let deleteImageList = []; // ids of images to be deleted
 	let selectedImages = `${deleteImageList.length} ${$t('selected')}`;
 	let deletable = true;
+	let isGeneratingAlt = false; // 是否正在生成 alt
 
 	function updateSelectedImages() {
 		selectedImages = `${deleteImageList.length} ${$t('selected')}`;
@@ -68,6 +69,90 @@
 		}
 	}
 
+	// 批量生成 alt
+	async function generateAltForImages() {
+		if (!supabase || deleteImageList.length === 0) {
+			return;
+		}
+
+		isGeneratingAlt = true;
+		const selectedImagesData = data.images.filter(image => deleteImageList.includes(image.id));
+		let successCount = 0;
+		let failCount = 0;
+
+		try {
+			// 为每张图片生成 alt 并更新数据库
+			for (const image of selectedImagesData) {
+				try {
+					// 调用 API 生成 alt
+					const altText = await fetch(`/api/img-alt`, {
+						method: 'POST',
+						headers: {
+							'Content-Type': 'application/json'
+						},
+						body: JSON.stringify({
+							prefix: data.prefix,
+							img_key: image.storage_key
+						})
+					}).then(res => res.text());
+
+					// 更新数据库
+					const { error: updateError } = await supabase
+						.from('image')
+						.update({ alt: altText })
+						.eq('id', image.id);
+
+					if (updateError) {
+						console.error(`更新图片 ${image.id} 的 alt 失败:`, updateError);
+						failCount++;
+					} else {
+						successCount++;
+						// 成功生成后，从选中列表中移除该图片
+						deleteImageList = deleteImageList.filter(id => id !== image.id);
+						// 更新复选框状态
+						const checkbox = document.querySelector(`input[type="checkbox"][id="${image.id}"]`) as HTMLInputElement;
+						if (checkbox) {
+							checkbox.checked = false;
+						}
+					}
+				} catch (error) {
+					console.error(`为图片 ${image.id} 生成 alt 失败:`, error);
+					failCount++;
+				}
+			}
+
+			// 更新选中状态显示
+			updateSelectedImages();
+
+			// 刷新数据
+			await invalidateAll();
+
+			// 显示结果
+			if (successCount > 0) {
+				toastStore.trigger({
+					message: `成功为 ${successCount} 张图片生成 alt${failCount > 0 ? `，${failCount} 张失败` : ''}。`,
+					hideDismiss: true,
+					background: 'variant-filled-success'
+				});
+			} else {
+				toastStore.trigger({
+					message: `生成 alt 失败，共 ${failCount} 张图片。`,
+					hideDismiss: true,
+					background: 'variant-filled-error'
+				});
+			}
+		} catch (error) {
+			console.error('批量生成 alt 时出错:', error);
+			toastStore.trigger({
+				message: '批量生成 alt 失败。',
+				hideDismiss: true,
+				background: 'variant-filled-error'
+			});
+		} finally {
+			isGeneratingAlt = false;
+		}
+	}
+
 	// 打开图片编辑窗口
 	let isEditing = false;
 	let imageData = {};
@@ -106,10 +191,18 @@
 <div class = "flex justify-between items-center my-8">
 	<p>{selectedImages}</p>
 	<button on:click = {switchSelectAllImages}>Select All</button>
-	<div class = "mt-4 flex md:ml-4 md:mt-0">
+	<div class = "mt-4 flex md:ml-4 md:mt-0 gap-2">
+		<button
+			on:click = {generateAltForImages}
+			disabled = {deletable || isGeneratingAlt} type = "button"
+			class =
+				"inline-flex w-full justify-center rounded-md bg-cyan-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-cyan-500 sm:ml-3 sm:w-auto disabled:bg-gray-300"
+		>
+			{isGeneratingAlt ? $t('generating') : $t('generate-alt')}
+		</button>
 		<button
 			on:click = {deleteImages}
-			disabled = {deletable} type = "button"
+			disabled = {deletable || isGeneratingAlt} type = "button"
 			class =
 				"inline-flex w-full justify-center rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 sm:ml-3 sm:w-auto disabled:bg-gray-300"
 		>{$t('delete')}
