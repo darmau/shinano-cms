@@ -7,43 +7,55 @@
 	import ArticleIcon from '$assets/icons/document-text.svelte';
 	import { browser } from '$app/environment';
 	import { getSupabaseBrowserClient } from '$lib/supabaseClient';
+	import type { SupabaseClient } from '@supabase/supabase-js';
+	import type { ArticleListPageData } from '$lib/types/article';
 
-	export let data;
-	const supabase = browser ? getSupabaseBrowserClient() : null;
+	export let data: ArticleListPageData;
+	const supabase: SupabaseClient | null = browser ? getSupabaseBrowserClient() : null;
 
 	const toastStore = getToastStore();
 
-	let selectedArticleList = [];
+	let selectedArticleList: number[] = [];
 	let deletable = true;
 
 	// 删除选中文章
-	async function deleteArticles() {
-		const { error: deleteError} = await
-			supabase.from('article').delete().in('id',
-			selectedArticleList);
+	async function deleteArticles(): Promise<void> {
+		if (!supabase || !selectedArticleList.length) {
+			return;
+		}
 
-		if (deleteError) {
+		try {
+			const { error } = await supabase.from('article').delete().in('id', selectedArticleList);
+			if (error) {
+				throw error;
+			}
+
+			selectedArticleList = [];
+			deletable = true;
+
 			toastStore.trigger({
-				message: deleteError.message,
+				message: `成功删除文章。`,
+				hideDismiss: true,
+				background: 'variant-filled-success'
+			});
+
+			await invalidateAll();
+		} catch (err) {
+			const message = err instanceof Error ? err.message : '删除文章失败。';
+			toastStore.trigger({
+				message,
 				hideDismiss: true,
 				background: 'variant-filled-error'
 			});
 		}
-
-		selectedArticleList = [];
-		deletable = true;
-
-		toastStore.trigger({
-			message: `成功删除文章。`,
-			hideDismiss: true,
-			background: 'variant-filled-success'
-		});
-
-		await invalidateAll();
 	}
 
 	// 直接删除文章
-	async function deleteArticle(id: number) {
+	async function deleteArticle(id: number): Promise<void> {
+		if (!supabase) {
+			return;
+		}
+
 		const { error: deleteError } = await supabase.from('article').delete().eq('id', id);
 		if (deleteError) {
 			toastStore.trigger({
@@ -62,21 +74,31 @@
 	}
 
 	// 选中所有文章并添加到selectedArticleList
-	function switchSelectAll() {
-		const checkboxes = document.querySelectorAll('.article-checkbox');
+	function switchSelectAll(): void {
+		const checkboxes = document.querySelectorAll<HTMLInputElement>('.article-checkbox');
 		if (selectedArticleList.length === data.articles.length) {
 			checkboxes.forEach((checkbox) => {
 				checkbox.checked = false;
 			});
 			selectedArticleList = [];
-			deletable = true;
 		} else {
 			checkboxes.forEach((checkbox) => {
 				checkbox.checked = true;
 			});
 			selectedArticleList = data.articles.map((article) => article.id);
-			deletable = false;
 		}
+		deletable = selectedArticleList.length === 0;
+	}
+
+	function toggleArticleSelection(articleId: number, isChecked: boolean): void {
+		if (isChecked) {
+			if (!selectedArticleList.includes(articleId)) {
+				selectedArticleList = [...selectedArticleList, articleId];
+			}
+		} else {
+			selectedArticleList = selectedArticleList.filter((id) => id !== articleId);
+		}
+		deletable = selectedArticleList.length === 0;
 	}
 </script>
 
@@ -109,9 +131,7 @@
 				<div
 					class = "inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8"
 				>
-					<div
-						class = "overflow-hidden shadow ring-1 ring-black ring-opacity-5 sm:rounded-lg"
-					>
+					<div class = "overflow-hidden shadow ring-1 ring-gray-200 sm:rounded-lg">
 						<table class = "min-w-full divide-y divide-gray-300">
 							<thead class = "bg-zinc-100">
 							<tr>
@@ -163,14 +183,9 @@
 								>
 									<td class = "px-3 py-4 text-sm text-gray-500">
 										<input
-											on:change = {() => {
-											if (selectedArticleList.includes(article.id)) {
-												selectedArticleList = selectedArticleList.filter((id) => id !== article.id);
-												deletable = selectedArticleList.length === 0;
-											} else {
-												selectedArticleList.push(article.id);
-												deletable = false;
-											}
+											on:change = {(event) => {
+											const input = event.currentTarget as HTMLInputElement;
+											toggleArticleSelection(article.id, input.checked);
 										}}
 											type = "checkbox"
 											class =
@@ -211,7 +226,7 @@
 									<td
 										class =
 											"hidden sm:table-cell px-3 py-4 text-sm text-gray-500"
-									>{article.category.title}</td>
+									>{article.category?.title ?? '-'}</td>
 
 									<!--文章状态-->
 									<td
@@ -275,7 +290,7 @@
 
 									<td
 										class =
-											"space-y-4 sm:space-y-2 sm:space-x-4 py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6"
+											"relative flex flex-wrap gap-4 py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6"
 									>
 										<a
 											href = {`/admin/article/edit/${article.id}`}
