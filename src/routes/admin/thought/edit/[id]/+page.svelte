@@ -214,7 +214,7 @@
 						type = "button"
 						id = "add-image"
 						on:click = {() => isModalOpen = true}
-						class = "border rounded-md aspect-square flex justify-center items-center bg-white group hover:bg-gray-100"
+						class = "border border-gray-200 rounded-md aspect-square flex justify-center items-center bg-white group hover:bg-gray-100"
 					>
 						<AddIcon
 							classList = "w-8 h-8 text-gray-700 group-hover:text-gray-400"
