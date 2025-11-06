@@ -117,6 +117,7 @@
 				isChanged = false;
 			} else {
 				newPhotoId = newPhoto[0].id;
+				photoContent.id = newPhotoId;
 				toastStore.trigger({
 					message: 'Photo saved successfully.',
 					background: 'variant-filled-success'
@@ -132,16 +133,18 @@
 			order: photo.order
 		}));
 
-		const { error: savePhotoImageError } = await supabase
-		.from('photo_image')
-		.insert(albumImages);
+		if (albumImages.length) {
+			const { error: savePhotoImageError } = await supabase
+			.from('photo_image')
+			.insert(albumImages);
 
-		if (savePhotoImageError) {
-			console.error('Save image relations failed', savePhotoImageError);
-			toastStore.trigger({
-				message: savePhotoImageError.message,
-				background: 'variant-filled-error'
-			});
+			if (savePhotoImageError) {
+				console.error('Save image relations failed', savePhotoImageError);
+				toastStore.trigger({
+					message: savePhotoImageError.message,
+					background: 'variant-filled-error'
+				});
+			}
 		}
 
 
