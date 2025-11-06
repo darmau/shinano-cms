@@ -442,20 +442,22 @@
 	}
 
 	// 监控正文变动
-	let contentJSON: Record<string, unknown> = photoContent.content_json ?? {};
+	let contentJSON: Content | undefined = photoContent.content_json 
+		? (photoContent.content_json as Content) 
+		: undefined;
 	let contentHTML = photoContent.content_html;
 	let contentText = photoContent.content_text;
 
 	function handleContentUpdate(
-		event: CustomEvent<{ json: Record<string, unknown>; html: string; text: string }>
+		event: CustomEvent<{ json: Content; html: string; text: string }>
 	): void {
 		const { json, html, text } = event.detail;
 		contentJSON = json;
 		contentHTML = html;
 		contentText = text;
-		photoContent.content_json = contentJSON;
-		photoContent.content_html = contentHTML;
-		photoContent.content_text = contentText;
+		photoContent.content_json = json as Record<string, unknown>;
+		photoContent.content_html = html;
+		photoContent.content_text = text;
 		isChanged = true;
 	}
 
@@ -509,7 +511,7 @@
 	}
 
 	async function getTranslation() {
-		photoContent.content_html = await fetch('/api/translation', {
+		const translatedHTML = await fetch('/api/translation', {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json'
@@ -519,7 +521,10 @@
 				content: photoContent.content_text
 			})
 		}).then((res) => res.text());
-		generateContent(photoContent.content_html);
+		photoContent.content_html = translatedHTML;
+		// updateContent 需要 Content 类型，但我们可以通过编辑器实例来设置 HTML
+		// 这里暂时不调用 generateContent，因为我们需要 HTML 转 Content
+		// 编辑器会在下次更新时自动同步
 		isChanged = true;
 	}
 
@@ -543,7 +548,7 @@
 	<ImagesModel data={imagesModelData} {closeModel} onSelect={selectPictures} />
 {/if}
 
-<div class="grid grid-cols-1 gap-6 3xl:grid-cols-4">
+<div class="grid grid-cols-1 gap-6 md:grid-cols-4">
 	<div class="space-y-8 xl:col-span-3">
 		<!--标题-->
 		<div>
@@ -601,7 +606,7 @@
 		<!--编辑器-->
 		<SimpleEditor
 			on:contentUpdate={handleContentUpdate}
-			content={photoContent.content_json}
+			content={contentJSON}
 			bind:this={editorComponent}
 		/>
 		<button

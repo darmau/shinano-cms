@@ -49,6 +49,7 @@
 	import ImagesModel from '$components/editor/ImagesModel.svelte';
 	import Image from '$components/editor/Image';
 	import Gapcursor from '@tiptap/extension-gapcursor';
+	import type { MenuItem, SelectedImage } from '$lib/types/editor';
 
 	const dispatch = createEventDispatcher();
 	export let data;
@@ -134,23 +135,9 @@
 		return codeToName[languageCode.toLowerCase()] || languageCode.charAt(0).toUpperCase() + languageCode.slice(1);
 	}
 
-	type SelectedImage = {
-		id: number;
-		storage_key: string;
-		prefix: string;
-		alt?: string | null;
-		caption?: string | null;
-	};
-
 	// 将 menuItems 和 tableItems 移到响应式语句外，避免每次 editor 更新都重新创建
-	type MenuItem = {
-		name: string;
-		command: () => void;
-		content: typeof BoldIcon;
-		active: () => boolean;
-	};
 
-	const createMenuItems = (editorInstance: Editor): MenuItem[] => [
+	const createMenuItems = (editorInstance: Editor): Array<MenuItem & { content: typeof BoldIcon }> => [
 		{
 			name: 'image',
 			command: () => openImageModal(),
