@@ -522,9 +522,6 @@
 			})
 		}).then((res) => res.text());
 		photoContent.content_html = translatedHTML;
-		// updateContent 需要 Content 类型，但我们可以通过编辑器实例来设置 HTML
-		// 这里暂时不调用 generateContent，因为我们需要 HTML 转 Content
-		// 编辑器会在下次更新时自动同步
 		isChanged = true;
 	}
 
@@ -565,7 +562,7 @@
 						isChanged = true;
 					}}
 					required
-					class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-cyan-600 sm:text-sm sm:leading-6"
+					class="block w-full rounded-md border-0 p-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-cyan-600 sm:text-sm sm:leading-6"
 					placeholder="必须填写标题"
 				/>
 			</div>
@@ -585,12 +582,12 @@
 						checkSlug(photoContent.slug);
 					}}
 					required
-					class="block font-mono w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-cyan-600 sm:text-sm sm:leading-6"
+					class="block font-mono w-full rounded-md border-0 p-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-cyan-600 sm:text-sm sm:leading-6"
 				/>
 				<button
 					type="button"
 					on:click={generateSlug}
-					class="w-fit break-keep rounded bg-cyan-50 px-3 py-1 text-sm font-semibold text-cyan-600 shadow-sm hover:bg-cyan-100"
+					class="w-fit break-keep rounded bg-cyan-50 px-3 py-1 text-sm font-semibold text-cyan-600 shadow-sm hover:bg-cyan-100 cursor-pointer"
 					>{$t('generate')}</button
 				>
 			</div>
@@ -714,7 +711,7 @@
 				on:change={() => {
 					isChanged = true;
 				}}
-				class="mt-2 w-full rounded-md border-0 py-1.5 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-cyan-600 sm:text-sm sm:leading-6"
+				class="mt-2 w-full rounded-md border-0 p-1.5 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-cyan-600 sm:text-sm sm:leading-6"
 			/>
 		</div>
 
@@ -723,7 +720,7 @@
 			<h2 class="text-sm font-medium leading-6 text-gray-900">{$t('language')}</h2>
 			<ul class="mt-2 flex gap-2">
 				<li
-					class="inline-flex items-center gap-x-1.5 rounded-md bg-green-100 px-2 py-1 text-xs font-medium text-green-700"
+					class="inline-flex items-center gap-x-1.5 rounded-md bg-green-100 p-2 text-xs font-medium text-green-700"
 				>
 					<svg class="h-1.5 w-1.5 fill-green-500" viewBox="0 0 6 6" aria-hidden="true">
 						<circle cx="3" cy="3" r="3" />
@@ -773,7 +770,7 @@
 				}}
 				id="category"
 				name="category"
-				class="mt-2 block w-full rounded-md border-0 py-1.5 pl-3 pr-10 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-cyan-600 sm:text-sm sm:leading-6"
+				class="mt-2 block w-full rounded-md border-0 p-1.5 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-cyan-600 sm:text-sm sm:leading-6"
 			>
 				{#each data.categories as category}
 					<option value={category.id}>{category.title}</option>
@@ -790,7 +787,7 @@
 				<button
 					type="button"
 					on:click={generateTags}
-					class="rounded bg-cyan-600 px-2 py-1 text-sm font-semibold text-white shadow-sm hover:bg-cyan-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-600"
+					class="rounded bg-cyan-600 px-2 py-1 text-sm font-semibold text-white shadow-sm hover:bg-cyan-500 cursor-pointer"
 					>{$t('generate')}</button
 				>
 			</div>
@@ -838,7 +835,7 @@
 				<button
 					type="button"
 					on:click={generateAbstract}
-					class="rounded bg-cyan-600 px-2 py-1 text-sm font-semibold text-white shadow-sm hover:bg-cyan-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-600"
+					class="rounded bg-cyan-600 px-2 py-1 text-sm font-semibold text-white shadow-sm hover:bg-cyan-500 cursor-pointer"
 					>{$t('generate')}</button
 				>
 			</div>
@@ -852,7 +849,7 @@
 						isChanged = true;
 					}}
 					placeholder="使用AI为文章生成摘要"
-					class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-cyan-600 sm:text-sm sm:leading-6"
+					class="block w-full rounded-md border-0 p-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-cyan-600 sm:text-sm sm:leading-6"
 				></textarea>
 			</div>
 		</div>
@@ -893,18 +890,18 @@
 		<div class="flex justify-end gap-4">
 			<button
 				on:click={deletePhoto}
-				class="rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600 mr-auto"
+				class="rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 cursor-pointer mr-auto"
 				>{$t('delete')}</button
 			>
 			<button
 				on:click={savePhoto}
 				disabled={!isChanged}
-				class="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed"
+				class="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 cursor-pointer hover:bg-gray-50 disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed"
 				>{$t('save')}</button
 			>
 			<button
 				on:click={publishPhoto}
-				class="rounded-md bg-cyan-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-cyan-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-600"
+				class="rounded-md bg-cyan-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-cyan-500 cursor-pointer"
 				>{photoContent.is_draft ? $t('publish') : $t('unpublish')}</button
 			>
 		</div>
