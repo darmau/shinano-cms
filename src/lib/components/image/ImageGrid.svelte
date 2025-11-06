@@ -123,7 +123,7 @@
 	{#each data.images as image (image.id)}
 		<div
 			data-image-id = {image.id}
-			class = "bg-white border rounded-xl overflow-clip hover:shadow-md transition-all duration-150 space-y-2"
+			class = "bg-white border border-gray-200 rounded-xl overflow-clip hover:shadow-md transition-all duration-150 space-y-2"
 		>
 			<div class = "object-contain aspect-square relative">
 				<div class = "absolute left-4 top-4 flex h-6 items-center">

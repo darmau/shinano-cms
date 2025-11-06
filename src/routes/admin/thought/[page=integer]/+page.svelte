@@ -8,41 +8,50 @@
 	import getDateFormat from '$lib/functions/dateFormat';
 	import { browser } from '$app/environment';
 	import { getSupabaseBrowserClient } from '$lib/supabaseClient';
+	import type { SupabaseClient } from '@supabase/supabase-js';
+	import type { ThoughtListPageData } from '$lib/types/thought';
 
-	export let data;
-	const supabase = browser ? getSupabaseBrowserClient() : null;
+	export let data: ThoughtListPageData;
+	const supabase: SupabaseClient | null = browser ? getSupabaseBrowserClient() : null;
 
 	const toastStore = getToastStore();
 
-	let selectedThoughtList = [];
+	let selectedThoughtList: number[] = [];
 	let deletable = true;
 
-	// 删除选中想法
-	async function deleteThoughts() {
-		try {
-			await supabase.from('thought').delete().in('id', selectedThoughtList);
-			selectedThoughtList = [];
-			deletable = true;
-			await invalidateAll();
-			toastStore.trigger({
-				message: `成功删除想法。`,
-				hideDismiss: true,
-				background: 'variant-filled-success'
-			});
-		} catch (error) {
+	async function deleteThoughts(): Promise<void> {
+		if (!supabase || !selectedThoughtList.length) {
+			return;
+		}
+
+		const { error } = await supabase.from('thought').delete().in('id', selectedThoughtList);
+
+		if (error) {
 			console.error('删除想法时出错:', error);
 			toastStore.trigger({
 				message: error.message,
 				hideDismiss: true,
 				background: 'variant-filled-error'
 			});
+			return;
 		}
+
+		selectedThoughtList = [];
+		deletable = true;
+		await invalidateAll();
+		toastStore.trigger({
+			message: `成功删除想法。`,
+			hideDismiss: true,
+			background: 'variant-filled-success'
+		});
 	}
 
-	// 直接删除想法
-	async function deleteThought(id: number) {
-		const { error: deleteError } = await
-			supabase.from('thought').delete().eq('id',	id);
+	async function deleteThought(id: number): Promise<void> {
+		if (!supabase) {
+			return;
+		}
+
+		const { error: deleteError } = await supabase.from('thought').delete().eq('id', id);
 		if (deleteError) {
 			toastStore.trigger({
 				message: deleteError.message,
@@ -59,9 +68,8 @@
 		await invalidateAll();
 	}
 
-	// 选中所有想法并添加到selectedThoughtList
-	function switchSelectAll() {
-		const checkboxes = document.querySelectorAll('.thought-checkbox');
+	function switchSelectAll(): void {
+		const checkboxes = document.querySelectorAll<HTMLInputElement>('.thought-checkbox');
 		if (selectedThoughtList.length === data.thoughts.length) {
 			checkboxes.forEach((checkbox) => {
 				checkbox.checked = false;
@@ -76,6 +84,17 @@
 			deletable = false;
 		}
 	}
+
+	function toggleThoughtSelection(thoughtId: number, isChecked: boolean): void {
+		if (isChecked) {
+			if (!selectedThoughtList.includes(thoughtId)) {
+				selectedThoughtList = [...selectedThoughtList, thoughtId];
+			}
+		} else {
+			selectedThoughtList = selectedThoughtList.filter((id) => id !== thoughtId);
+		}
+		deletable = selectedThoughtList.length === 0;
+	}
 </script>
 
 <svelte:head>
@@ -88,8 +107,8 @@
 	<div class = "flex gap-4 items-center justify-between">
 		<button
 			type = "button"
-			disabled = {deletable}
-			on:click = {deleteThoughts}
+			disabled={deletable}
+			on:click={deleteThoughts}
 			class =
 				"inline-flex justify-center rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 sm:w-auto disabled:bg-gray-300"
 		>{$t('delete')}
@@ -110,7 +129,7 @@
 					class = "inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8"
 				>
 					<div
-						class = "overflow-hidden shadow ring-1 ring-black ring-opacity-5 sm:rounded-lg"
+						class = "overflow-hidden shadow ring-1 ring-gray-200 sm:rounded-lg"
 					>
 						<table class = "min-w-full divide-y divide-gray-300">
 							<thead class = "bg-zinc-100">
@@ -120,7 +139,7 @@
 									class = "px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
 								>
 									<input
-										on:click = {switchSelectAll}
+										on:click={switchSelectAll}
 										type = "checkbox"
 										class = "h-4 w-4 rounded border-gray-300 text-cyan-600 focus:ring-cyan-600"
 									/>
@@ -153,14 +172,9 @@
 								>
 									<td class = "px-3 py-4 text-sm text-gray-500">
 										<input
-											on:change = {() => {
-											if (selectedThoughtList.includes(thought.id)) {
-												selectedThoughtList = selectedThoughtList.filter((id)=> id !== thought.id);
-												deletable = selectedThoughtList.length === 0;
-											} else {
-												selectedThoughtList.push(thought.id);
-												deletable = false;
-											}
+											on:change={(event) => {
+											const input = event.currentTarget as HTMLInputElement;
+											toggleThoughtSelection(thought.id, input.checked);
 										}}
 											type = "checkbox"
 											class =
@@ -185,11 +199,11 @@
 											"relative whitespace-nowrap py-4 pl-3 pr-4 space-x-4 text-right text-sm font-medium sm:pr-6"
 									>
 										<a
-											href = {`/admin/thought/edit/${thought.id}`}
+											href={`/admin/thought/edit/${thought.id}`}
 											class = "text-cyan-600 hover:text-cyan-900"
 										>{$t('edit')}</a>
 										<button
-											on:click = {() => deleteThought(thought.id)}
+											on:click={() => deleteThought(thought.id)}
 											class = "text-red-600 hover:text-red-900"
 										>
 											{$t('delete')}
@@ -220,7 +234,7 @@
 	</div>
 </div>
 
-<Pagination
-	count = {data.count} page = {data.page} limit = {data.limit}
-	path = {data.path}
-/>
+	<Pagination
+		count={data.count} page={data.page} limit={data.limit}
+	path={data.path}
+	/>

@@ -25,9 +25,10 @@
 	import { createEventDispatcher } from 'svelte';
 	import Gapcursor from '@tiptap/extension-gapcursor'
 	import Heading, { type Level } from '@tiptap/extension-heading';
+	import type { MenuItem } from '$lib/types/editor';
 
 	const dispatch = createEventDispatcher();
-	export let content;
+	export let content: Content | undefined = undefined;
 
 	let editor: Readable<Editor>;
 
@@ -138,7 +139,10 @@
 
 	$: isActive = (name: string, attrs = {}) => $editor.isActive(name, attrs);
 
-	$: menuItems = [
+	let menuItems: Array<MenuItem & { content: typeof H2Icon }> = [];
+	
+	$: if ($editor) {
+		menuItems = [
 		{
 			name: 'heading-2',
 			command: toggleHeading(2),
@@ -217,7 +221,8 @@
 			content: HardBreakIcon,
 			active: () => isActive('hardBreak')
 		}
-	];
+		];
+	}
 
 	export function updateContent(content: Content) {
 		$editor.chain().focus().setContent(content).run();
