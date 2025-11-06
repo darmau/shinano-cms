@@ -607,7 +607,7 @@
 	{/if}
 	
 	<!-- 调试模块 -->
-	<div class="mt-4 border-t border-gray-300 pt-4">
+	<div class="mt-4">
 		<button
 			type="button"
 			on:click={() => showDebug = !showDebug}
