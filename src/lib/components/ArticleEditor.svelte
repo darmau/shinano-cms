@@ -72,6 +72,9 @@
 				});
 				isChanged = false;
 			} else {
+				if (data?.length) {
+					articleContent.id = data[0].id;
+				}
 				toastStore.trigger({
 					message: 'Article saved successfully.',
 					background: 'variant-filled-success'

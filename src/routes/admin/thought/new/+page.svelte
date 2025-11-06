@@ -127,18 +127,20 @@
 			order: index + 1
 		}));
 
-		const { error: saveThoughtImageError } = await supabase
-		.from('thought_image')
-		.insert(thoughtImages);
+		if (thoughtImages.length) {
+			const { error: saveThoughtImageError } = await supabase
+			.from('thought_image')
+			.insert(thoughtImages);
 
-		if (saveThoughtImageError) {
-			console.error(saveThoughtImageError);
-			toastStore.trigger({
-				message: `保存thought_image失败。${saveThoughtImageError.message}`,
-				hideDismiss: true,
-				background: 'variant-filled-error'
-			});
-			return;
+			if (saveThoughtImageError) {
+				console.error(saveThoughtImageError);
+				toastStore.trigger({
+					message: `保存thought_image失败。${saveThoughtImageError.message}`,
+					hideDismiss: true,
+					background: 'variant-filled-error'
+				});
+				return;
+			}
 		}
 
 		toastStore.trigger({
