@@ -3,19 +3,14 @@
 	import { invalidate } from '$app/navigation';
 	import { onMount } from 'svelte';
 	import '../app.css';
-	import { initializeStores, Toast } from '$lib/toast';
-	import { createBrowserClient } from '@supabase/ssr';
-	import { PUBLIC_SUPABASE_ANON_KEY, PUBLIC_SUPABASE_URL } from '$env/static/public';
+        import { initializeStores, Toast } from '$lib/toast';
+        import { getSupabaseBrowserClient } from '$lib/supabaseClient';
 
 	initializeStores();
 
 	export let data;
-	let { session, user, message_count, comment_count } = data;
-	let supabase;
-
-	if (browser) {
-		supabase = createBrowserClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY);
-	}
+        let { session, user, message_count, comment_count } = data;
+        const supabase = browser ? getSupabaseBrowserClient() : null;
 
 	onMount(() => {
 		if (!supabase) return;

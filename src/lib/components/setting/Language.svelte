@@ -11,13 +11,23 @@
 	const toastStore = getToastStore();
 
 	export let data;
-	const supabase = browser ? getSupabaseBrowserClient() : null;
+        const supabase = browser ? getSupabaseBrowserClient() : null;
+        const getSupabaseClient = () => {
+                if (!supabase) {
+                        throw new Error('Supabase browser client requested outside the browser context.');
+                }
+
+                return supabase;
+        };
 	$: languages = [];
 
 	// 获取所有语言
 	const getLanguages = async () => {
-		const { data, error: fetchError } = await
-			supabase.from('language').select('lang, locale, is_default').order('is_default', { ascending: false });
+                const client = getSupabaseClient();
+                const { data, error: fetchError } = await client
+                        .from('language')
+                        .select('lang, locale, is_default')
+                        .order('is_default', { ascending: false });
 		if (fetchError) {
 			console.error(fetchError);
 			toastStore.trigger({
@@ -34,7 +44,8 @@
 
 	// 更换默认语言
 	const setDefaultLanguage = async (lang: string) => {
-		await supabase.from('language').update({ is_default: true }).eq('lang', lang);
+                const client = getSupabaseClient();
+                await client.from('language').update({ is_default: true }).eq('lang', lang);
 		await getLanguages();
 		toastStore.trigger({
 			message: $t('language-set-default'),
@@ -45,8 +56,8 @@
 
 	// 添加语言
 	const addLanguage = async (lang, locale) => {
-		const { error: dataError } = await
-			supabase.from('language').insert({ lang, locale }).select();
+                const client = getSupabaseClient();
+                const { error: dataError } = await client.from('language').insert({ lang, locale }).select();
 		if (dataError) {
 			console.error(dataError);
 			toastStore.trigger({
@@ -65,9 +76,11 @@
 
 	// 删除语言
 	const deleteLanguage = async (lang: string) => {
-		const { error: deleteError } = await
-			supabase.from('language').delete().eq('lang',
-				lang);
+                const client = getSupabaseClient();
+                const { error: deleteError } = await client
+                        .from('language')
+                        .delete()
+                        .eq('lang', lang);
 		if (deleteError) {
 			console.error(deleteError);
 			toastStore.trigger({

@@ -6,9 +6,8 @@
 
 	const toastStore = getToastStore();
 
-	export let data;
-	let { supabase } = data;
-	$: ({ supabase } = data);
+        export let data;
+        void data;
 
 	const apis = new ThirdPartyAPIs();
 	let API = apis.emptyObject();

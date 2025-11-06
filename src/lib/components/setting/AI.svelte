@@ -6,9 +6,8 @@
 
 	const toastStore = getToastStore();
 
-	export let data;
-	let { supabase } = data;
-	$: ({ supabase } = data);
+        export let data;
+        void data;
 
 	const ai = new AI();
 	let AIObj = ai.emptyObject();
