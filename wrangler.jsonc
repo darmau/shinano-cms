@@ -1,0 +1,40 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "shinano-cms-worker",
+  "main": "src/routes/api/index.ts",
+  "compatibility_date": "2025-11-07",
+  "workers_dev": false,
+  "assets": {
+    "binding": "ASSETS",
+    "directory": ".svelte-kit/cloudflare/assets"
+  },
+  "r2_buckets": [
+    {
+      "binding": "STORAGE",
+      "bucket_name": "darmau-co",
+      "preview_bucket_name": "darmau-co-test"
+    }
+  ],
+  "ai": {
+    "binding": "AI",
+  },
+  "env": {
+    "development": {
+      "name": "shinano-cms-worker-development",
+      "assets": {
+        "binding": "ASSETS",
+        "directory": ".svelte-kit/cloudflare/assets"
+      },
+      "r2_buckets": [
+        {
+          "binding": "STORAGE",
+          "bucket_name": "darmau-co-test",
+          "preview_bucket_name": "darmau-co-test"
+        }
+      ],
+      "ai": {
+        "binding": "AI",
+      }
+    }
+  }
+}

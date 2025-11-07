@@ -7,6 +7,7 @@
 	},
 	"scripts": {
 		"dev": "vite dev",
+		"dev:cf": "wrangler dev --remote",
 		"build": "vite build",
 		"preview": "vite preview",
 		"test": "npm run test:integration && npm run test:unit",
