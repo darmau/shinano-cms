@@ -295,7 +295,7 @@
 			},
 			body: JSON.stringify({
 				lang: data.currentLanguage.locale,
-				content: articleContent.content_text
+				content: articleContent.content_html
 			})
 		}).then(res => res.text());
 		generateContent(articleContent.content_html);
