@@ -377,6 +377,12 @@ CREATE TABLE
     "user_count" INT DEFAULT 0
   );
 
+CREATE TABLE
+  config (
+    "key" TEXT PRIMARY KEY,
+    "value" TEXT
+  );
+
 -- 函数和触发器
 CREATE
 OR REPLACE FUNCTION manage_default_language () RETURNS TRIGGER LANGUAGE plpgsql SECURITY INVOKER
@@ -601,6 +607,8 @@ ALTER TABLE photo ENABLE ROW LEVEL SECURITY;
 ALTER TABLE thought ENABLE ROW LEVEL SECURITY;
 
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE config ENABLE ROW LEVEL SECURITY;
 
 ALTER TABLE thought_image ENABLE ROW LEVEL SECURITY;
 
@@ -899,6 +907,10 @@ select
 create policy "Get Stats for Authenticated" on public.stats for
 select
   to authenticated using (true);
+
+create policy "Manage Config" on public.config for all to authenticated using (is_admin ())
+with
+  check (is_admin ());
 
 -- 定时任务
 create extension pg_cron
