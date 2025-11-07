@@ -1,47 +1,50 @@
 import { error, type RequestHandler } from '@sveltejs/kit';
-import { WORKERS_TOKEN, WORKERS_URL } from '$env/static/private';
+import type { ConfigRow } from '$lib/types/config';
+import OpenAI from 'openai';
 
-export const POST: RequestHandler = async ({ request }) => {
+export const POST: RequestHandler = async ({ request, locals }) => {
 	const { title } = await request.json();
-	const promptObj = await fetch(`${WORKERS_URL}/kv`, {
-		method: 'POST',
-		headers: {
-			'Authorization': `Bearer ${WORKERS_TOKEN}`,
-			'Content-Type': 'application/json'
-		},
-		body: JSON.stringify({
-			keys: [
-				"prompt_SLUG"
-			]
-		})
-	}).then(res => res.json())
-	.catch(err => {
-		console.error(err);
-		error(502, 'Error fetching prompt');
-	});
+  
+	const supabase = locals.supabase;
+	const { data, error: supabaseError } = await supabase
+		.from('config')
+		.select('key, value')
+		.in('key', ['config_OPENAI', 'prompt_SLUG']);
 
-	const prompt = promptObj[0].prompt_SLUG;
+	if (supabaseError) {
+		console.error(supabaseError);
+		error(500, 'Failed to fetch configuration');
+	}
 
-	const generatedSlug = await fetch(`${WORKERS_URL}/openai`, {
-		method: 'POST',
-		headers: {
-			'Authorization': `Bearer ${WORKERS_TOKEN}`,
-			'Content-Type': 'application/json'
-		},
-		body: JSON.stringify({
-			model: 'gpt-3.5-turbo',
-			messages: [
-				{ role: 'system', content: prompt },
-				{ role: 'user', content: title },
-			]
-		})
-	}).then(res => res.text())
-	.catch(err => {
+	const rows = (data ?? []) as ConfigRow[];
+	const configMap = new Map(rows.map(({ key, value }) => [key, value ?? '']));
+	const openaiApiKey = configMap.get('config_OPENAI');
+	const prompt = configMap.get('prompt_SLUG');
+
+	if (!openaiApiKey) {
+		error(500, 'OpenAI API key not configured');
+	}
+
+	if (!prompt) {
+		error(500, 'Slug prompt not configured');
+	}
+
+	const openai = new OpenAI({ apiKey: openaiApiKey });
+
+	let slug = '';
+	try {
+		const response = await openai.responses.create({
+			model: 'gpt-5-nano',
+			instructions: prompt,
+			input: title,
+		});
+		slug = response.output_text?.trim() ?? '';
+	} catch (err) {
 		console.error(err);
 		error(502, 'Error generating slug');
-	});
+	}
 
-	return new Response(generatedSlug, {
+	return new Response(slug, {
 		headers: { 'Content-Type': 'text/plain' }
 	});
 }

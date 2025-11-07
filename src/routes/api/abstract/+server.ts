@@ -49,10 +49,6 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		error(502, 'Error generating abstract');
 	}
 
-	if (!generatedAbstract) {
-		error(502, 'Empty response from OpenAI');
-	}
-
 	return new Response(generatedAbstract, {
 		headers: { 'Content-Type': 'text/plain' }
 	});
