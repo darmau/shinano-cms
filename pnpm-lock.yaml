@@ -76,7 +76,7 @@ importers:
         version: 3.6.6
       openai:
         specifier: ^6.8.1
-        version: 6.8.1(ws@8.18.3)
+        version: 6.8.1(ws@8.18.3)(zod@4.1.12)
       tiptap-unique-id:
         specifier: ^3.4.1
         version: 3.4.1(@tiptap/core@3.6.6(@tiptap/pm@3.6.6))(@tiptap/pm@3.6.6)
@@ -2576,6 +2576,9 @@ packages:
   zod@3.22.3:
     resolution: {integrity: sha512-EjIevzuJRiRPbVH4mGc8nApb/lVLKVpmUhAaR5R5doKGfAnGJ6Gr3CViAVjP+4FWSxCsybeWQdcgCtbX+7oZug==}
 
+  zod@4.1.12:
+    resolution: {integrity: sha512-JInaHOamG8pt5+Ey8kGmdcAcg3OL9reK8ltczgHTAwNhMys/6ThXHityHxVV2p3fkw/c+MAvBHFVYHFZDmjMCQ==}
+
 snapshots:
 
   '@alloc/quick-lru@5.2.0': {}
@@ -4166,9 +4169,10 @@ snapshots:
 
   ohash@2.0.11: {}
 
-  openai@6.8.1(ws@8.18.3):
+  openai@6.8.1(ws@8.18.3)(zod@4.1.12):
     optionalDependencies:
       ws: 8.18.3
+      zod: 4.1.12
 
   optionator@0.9.4:
     dependencies:
@@ -4789,3 +4793,6 @@ snapshots:
   zimmerframe@1.1.4: {}
 
   zod@3.22.3: {}
+
+  zod@4.1.12:
+    optional: true
