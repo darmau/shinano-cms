@@ -601,7 +601,7 @@ import type { EditorHandle, ImagesModelData } from '$lib/types/editor';
 		<button
 			type="button"
 			on:click={getTranslation}
-			class="rounded-md bg-cyan-50 px-3 py-2 text-sm font-semibold text-cyan-600 shadow-sm hover:bg-cyan-100"
+			class="rounded-md bg-cyan-50 px-3 py-2 text-sm font-semibold text-cyan-600 shadow-sm hover:bg-cyan-100 cursor-pointer"
 			>{$t('translate')}</button
 		>
 
