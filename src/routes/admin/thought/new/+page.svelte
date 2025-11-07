@@ -10,6 +10,7 @@
 	import { browser } from '$app/environment';
 	import { getSupabaseBrowserClient } from '$lib/supabaseClient';
 	import type { SupabaseClient } from '@supabase/supabase-js';
+	import type { ImagesModelData } from '$lib/types/editor';
 	import type { SelectedImage } from '$lib/types/photo';
 	import type {
 		ThoughtContent,
@@ -18,15 +19,10 @@
 		ThoughtPageData
 	} from '$lib/types/thought';
 
-	type ImagesModalData = {
-		supabase: SupabaseClient | null;
-		prefix: string;
-	};
-
 	export let data: ThoughtPageData;
 	const supabase: SupabaseClient | null = browser ? getSupabaseBrowserClient() : null;
 
-	let imagesModelData: ImagesModalData = {
+	let imagesModelData: ImagesModelData = {
 		supabase,
 		prefix: data.prefix
 	};

@@ -1,6 +1,1 @@
-export type SelectedImage = {
-	id: string;
-	alt: string;
-	storage_key: string;
-};
-
+export type { SelectedImage } from './editor';

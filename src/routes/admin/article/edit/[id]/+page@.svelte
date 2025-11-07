@@ -1,8 +1,9 @@
 <script lang="ts">
 	import ArticleEditor from '$components/ArticleEditor.svelte';
 	import { t } from '$lib/functions/i18n';
+	import type { ArticleEditorPageData } from '$lib/types/article';
 
-	export let data;
+	export let data: ArticleEditorPageData;
 </script>
 
 <div class="mx-auto p-8 max-w-6xl">

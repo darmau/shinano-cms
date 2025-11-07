@@ -6,7 +6,7 @@
 	import { beforeNavigate, goto } from '$app/navigation';
 	import getDateFormat from '$lib/functions/dateFormat';
 	import { onMount } from 'svelte';
-	import ImagesModel from '$components/editor/ImagesModel.svelte';
+import ImagesModel from '$components/editor/ImagesModel.svelte';
 	import { flip } from 'svelte/animate';
 	import PhotoIcon from '$assets/icons/photo.svelte';
 	import DeleteIcon from '$assets/icons/delete.svelte';
@@ -14,28 +14,20 @@
 	import { getSupabaseBrowserClient } from '$lib/supabaseClient';
 	import type { SupabaseClient } from '@supabase/supabase-js';
 	import type { Content } from '@tiptap/core';
-	import type {
-		AlbumPicture,
-		SelectedImage,
-		PhotoContent,
-		PageData,
-		PhotoImageInsert,
-		Language
-	} from '$lib/types/photo';
-
-	type EditorHandle = {
-		updateContent: (content: Content) => void;
-	};
-
-	type ImagesModalData = {
-		supabase: SupabaseClient | null;
-		prefix: string;
-	};
+import type {
+	AlbumPicture,
+	SelectedImage,
+	PhotoContent,
+	PageData,
+	PhotoImageInsert,
+	Language
+} from '$lib/types/photo';
+import type { EditorHandle, ImagesModelData } from '$lib/types/editor';
 
 	export let data: PageData;
 	export let isSaved: boolean = false;
 	const supabase: SupabaseClient | null = browser ? getSupabaseBrowserClient() : null;
-	let imagesModelData: ImagesModalData = {
+	let imagesModelData: ImagesModelData = {
 		supabase,
 		prefix: data.prefix
 	};

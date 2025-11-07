@@ -46,13 +46,13 @@
 	import { Typography } from '@tiptap/extension-typography';
 	import UniqueId from 'tiptap-unique-id';
 	import Heading from '@tiptap/extension-heading';
-	import ImagesModel from '$components/editor/ImagesModel.svelte';
-	import Image from '$components/editor/Image';
-	import Gapcursor from '@tiptap/extension-gapcursor';
-	import type { MenuItem, SelectedImage } from '$lib/types/editor';
+import ImagesModel from '$components/editor/ImagesModel.svelte';
+import Image from '$components/editor/Image';
+import Gapcursor from '@tiptap/extension-gapcursor';
+import type { ImagesModelData, MenuItem, SelectedImage } from '$lib/types/editor';
 
 	const dispatch = createEventDispatcher();
-	export let data;
+	export let data: ImagesModelData;
 	export let content: Content | undefined = undefined;
 
 	let editor: Readable<Editor> | undefined;

@@ -1,4 +1,6 @@
 import type { ComponentType } from 'svelte';
+import type { Content } from '@tiptap/core';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
 /**
  * 编辑器菜单项类型
@@ -19,7 +21,15 @@ export type SelectedImage = {
 	id: number;
 	storage_key: string;
 	prefix: string;
-	alt?: string | null;
+	alt: string | null;
 	caption?: string | null;
 };
 
+export type ImagesModelData = {
+	supabase: SupabaseClient | null;
+	prefix: string;
+};
+
+export type EditorHandle = {
+	updateContent: (content: Content) => void;
+};
