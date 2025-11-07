@@ -51,11 +51,13 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 								},
 								minItems: 1,
 								maxItems: 8,
-							}
-						}
-					}
-				}
-			}
+							},
+						},
+						required: ['tags'],
+						additionalProperties: false,
+					},
+				},
+			},
 		});
 		tags = response.output_text?.trim() ?? '';
 	} catch (err) {
