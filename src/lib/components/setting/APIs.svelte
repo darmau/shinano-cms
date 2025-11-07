@@ -1,33 +1,46 @@
 <script lang="ts">
 	import { t } from '$lib/functions/i18n';
-	import { onMount } from 'svelte';
-	import { getToastStore } from '$lib/toast';
-	import { ThirdPartyAPIs } from '$lib/types/thirdPartyApi';
+import { onMount } from 'svelte';
+import { getToastStore } from '$lib/toast';
+import { ThirdPartyAPIs } from '$lib/types/thirdPartyApi';
+import { browser } from '$app/environment';
+import { getSupabaseBrowserClient } from '$lib/supabaseClient';
+import type { ConfigRow } from '$lib/types/config';
 
-	const toastStore = getToastStore();
+const toastStore = getToastStore();
 
-	export let data;
-	let { supabase } = data;
-	$: ({ supabase } = data);
+export let data: unknown;
+void data;
+const supabase = browser ? getSupabaseBrowserClient() : null;
 
 	const apis = new ThirdPartyAPIs();
 	let API = apis.emptyObject();
 	const KEYS = apis.array();
 
 	// 从config表中获取API配置
-	const getAPIConfig = async () => {
-		const apiKeys = await fetch('/api/kv', {
-			method: 'POST',
-			body: JSON.stringify({
-				keys: KEYS
-			})
-		}).then(res => res.json())
+const getAPIConfig = async () => {
+	if (!supabase) return;
 
-		apiKeys.forEach(item => {
-			const key = Object.keys(item)[0];
-			API[key] = item[key];
+	const { data: rowsResult, error: fetchError } = await supabase
+		.from('config')
+		.select('key, value')
+		.in('key', KEYS);
+
+	if (fetchError) {
+		console.error(fetchError);
+		toastStore.trigger({
+			message: '获取 API 配置失败',
+			background: 'variant-filled-error'
 		});
-	};
+		return;
+	}
+
+	const rows = (rowsResult ?? []) as ConfigRow[];
+	const mapped = new Map(rows.map(({ key, value }) => [key, value ?? '']));
+	KEYS.forEach((key) => {
+		API[key] = mapped.get(key) ?? '';
+	});
+};
 
 	onMount(async () => {
 		await getAPIConfig();
@@ -40,30 +53,37 @@
 	async function submitForm(event: Event) {
 		event.preventDefault();
 		const formData = new FormData(event.target as HTMLFormElement);
-		const storageData = Object.fromEntries(formData.entries());
+	const storageData = Object.fromEntries(formData.entries()) as Record<string, FormDataEntryValue>;
 
 		// 将对象中的key-value转换成独立的对象，最后拼接成数组
-		const arrayData = Object.entries(storageData).map(([key, value]) => ({
-			[key]: value }));
+	if (!supabase) return;
 
-		const response = await fetch('/api/kv', {
-			method: 'PUT',
-			headers: {
-				'Content-Type': 'application/json'
-			},
-			body: JSON.stringify({
-				kv: arrayData
-			})
-		}).then(res => res.text());
+	const arrayData = (Object.entries(storageData) as [string, FormDataEntryValue][]).map(([key, value]) => ({
+		key,
+		value: typeof value === 'string' ? value : String(value ?? '')
+	}));
 
+	const { error: upsertError } = await supabase
+		.from('config')
+		.upsert(arrayData, { onConflict: 'key' });
+
+	if (upsertError) {
+		console.error(upsertError);
 		toastStore.trigger({
-			message: response,
-			hideDismiss: true,
-			background: 'variant-filled-success'
+			message: '更新 API 配置失败',
+			background: 'variant-filled-error'
 		});
+		return;
+	}
 
-		isFormChanged = false;
-		await getAPIConfig();
+	toastStore.trigger({
+		message: 'API 配置更新成功',
+		hideDismiss: true,
+		background: 'variant-filled-success'
+	});
+
+	isFormChanged = false;
+	await getAPIConfig();
 	}
 </script>
 
