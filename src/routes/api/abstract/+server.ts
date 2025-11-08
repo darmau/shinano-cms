@@ -40,8 +40,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		const response = await openai.responses.create({
 			model: 'gpt-5-nano',
 			instructions: prompt,
-			input: content,
-			max_output_tokens: 150,
+			input: content
 		});
 
 		generatedAbstract = response.output_text?.trim() ?? '';
