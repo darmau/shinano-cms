@@ -19,6 +19,8 @@ export type AlbumImage = {
 	prefix?: string;
 };
 
+import type { SelectedImage as EditorSelectedImage } from './editor';
+
 export type AlbumPicture = {
 	order: number;
 	image: AlbumImage;
@@ -57,7 +59,7 @@ export type PageData = {
 	allLanguages: Language[];
 };
 
-export type SelectedImage = AlbumImage & { prefix: string };
+export type SelectedImage = EditorSelectedImage;
 
 export type PhotoImageInsert = {
 	photo_id: number;

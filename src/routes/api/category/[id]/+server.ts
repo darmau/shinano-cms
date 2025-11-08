@@ -17,7 +17,7 @@ export const DELETE: RequestHandler = async ({ params, locals }) => {
 		.single();
 
 	if (error) {
-		return json({ error: error.message }, { status: error.status ?? 500 });
+		return json({ error: error.message }, { status: 500 });
 	}
 
 	return json(data);

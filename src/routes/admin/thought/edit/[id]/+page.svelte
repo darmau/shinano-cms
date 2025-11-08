@@ -10,6 +10,7 @@
 	import { browser } from '$app/environment';
 	import { getSupabaseBrowserClient } from '$lib/supabaseClient';
 	import type { SupabaseClient } from '@supabase/supabase-js';
+	import type { ImagesModelData } from '$lib/types/editor';
 	import type { SelectedImage } from '$lib/types/photo';
 	import type {
 		ThoughtContent,
@@ -18,15 +19,10 @@
 		ThoughtImageInsert
 	} from '$lib/types/thought';
 
-	type ImagesModalData = {
-		supabase: SupabaseClient | null;
-		prefix: string;
-	};
-
 	export let data: ThoughtEditPageData;
 	const supabase: SupabaseClient | null = browser ? getSupabaseBrowserClient() : null;
 
-	let imagesModelData: ImagesModalData = {
+	let imagesModelData: ImagesModelData = {
 		supabase,
 		prefix: data.prefix
 	};
@@ -304,6 +300,8 @@
 				{#each thoughtContent.images as picture, index (picture.image.id)}
 					<div
 						class = "relative aspect-square rounded-md overflow-hidden border border-gray-100"
+						role = "listitem"
+						aria-grabbed={draggingIndex === index ? 'true' : 'false'}
 						draggable={true}
 						on:dragstart={(event) => dragStart(event, index)}
 						on:dragover={(event) => dragOver(event, index)}
@@ -331,6 +329,7 @@
 		<!--话题-->
 		<div>
 			<label
+				for = "topic-input"
 				class = "text-sm font-medium leading-6 text-gray-900"
 			>{$t('topic')}</label>
 			<div class = "relative mt-2">
@@ -360,6 +359,7 @@
 					{/each}
 					<input
 						type = "text"
+						id = "topic-input"
 						bind:value={topicInput}
 						on:keydown={handleKeydown}
 						class = "peer border-none text-sm focus:ring-0 focus:outline-none bg-transparent"

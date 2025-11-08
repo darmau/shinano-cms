@@ -10,7 +10,6 @@
 
 	const toastStore = getToastStore();
 
-	export let data;
 	const supabase = browser ? getSupabaseBrowserClient() : null;
 	$: languages = [];
 

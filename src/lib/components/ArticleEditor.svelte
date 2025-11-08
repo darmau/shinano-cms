@@ -10,14 +10,88 @@
 	import { onMount } from 'svelte';
 	import { browser } from '$app/environment';
 	import { getSupabaseBrowserClient } from '$lib/supabaseClient';
+	import type { SupabaseClient } from '@supabase/supabase-js';
+	import type { Content, JSONContent } from '@tiptap/core';
+	import type {
+		ArticleContent,
+		ArticleCoverImage,
+		ArticleEditorPageData
+	} from '$lib/types/article';
+	import type { EditorHandle, ImagesModelData, SelectedImage } from '$lib/types/editor';
 
-	export let data;
+	type EditorContentUpdatePayload = {
+		json: JSONContent;
+		html: string;
+		text: string;
+	};
+
+	type SlugCheckResponse = {
+		error?: string;
+	};
+
+	type TagsResponse = {
+		tags?: string[];
+	};
+
+	export let data: ArticleEditorPageData;
 	export let isSaved: boolean = false;
-	const supabase = browser ? getSupabaseBrowserClient() : null;
 
 	const toastStore = getToastStore();
+	const supabase: SupabaseClient | null = browser ? getSupabaseBrowserClient() : null;
 
-	// 找出当前文章没有的语言
+	const initialArticle = data.articleContent;
+
+	let articleContent: ArticleContent = {
+		id: initialArticle.id,
+		title: initialArticle.title ?? '',
+		subtitle: initialArticle.subtitle ?? '',
+		slug: initialArticle.slug ?? '',
+		content_json: initialArticle.content_json,
+		content_html: initialArticle.content_html ?? '',
+		content_text: initialArticle.content_text ?? '',
+		abstract: initialArticle.abstract ?? '',
+		is_top: initialArticle.is_top ?? false,
+		is_draft: initialArticle.is_draft ?? true,
+		is_featured: initialArticle.is_featured ?? false,
+		is_premium: initialArticle.is_premium ?? false,
+		lang: initialArticle.lang ?? data.currentLanguage.id,
+		topic: initialArticle.topic ?? [],
+		published_at: initialArticle.published_at ?? null,
+		category: initialArticle.category ?? null,
+		cover: initialArticle.cover?.id ?? null,
+		updated_at: initialArticle.updated_at
+	};
+
+	let topics: string[] = [...articleContent.topic];
+	articleContent.topic = topics;
+
+	let contentJSON: JSONContent = articleContent.content_json;
+	let contentHTML = articleContent.content_html;
+	let contentText = articleContent.content_text;
+
+	let isChanged = false;
+	let isModalOpen = false;
+	let coverImage: ArticleCoverImage | null = initialArticle.cover ?? null;
+	let localTime: string | null =
+		articleContent.published_at ? getDateFormat(articleContent.published_at, true) : null;
+let slugExists = false;
+let isCheckingSlug = false;
+let isGeneratingSlug = false;
+let isGeneratingAbstract = false;
+let isGeneratingTags = false;
+let isTranslatingContent = false;
+	let editorComponent: EditorHandle | null = null;
+	let topicInput = '';
+
+	const supabaseUnavailableMessage = 'Supabase client is not available in the current environment.';
+
+	const getImagesModelData = (): ImagesModelData => ({
+		supabase,
+		prefix: data.prefix
+	});
+	let imagesModelData: ImagesModelData = getImagesModelData();
+	$: imagesModelData = getImagesModelData();
+
 	function generateNewLanguageVersions() {
 		const currentLanguageId = data.currentLanguage.id;
 		const otherVersions = data.otherVersions;
@@ -29,23 +103,26 @@
 		);
 	}
 
-	const newLanguageVersions = generateNewLanguageVersions();
+	let newLanguageVersions = generateNewLanguageVersions();
+	$: newLanguageVersions = generateNewLanguageVersions();
 
-	// 保存函数
-	let isChanged = false;
-	let articleContent = data.articleContent;
 	async function saveArticle() {
+		if (!supabase) {
+			console.error(supabaseUnavailableMessage);
+			return;
+		}
 
 		articleContent.updated_at = new Date().toISOString();
-		articleContent.cover = coverImage.id;
+		articleContent.cover = coverImage?.id ?? null;
 		articleContent.published_at = localTime ? new Date(localTime).toISOString() : null;
 		articleContent.topic = topics;
 
-		// 存储到supabase article表。对于已保存的文章，只更新内容
 		if (isSaved === true) {
-			const { error } = await
-				supabase.from('article').update(articleContent).eq('id',
-					articleContent.id);
+			if (!articleContent.id) {
+				console.error('Missing article id when attempting to save existing article.');
+				return;
+			}
+			const { error } = await supabase.from('article').update(articleContent).eq('id', articleContent.id);
 			if (error) {
 				console.error(error);
 				toastStore.trigger({
@@ -61,8 +138,10 @@
 				isChanged = false;
 			}
 		} else {
-			const { data, error: saveError } = await
-				supabase.from('article').insert(articleContent).select();
+			const { data: createdArticle, error: saveError } = await supabase
+				.from('article')
+				.insert(articleContent)
+				.select();
 
 			if (saveError) {
 				console.error(saveError);
@@ -72,26 +151,24 @@
 				});
 				isChanged = false;
 			} else {
-				if (data?.length) {
-					articleContent.id = data[0].id;
+				const newArticleId = createdArticle?.[0]?.id;
+				if (newArticleId) {
+					articleContent.id = newArticleId;
 				}
 				toastStore.trigger({
 					message: 'Article saved successfully.',
 					background: 'variant-filled-success'
 				});
-				// 跳转到/admin/article/edit/:id
 				isSaved = true;
-				await goto(`/admin/article/edit/${data[0].id}`)
+				if (newArticleId) {
+					await goto(`/admin/article/edit/${newArticleId}`);
+				}
 			}
 		}
 	}
 
-	let contentJSON = {};
-	let contentHTML = '';
-	let contentText = '';
-
 	// 监控正文变动
-	function handleContentUpdate(event) {
+	function handleContentUpdate(event: CustomEvent<EditorContentUpdatePayload>) {
 		const { json, html, text } = event.detail;
 		contentJSON = json;
 		contentHTML = html;
@@ -103,22 +180,23 @@
 	}
 
 	// 接收图片选择器返回的图片信息并显示
-	let isModalOpen = false;
-	let coverImage = articleContent.cover || {};
+	function selectCoverImage(images: SelectedImage[]) {
+		const [image] = images;
+		if (!image) {
+			return;
+		}
 
-	function selectCoverImage(images) {
-		// 只接收第一张图片
 		coverImage = {
-			id: images[0].id,
-			alt: images[0].alt,
-			storage_key: images[0].storage_key
+			id: image.id,
+			alt: image.alt ?? null,
+			storage_key: image.storage_key
 		};
 		articleContent.cover = coverImage.id;
 		isChanged = true;
 	}
 
 	function resetCoverImage() {
-		coverImage = {};
+		coverImage = null;
 		articleContent.cover = null;
 		isChanged = true;
 	}
@@ -128,24 +206,25 @@
 	}
 
 	// 切换发布文章
-	let localTime = articleContent.published_at ?
-		getDateFormat(articleContent.published_at, true) : null;
 	async function publishArticle() {
 		await saveArticle();
+		if (!supabase || !articleContent.id) {
+			return;
+		}
+
 		if (articleContent.is_draft) {
 			articleContent.is_draft = false;
 			const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-			let date = localTime ? new Date(localTime) : new Date();
-			let isoString = date.toLocaleString('en-US', { timeZone: timezone });
+			const date = localTime ? new Date(localTime) : new Date();
+			const isoString = date.toLocaleString('en-US', { timeZone: timezone });
 			articleContent.published_at = new Date(isoString).toISOString();
 		} else {
 			articleContent.is_draft = true;
 			articleContent.published_at = null;
 			localTime = null;
 		}
-		const { error } = await
-			supabase.from('article').update(articleContent).eq('id',
-				articleContent.id).select();
+
+		const { error } = await supabase.from('article').update(articleContent).eq('id', articleContent.id);
 		if (error) {
 			console.error(error);
 			toastStore.trigger({
@@ -164,7 +243,7 @@
 
 	// 删除文章
 	async function deleteArticle() {
-		if (!isSaved) {
+		if (!isSaved || !articleContent.id) {
 			toastStore.trigger({
 				message: 'Article not saved yet.',
 				background: 'variant-filled-error'
@@ -172,8 +251,12 @@
 			return;
 		}
 
-		const { error } = await
-			supabase.from('article').delete().eq('id', articleContent.id).select();
+		if (!supabase) {
+			console.error(supabaseUnavailableMessage);
+			return;
+		}
+
+		const { error } = await supabase.from('article').delete().eq('id', articleContent.id).select();
 		if (error) {
 			console.error(error);
 			toastStore.trigger({
@@ -190,12 +273,10 @@
 	}
 
 	// 检测当前slug在相同语言下是否已存在
-	let slugExists = false;
-	let isCheckingSlug = false;
-	async function checkSlug(slug: string): Boolean {
+	async function checkSlug(slug: string) {
 		isCheckingSlug = true;
 
-		const { error } = await fetch('/api/slug-check', {
+		const response: SlugCheckResponse = await fetch('/api/slug-check', {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json'
@@ -204,14 +285,14 @@
 				type: 'article',
 				langId: data.currentLanguage.id,
 				slug,
-				contentId: articleContent.id || null
+				contentId: articleContent.id ?? null
 			})
-		}).then(res => res.json());
+		}).then((res) => res.json());
 
 		isCheckingSlug = false;
-		if (error) {
+		if (response.error) {
 			toastStore.trigger({
-				message: error,
+				message: response.error,
 				background: 'variant-filled-error'
 			});
 			slugExists = true;
@@ -222,35 +303,78 @@
 
 	// 生成slug
 	async function generateSlug() {
-		const title = articleContent.title;
-		articleContent.slug = await fetch('/api/slug', {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json'
-			},
-			body: JSON.stringify({ title })
-		}).then((res) => res.text());
-		isChanged = true;
+		if (isGeneratingSlug) {
+			return;
+		}
+
+		const title = articleContent.title?.trim();
+		if (!title) {
+			toastStore.trigger({
+				message: '请先填写标题。',
+				background: 'variant-filled-error'
+			});
+			return;
+		}
+
+		isGeneratingSlug = true;
+		try {
+			articleContent.slug = await fetch('/api/slug', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({ title })
+			}).then((res) => res.text());
+			isChanged = true;
+		} catch (err) {
+			console.error('Failed to generate slug', err);
+			toastStore.trigger({
+				message: '生成 slug 失败，请稍后重试。',
+				background: 'variant-filled-error'
+			});
+		} finally {
+			isGeneratingSlug = false;
+		}
 	}
 
 	// 生成摘要
 	async function generateAbstract() {
+		if (isGeneratingAbstract) {
+			return;
+		}
+
 		const content = articleContent.content_text;
-		articleContent.abstract = await fetch('/api/abstract', {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json'
-			},
-			body: JSON.stringify({ content })
-		}).then((res) => res.text());
-		isChanged = true;
+		if (!content?.trim()) {
+			toastStore.trigger({
+				message: '正文内容为空，无法生成摘要。',
+				background: 'variant-filled-error'
+			});
+			return;
+		}
+
+		isGeneratingAbstract = true;
+		try {
+			articleContent.abstract = await fetch('/api/abstract', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({ content })
+			}).then((res) => res.text());
+			isChanged = true;
+		} catch (err) {
+			console.error('Failed to generate abstract', err);
+			toastStore.trigger({
+				message: '生成摘要失败，请稍后重试。',
+				background: 'variant-filled-error'
+			});
+		} finally {
+			isGeneratingAbstract = false;
+		}
 	}
 
 	// 话题
-	let topics = articleContent.topic || [];
-	let topicInput = '';
-
-	function handleKeydown(event) {
+	function handleKeydown(event: KeyboardEvent) {
 		if (event.key === 'Enter' && topicInput.trim() !== '') {
 			topics = [...topics, topicInput.trim()];
 			articleContent.topic = topics;
@@ -259,7 +383,7 @@
 		}
 	}
 
-	function removeTopic(index) {
+	function removeTopic(index: number) {
 		topics = topics.filter((_, i) => i !== index);
 		articleContent.topic = topics;
 		isChanged = true;
@@ -267,43 +391,92 @@
 
 	// 生成tags
 	async function generateTags() {
+		if (isGeneratingTags) {
+			return;
+		}
+
 		const content = articleContent.content_text;
-		const result = await fetch('/api/tags', {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json'
-			},
-			body: JSON.stringify({ content })
-		}).then((res) => res.json());
-		topics = result.tags;
-		articleContent.topic = topics;
-		isChanged = true;
+		if (!content?.trim()) {
+			toastStore.trigger({
+				message: '正文内容为空，无法生成标签。',
+				background: 'variant-filled-error'
+			});
+			return;
+		}
+
+		isGeneratingTags = true;
+		try {
+			const result: TagsResponse = await fetch('/api/tags', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({ content })
+			}).then((res) => res.json());
+			topics = result.tags ?? [];
+			articleContent.topic = topics;
+			isChanged = true;
+		} catch (err) {
+			console.error('Failed to generate tags', err);
+			toastStore.trigger({
+				message: '生成标签失败，请稍后重试。',
+				background: 'variant-filled-error'
+			});
+		} finally {
+			isGeneratingTags = false;
+		}
 	}
 
 	// 翻译
-	let editorComponent;
+	function generateContent(content: Content) {
+		if (!editorComponent) {
+			return;
+		}
 
-	function generateContent(content) {
 		editorComponent.updateContent(content);
 	}
 
 	async function getTranslation() {
-		articleContent.content_html = await fetch('/api/translation', {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json'
-			},
-			body: JSON.stringify({
-				lang: data.currentLanguage.locale,
-				content: articleContent.content_text
-			})
-		}).then(res => res.text());
-		generateContent(articleContent.content_html);
-		isChanged = true;
+		if (isTranslatingContent) {
+			return;
+		}
+
+		const content = articleContent.content_html;
+		if (!content?.trim()) {
+			toastStore.trigger({
+				message: '正文内容为空，无法翻译。',
+				background: 'variant-filled-error'
+			});
+			return;
+		}
+
+		isTranslatingContent = true;
+		try {
+			articleContent.content_html = await fetch('/api/translation', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({
+					lang: data.currentLanguage.locale,
+					content
+				})
+			}).then((res) => res.text());
+			generateContent(articleContent.content_html);
+			isChanged = true;
+		} catch (err) {
+			console.error('Failed to translate content', err);
+			toastStore.trigger({
+				message: '翻译失败，请稍后重试。',
+				background: 'variant-filled-error'
+			});
+		} finally {
+			isTranslatingContent = false;
+		}
 	}
 
 	// 防止误关页面
-	function handleBeforeUnload(event) {
+	function handleBeforeUnload(event: BeforeUnloadEvent) {
 		if (!isSaved && isChanged) {
 			event.preventDefault();
 			event.returnValue = '';
@@ -316,18 +489,18 @@
 				navigation.preventDefault();
 			}
 		}
-	})
+	});
 
 	onMount(() => {
 		isCheckingSlug = true;
 		checkSlug(articleContent.slug);
-	})
+	});
 </script>
 
 <svelte:window on:beforeunload={handleBeforeUnload} />
 
 {#if isModalOpen}
-	<ImagesModel {data} {closeModel} onSelect = {selectCoverImage} />
+	<ImagesModel data={imagesModelData} {closeModel} onSelect={selectCoverImage} />
 {/if}
 
 <div class = "grid grid-cols-1 gap-6 xl:grid-cols-4">
@@ -366,9 +539,10 @@
 					type = "text" name = "slug" id = "slug"
 					value = {articleContent.slug}
 					on:input = {(event: Event) => {
-						isChanged = true; 
-						checkSlug(articleContent.slug)
-						articleContent.slug = (event.currentTarget as HTMLInputElement).value
+						const target = event.currentTarget as HTMLInputElement;
+						articleContent.slug = target.value;
+						checkSlug(target.value);
+						isChanged = true;
 						}}
 					required
 					class =
@@ -377,8 +551,9 @@
 				<button
 					type="button"
 					on:click = {generateSlug}
-				  class="w-fit break-keep rounded bg-cyan-50 px-3 py-1 text-sm font-semibold text-cyan-600 shadow-sm hover:bg-cyan-100"
-				>{$t('generate')}</button>
+					disabled = {isGeneratingSlug}
+				  class="w-fit break-keep rounded bg-cyan-50 px-3 py-1 text-sm font-semibold text-cyan-600 shadow-sm hover:bg-cyan-100 cursor-pointer disabled:cursor-not-allowed disabled:opacity-70"
+				>{isGeneratingSlug ? $t('generating') : $t('generate')}</button>
 			</div>
 			{#if isCheckingSlug}
 				<p class="mt-2 text-sm text-gray-600">Checking...</p>
@@ -414,14 +589,17 @@
 
 		<!--Content-->
 		<Tiptap
-			on:contentUpdate = {handleContentUpdate} {data} content =
-			{articleContent.content_json} bind:this = {editorComponent}
+			on:contentUpdate={handleContentUpdate}
+			data={imagesModelData}
+			content={articleContent.content_json}
+			bind:this={editorComponent}
 		/>
 		<button
 			type="button"
 			on:click = {getTranslation}
-			class="rounded-md bg-cyan-50 p-2 text-sm font-semibold text-cyan-600 shadow-sm hover:bg-cyan-100"
-		>{$t('translate')}</button>
+			disabled = {isTranslatingContent}
+			class="rounded-md bg-cyan-50 p-2 text-sm font-semibold text-cyan-600 shadow-sm hover:bg-cyan-100 cursor-pointer disabled:cursor-not-allowed disabled:opacity-70"
+		>{isTranslatingContent ? $t('generating') : $t('translate')}</button>
 	</div>
 
 	<aside class = "col-span-1 space-y-8">
@@ -433,6 +611,7 @@
 			<input
 				type="datetime-local"
 				class="mt-2 w-full rounded-md border-0 p-1.5 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-cyan-600 sm:text-sm sm:leading-6"
+				defaultValue={localTime ? new Date(localTime).toISOString().slice(0, 16) : undefined}
 				bind:value={localTime}
 				on:change = {(event: Event) => {
 					isChanged = true
@@ -502,10 +681,11 @@
 				</a>
 			</header>
 			<select
-				bind:value={articleContent.category}
+				value={articleContent.category ?? ''}
 				on:change = {(event: Event) => {
 					isChanged = true;
-					articleContent.category = (event.currentTarget as HTMLSelectElement).value
+					const value = Number((event.currentTarget as HTMLSelectElement).value);
+					articleContent.category = Number.isNaN(value) ? null : value;
 					}}
 				id="category"
 				name="category"
@@ -526,8 +706,9 @@
 				<button
 					type="button"
 					on:click = {generateTags}
-					class = "rounded bg-cyan-600 px-2 py-1 text-sm font-semibold text-white shadow-sm hover:bg-cyan-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-600"
-				>{$t('generate')}</button>
+					disabled = {isGeneratingTags}
+					class = "rounded bg-cyan-600 px-2 py-1 text-sm font-semibold text-white shadow-sm hover:bg-cyan-500 cursor-pointer disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
+				>{isGeneratingTags ? $t('generating') : $t('generate')}</button>
 			</div>
 			<div class="relative mt-2">
 				<div
@@ -566,16 +747,16 @@
 				>{$t('cover')}</h2>
 				<button
 					on:click = {resetCoverImage}
-					disabled = {Object.keys(coverImage).length === 0}
+					disabled = {!coverImage}
 					class =
-						"rounded bg-red-600 px-2 py-1 text-sm font-semibold text-white shadow-sm hover:bg-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600 disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed"
+						"rounded bg-red-600 px-2 py-1 text-sm font-semibold text-white shadow-sm hover:bg-red-500 disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed cursor-pointer"
 				>
 					{$t('reset')}
 				</button>
 				<button
 					on:click = {()=>{isModalOpen =true}}
 					class =
-						"rounded bg-cyan-600 px-2 py-1 text-sm font-semibold text-white shadow-sm hover:bg-cyan-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-600"
+						"rounded bg-cyan-600 px-2 py-1 text-sm font-semibold text-white shadow-sm hover:bg-cyan-500 cursor-pointer"
 				>
 					{$t('select')}
 				</button>
@@ -584,11 +765,11 @@
 				class =
 					"mt-2 aspect-[4/3] bg-gray-100 w-full rounded-md flex justify-center items-center"
 			>
-				{#if Object.keys(coverImage).length > 0}
+				{#if coverImage}
 					<img
 						src =
 							{`${data.prefix}/cdn-cgi/image/format=auto,width=480/${coverImage.storage_key}`}
-						alt = {coverImage.alt}
+						alt = {coverImage.alt ?? ''}
 						class = "img-bg h-full w-full object-contain"
 					/>
 				{:else}
@@ -607,8 +788,9 @@
 				<button
 					type="button"
 					on:click = {generateAbstract}
-					class = "rounded bg-cyan-600 px-2 py-1 text-sm font-semibold text-white shadow-sm hover:bg-cyan-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-600"
-				>{$t('generate')}</button>
+					disabled = {isGeneratingAbstract}
+					class = "rounded bg-cyan-600 px-2 py-1 text-sm font-semibold text-white shadow-sm hover:bg-cyan-500 cursor-pointer disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
+				>{isGeneratingAbstract ? $t('generating') : $t('generate')}</button>
 			</div>
 			<div class = "mt-2">
 				<textarea
@@ -682,18 +864,18 @@
 			<button
 				on:click = {deleteArticle}
 				class =
-					"rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600 mr-auto"
+					"rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 cursor-pointer mr-auto"
 			>{$t('delete')}</button>
 			<button
 				on:click = {saveArticle}
 				disabled = {!isChanged}
 				class =
-					"rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed"
+					"rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed cursor-pointer"
 			>{$t('save')}</button>
 			<button
 				on:click = {publishArticle}
 				class =
-					"rounded-md bg-cyan-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-cyan-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-600"
+					"rounded-md bg-cyan-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-cyan-500 cursor-pointer"
 			>{articleContent.is_draft ? $t('publish') : $t('unpublish')}</button>
 		</div>
 	</aside>

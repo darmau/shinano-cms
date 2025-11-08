@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import type { SupabaseClient } from '@supabase/supabase-js';
 	import { getToastStore } from '$lib/toast';
 	import Edit from '$assets/icons/edit.svelte';
 	import EditImage from '$components/image/EditImage.svelte';
@@ -8,6 +7,7 @@
 	import { t } from '$lib/functions/i18n';
 	import { browser } from '$app/environment';
 	import { getSupabaseBrowserClient } from '$lib/supabaseClient';
+	import type { ImagesModelData, SelectedImage } from '$lib/types/editor';
 
 	const PAGE_SIZE = 24;
 	const toastStore = getToastStore();
@@ -20,14 +20,7 @@
 		caption?: string | null;
 	};
 
-	type SelectedImage = ImageRecord & { prefix: string };
-
-	interface ImagesModelData {
-		supabase: SupabaseClient | null;
-		prefix: string;
-	}
-
-	type ImagesModelCallback = (images: SelectedImage[]) => void;
+type ImagesModelCallback = (images: SelectedImage[]) => void;
 
 	export let data: ImagesModelData;
 	const supabase = browser ? getSupabaseBrowserClient() : null;

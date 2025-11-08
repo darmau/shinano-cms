@@ -91,8 +91,7 @@
 							'Content-Type': 'application/json'
 						},
 						body: JSON.stringify({
-							prefix: data.prefix,
-							img_key: image.storage_key
+							storage_key: image.storage_key
 						})
 					}).then(res => res.text());
 
