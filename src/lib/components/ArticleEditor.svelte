@@ -812,7 +812,10 @@ let isTranslatingContent = false;
 			<div class = "flex h-6 items-center gap-2">
 				<input
 					checked = {articleContent.is_top}
-					on:change = {() => {isChanged = true}}
+					on:change = {(event: Event) => {
+						isChanged = true;
+						articleContent.is_top = (event.currentTarget as HTMLInputElement).checked;
+					}}
 					id = "is_top" aria-describedby = "是否置顶文章"
 					name = "is_top" type = "checkbox"
 					class =
