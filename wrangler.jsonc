@@ -4,6 +4,9 @@
   "account_id": "d9275c9d13f0e1a8474eae2ebcd1d883",
   "main": ".svelte-kit/cloudflare/_worker.js",
   "compatibility_date": "2025-11-07",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
   "workers_dev": false,
   "assets": {
     "binding": "ASSETS",
