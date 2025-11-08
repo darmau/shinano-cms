@@ -6,10 +6,11 @@ import { getToastStore } from '$lib/toast';
 import { invalidateAll } from '$app/navigation';
 import EditImage from '$components/image/EditImage.svelte';
 import UnsplashBrowser from '$components/image/UnsplashBrowser.svelte';
+import AIImageGenerator from '$components/image/AIImageGenerator.svelte';
 import Edit from '$assets/icons/edit.svelte';
 import { browser } from '$app/environment';
 import { getSupabaseBrowserClient } from '$lib/supabaseClient';
-import type { UploadedImageRecord } from '$lib/api/unsplash';
+import type { MediaImageRecord } from '$lib/api/media';
 
 type ImageExif = Partial<{
 	Make: string;
@@ -54,6 +55,7 @@ let deleteImageList: number[] = []; // ids of images to be deleted
 	let deletable = true;
 	let isGeneratingAlt = false; // 是否正在生成 alt
 let showUnsplashModal = false;
+let showAIModal = false;
 
 	function updateSelectedImages() {
 		selectedImages = `${deleteImageList.length} ${$t('selected')}`;
@@ -204,8 +206,19 @@ function closeUnsplashModal() {
 	showUnsplashModal = false;
 }
 
-async function handleUnsplashImported(_event: CustomEvent<{ image: UploadedImageRecord }>) {
+function closeAIModal() {
+	showAIModal = false;
+}
+
+async function handleUnsplashImported(_event: CustomEvent<{ image: MediaImageRecord }>) {
 	closeUnsplashModal();
+	deleteImageList = [];
+	updateSelectedImages();
+	await invalidateAll();
+}
+
+async function handleAIImported(_event: CustomEvent<{ image: MediaImageRecord }>) {
+	closeAIModal();
 	deleteImageList = [];
 	updateSelectedImages();
 	await invalidateAll();
@@ -237,6 +250,13 @@ async function handleUnsplashImported(_event: CustomEvent<{ image: UploadedImage
 	<p>{selectedImages}</p>
 	<button on:click = {switchSelectAllImages}>Select All</button>
 	<div class = "mt-4 flex md:ml-4 md:mt-0 gap-2">
+		<button
+			type="button"
+			on:click={() => (showAIModal = true)}
+			class="inline-flex w-full justify-center rounded-md bg-emerald-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-500 sm:w-auto disabled:bg-gray-300"
+		>
+			AI 生成图片
+		</button>
 		<button
 			type="button"
 			on:click={() => (showUnsplashModal = true)}
@@ -412,6 +432,25 @@ async function handleUnsplashImported(_event: CustomEvent<{ image: UploadedImage
 			</div>
 			<div class="max-h-[80vh] overflow-y-auto px-6 py-6">
 				<UnsplashBrowser supabase={supabase} on:import={handleUnsplashImported} />
+			</div>
+		</div>
+	</div>
+{/if}
+{#if showAIModal}
+	<div class="fixed inset-0 z-[65] flex items-center justify-center bg-black/40 p-4">
+		<div class="w-full max-w-3xl overflow-hidden rounded-lg bg-white shadow-xl">
+			<div class="flex items-center justify-between border-b border-gray-200 px-6 py-4">
+				<h2 class="text-lg font-semibold text-gray-900">AI 生成图片</h2>
+				<button
+					type="button"
+					on:click={closeAIModal}
+					class="rounded-md bg-white px-3 py-1.5 text-sm font-semibold text-gray-700 ring-1 ring-gray-300 hover:bg-gray-100"
+				>
+					关闭
+				</button>
+			</div>
+			<div class="max-h-[80vh] overflow-y-auto px-6 py-6">
+				<AIImageGenerator supabase={supabase} on:import={handleAIImported} />
 			</div>
 		</div>
 	</div>
