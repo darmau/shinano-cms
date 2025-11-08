@@ -1,5 +1,5 @@
 import { error, type RequestHandler } from '@sveltejs/kit';
-import { getR2Bucket, type CfPlatform } from '$lib/server/r2';
+import { URL_PREFIX } from '$env/static/private';
 
 type WorkersAI = { run: (model: string, input: unknown) => Promise<unknown> };
 type CfEnv = { AI?: WorkersAI } & Record<string, unknown>;
@@ -7,6 +7,9 @@ type CfPlatformWithAI = { env?: CfEnv } | undefined;
 
 const DEFAULT_PROMPT =
 	'Generate a caption for this image, do not try to guess the location, just describe the image.';
+
+// 使用 Cloudflare Image Resizing 的最大宽度，减少内存占用
+const MAX_IMAGE_WIDTH = 512;
 
 export const POST: RequestHandler = async ({ request, locals, platform }) => {
 	const { storage_key, img_key } = await request.json();
@@ -37,18 +40,25 @@ export const POST: RequestHandler = async ({ request, locals, platform }) => {
 		error(500, 'Workers AI binding not configured');
 	}
 
-	const bucket = getR2Bucket(platform as CfPlatform);
-	if (!bucket) {
-		error(500, 'R2 bucket binding not configured');
+	// 使用 Cloudflare Image Resizing 来压缩图片，大幅降低内存使用
+	// 格式：https://domain.com/cdn-cgi/image/width=512,format=jpeg/image-key
+	const resizedImageUrl = `${URL_PREFIX}/cdn-cgi/image/width=${MAX_IMAGE_WIDTH},format=jpeg/${targetKey}`;
+
+	// 通过 fetch 获取压缩后的图片
+	let imageResponse: Response;
+	try {
+		imageResponse = await fetch(resizedImageUrl);
+		if (!imageResponse.ok) {
+			error(404, 'Image not found in storage');
+		}
+	} catch (err) {
+		console.error('Failed to fetch image:', err);
+		error(500, 'Failed to fetch image from storage');
 	}
 
-	const object = await bucket.get(targetKey);
-	if (!object) {
-		error(404, 'Image not found in storage');
-	}
-
-	const blob = await object.arrayBuffer();
-	const byteArray = Array.from(new Uint8Array(blob));
+	// 将压缩后的图片转换为字节数组
+	const imageBuffer = await imageResponse.arrayBuffer();
+	const byteArray = Array.from(new Uint8Array(imageBuffer));
 	const input = { image: byteArray, prompt, max_tokens: 512 };
 
 	let aiResult: unknown;
