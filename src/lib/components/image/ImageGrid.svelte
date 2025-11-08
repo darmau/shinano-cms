@@ -1,24 +1,59 @@
 <script lang="ts">
-	import { fileSize } from '$lib/functions/fileSize';
-	import { t } from '$lib/functions/i18n';
-	import { localTime } from '$lib/functions/localTime';
-	import shutterSpeed from '$lib/functions/shutterSpeed';
-	import { getToastStore } from '$lib/toast';
-	import { invalidateAll } from '$app/navigation';
-	import EditImage from '$components/image/EditImage.svelte';
-	import Edit from '$assets/icons/edit.svelte';
-	import { browser } from '$app/environment';
-	import { getSupabaseBrowserClient } from '$lib/supabaseClient';
+import { fileSize } from '$lib/functions/fileSize';
+import { t } from '$lib/functions/i18n';
+import shutterSpeed from '$lib/functions/shutterSpeed';
+import { getToastStore } from '$lib/toast';
+import { invalidateAll } from '$app/navigation';
+import EditImage from '$components/image/EditImage.svelte';
+import UnsplashBrowser from '$components/image/UnsplashBrowser.svelte';
+import Edit from '$assets/icons/edit.svelte';
+import { browser } from '$app/environment';
+import { getSupabaseBrowserClient } from '$lib/supabaseClient';
+import type { UploadedImageRecord } from '$lib/api/unsplash';
 
-	export let data;
+type ImageExif = Partial<{
+	Make: string;
+	Model: string;
+	LensModel: string;
+	FNumber: string | number;
+	ExposureTime: string | number;
+	ISO: string | number;
+}>;
+
+type ImageItem = {
+	id: number;
+	storage_key: string;
+	file_name?: string | null;
+	alt?: string | null;
+	caption?: string | null;
+	width?: number | null;
+	height?: number | null;
+	size?: number | null;
+	taken_at?: string | null;
+	location?: string | null;
+	exif?: ImageExif | null;
+	[key: string]: unknown;
+};
+
+type MediaPageData = {
+	page: number;
+	images: ImageItem[];
+	prefix: string;
+	count: number;
+	limit: number;
+	path: string;
+};
+
+export let data: MediaPageData;
 	const supabase = browser ? getSupabaseBrowserClient() : null;
 
 	const toastStore = getToastStore();
 
-	let deleteImageList = []; // ids of images to be deleted
+let deleteImageList: number[] = []; // ids of images to be deleted
 	let selectedImages = `${deleteImageList.length} ${$t('selected')}`;
 	let deletable = true;
 	let isGeneratingAlt = false; // 是否正在生成 alt
+let showUnsplashModal = false;
 
 	function updateSelectedImages() {
 		selectedImages = `${deleteImageList.length} ${$t('selected')}`;
@@ -109,7 +144,7 @@
 						// 成功生成后，从选中列表中移除该图片
 						deleteImageList = deleteImageList.filter(id => id !== image.id);
 						// 更新复选框状态
-						const checkbox = document.querySelector(`input[type="checkbox"][id="${image.id}"]`) as HTMLInputElement;
+						const checkbox = document.querySelector<HTMLInputElement>(`input[type="checkbox"][id="${image.id}"]`);
 						if (checkbox) {
 							checkbox.checked = false;
 						}
@@ -154,20 +189,31 @@
 
 	// 打开图片编辑窗口
 	let isEditing = false;
-	let imageData = {};
+let imageData: ImageItem | Record<string, unknown> = {};
 
 	function closeEdit() {
 		isEditing = false;
 	}
 
-	function openEdit(image) {
+function openEdit(image: ImageItem) {
 		isEditing = true;
 		imageData = image;
 	}
 
+function closeUnsplashModal() {
+	showUnsplashModal = false;
+}
+
+async function handleUnsplashImported(_event: CustomEvent<{ image: UploadedImageRecord }>) {
+	closeUnsplashModal();
+	deleteImageList = [];
+	updateSelectedImages();
+	await invalidateAll();
+}
+
 	// 选中所有图片，并且添加到selectedImages数组中
 	function switchSelectAllImages() {
-		const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+		const checkboxes = document.querySelectorAll<HTMLInputElement>('input[type="checkbox"]');
 		if (deleteImageList.length === data.images.length) {
 			checkboxes.forEach(checkbox => {
 				checkbox.checked = false;
@@ -191,6 +237,13 @@
 	<p>{selectedImages}</p>
 	<button on:click = {switchSelectAllImages}>Select All</button>
 	<div class = "mt-4 flex md:ml-4 md:mt-0 gap-2">
+		<button
+			type="button"
+			on:click={() => (showUnsplashModal = true)}
+			class="inline-flex w-full justify-center rounded-md bg-slate-800 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-slate-700 sm:w-auto disabled:bg-gray-300"
+		>
+			从 Unsplash 导入
+		</button>
 		<button
 			on:click = {generateAltForImages}
 			disabled = {deletable || isGeneratingAlt} type = "button"
@@ -229,7 +282,8 @@
 								updateSelectedImages()
 							}
 						}}
-						id = {image.id} aria-describedby = {image.alt}
+						id = {String(image.id)}
+						aria-label={image.alt ?? image.file_name ?? ''}
 						name = {image.storage_key}
 						type = "checkbox"
 						class =
@@ -251,11 +305,11 @@
 			<div class = "p-4 space-y-4 break-words">
 				<h3 class = "font-medium">{image.file_name}</h3>
 				<small>
-					<span>{image.width}</span>
+					<span>{image.width ?? '-'}</span>
 					×
-					<span>{image.height}</span>
+					<span>{image.height ?? '-'}</span>
 					|
-					<span>{fileSize(image.size)}</span>
+					<span>{fileSize(Number(image.size ?? 0))}</span>
 				</small>
 				<div class = "space-y-1">
 					<h4 class = "font-medium text-sm mb-1">alt</h4>
@@ -328,7 +382,7 @@
 								>{$t('shutter-speed')}</h4>
 								<p
 									class = "text-sm text-gray-700 text-right"
-								>{shutterSpeed(image.exif.ExposureTime)}</p>
+								>{shutterSpeed(String(image.exif.ExposureTime))}</p>
 							</li>
 						{/if}
 						{#if image.exif.ISO}
@@ -343,3 +397,22 @@
 		</div>
 	{/each}
 </div>
+{#if showUnsplashModal}
+	<div class="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-4">
+		<div class="w-full max-w-5xl overflow-hidden rounded-lg bg-white shadow-xl">
+			<div class="flex items-center justify-between border-b border-gray-200 px-6 py-4">
+				<h2 class="text-lg font-semibold text-gray-900">从 Unsplash 导入图片</h2>
+				<button
+					type="button"
+					on:click={closeUnsplashModal}
+					class="rounded-md bg-white px-3 py-1.5 text-sm font-semibold text-gray-700 ring-1 ring-gray-300 hover:bg-gray-100"
+				>
+					关闭
+				</button>
+			</div>
+			<div class="max-h-[80vh] overflow-y-auto px-6 py-6">
+				<UnsplashBrowser supabase={supabase} on:import={handleUnsplashImported} />
+			</div>
+		</div>
+	</div>
+{/if}

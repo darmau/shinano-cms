@@ -4,10 +4,12 @@
 	import Edit from '$assets/icons/edit.svelte';
 	import EditImage from '$components/image/EditImage.svelte';
 	import UploadFile from '$components/image/UploadFile.svelte';
+	import UnsplashBrowser from '$components/image/UnsplashBrowser.svelte';
 	import { t } from '$lib/functions/i18n';
 	import { browser } from '$app/environment';
 	import { getSupabaseBrowserClient } from '$lib/supabaseClient';
 	import type { ImagesModelData, SelectedImage } from '$lib/types/editor';
+	import type { UploadedImageRecord } from '$lib/api/unsplash';
 
 	const PAGE_SIZE = 24;
 	const toastStore = getToastStore();
@@ -29,6 +31,7 @@ type ImagesModelCallback = (images: SelectedImage[]) => void;
 	let page = 1;
 	let selectedImages = new Map<number, SelectedImage>();
 	$: selectedCount = selectedImages.size;
+	let viewMode: 'library' | 'unsplash' = 'library';
 
 	export let closeModel: () => void;
 	export let onSelect: ImagesModelCallback;
@@ -106,6 +109,28 @@ type ImagesModelCallback = (images: SelectedImage[]) => void;
 		imageData = image;
 	}
 
+	async function handleUnsplashImported(event: CustomEvent<{ image: UploadedImageRecord }>) {
+		const { image } = event.detail;
+
+		await getImages(1);
+
+		selectedImages = new Map<number, SelectedImage>([
+			[
+				image.id,
+				{
+					id: image.id,
+					storage_key: image.storage_key,
+					prefix: data.prefix,
+					alt: image.alt,
+					caption: image.caption ?? null
+				}
+			]
+		]);
+
+		viewMode = 'library';
+		submitSelection();
+	}
+
 	async function deleteImages() {
 		if (!selectedImages.size) {
 			return;
@@ -162,51 +187,90 @@ type ImagesModelCallback = (images: SelectedImage[]) => void;
 		<div class="fixed inset-0 z-10 sm:w-11/12 mx-auto overflow-y-auto">
 			<div class="flex items-end justify-center p-4 text-center sm:items-center sm:p-0">
 				<div class="relative transform overflow-y-scroll rounded-lg bg-white px-4 text-left shadow-xl transition-all sm:w-full max-h-screen">
-					<div class="flex justify-between items-center sticky top-0 z-50 w-full bg-white p-4">
-						<button
-							on:click={deleteImages}
-							disabled={selectedCount <= 0}
-							class="inline-flex justify-center rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 sm:w-auto disabled:bg-gray-300 disabled:cursor-not-allowed disabled:opacity-50"
-						>
-							{$t('delete')}
-						</button>
-						<div>{selectedCount} Selected</div>
-						<button
-							on:click={submitSelection}
-							class="relative inline-flex items-center rounded-md bg-cyan-600 px-3 py-2 text-sm font-semibold text-white hover:bg-cyan-700 focus-visible:outline-offset-0"
-						>
-							{$t('submit')}
-						</button>
+					<div class="flex flex-col gap-4 sticky top-0 z-50 w-full bg-white p-4 shadow-sm">
+						<div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+							<div class="flex flex-wrap items-center gap-3">
+								<div class="inline-flex rounded-md border border-gray-200 p-0.5">
+									<button
+										type="button"
+										on:click={() => (viewMode = 'library')}
+										class={`rounded-md px-3 py-1.5 text-sm font-medium transition ${
+											viewMode === 'library'
+												? 'bg-cyan-600 text-white shadow-sm'
+												: 'text-gray-600 hover:bg-gray-100'
+										}`}
+									>
+										媒体库
+									</button>
+									<button
+										type="button"
+										on:click={() => (viewMode = 'unsplash')}
+										class={`rounded-md px-3 py-1.5 text-sm font-medium transition ${
+											viewMode === 'unsplash'
+												? 'bg-cyan-600 text-white shadow-sm'
+												: 'text-gray-600 hover:bg-gray-100'
+										}`}
+									>
+										Unsplash
+									</button>
+								</div>
+								<button
+									on:click={deleteImages}
+									disabled={selectedCount <= 0 || viewMode !== 'library'}
+									class="inline-flex justify-center rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 disabled:cursor-not-allowed disabled:bg-gray-300"
+								>
+									{$t('delete')}
+								</button>
+							</div>
+							<div class="text-sm text-gray-600">
+								{#if viewMode === 'library'}
+									{selectedCount} Selected
+								{:else}
+									点击图片即可导入 Unsplash 图片
+								{/if}
+							</div>
+							<button
+								on:click={submitSelection}
+								disabled={selectedCount <= 0 || viewMode !== 'library'}
+								class="relative inline-flex items-center rounded-md bg-cyan-600 px-3 py-2 text-sm font-semibold text-white hover:bg-cyan-700 focus-visible:outline-offset-0 disabled:cursor-not-allowed disabled:bg-gray-300"
+							>
+								{$t('submit')}
+							</button>
+						</div>
 					</div>
 					<div class="bg-white p-4">
-						<UploadFile refresh={refresh} />
-						<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4">
-							{#each imagesList as image (image.id)}
-								<div data-image-id={image.id} class="bg-white border-2 border-gray-200 rounded-xl overflow-clip hover:shadow-md transition-all duration-150 space-y-2">
-									<div class="object-contain aspect-square relative">
-										<div class="absolute left-4 top-4 flex gap-2 h-6 items-center">
-											<input
-												on:change={() => handleCheckboxChange(image)}
-												id={String(image.id)}
-												aria-label={image.alt ?? ''}
-												name={image.storage_key}
-												type="checkbox"
-												class="h-5 w-5 rounded border-gray-300 text-cyan-600 focus:ring-cyan-600"
-											>
-											<label for={String(image.id)}>{image.file_name ?? ''}</label>
+						{#if viewMode === 'library'}
+							<UploadFile refresh={refresh} />
+							<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+								{#each imagesList as image (image.id)}
+									<div data-image-id={image.id} class="bg-white border-2 border-gray-200 rounded-xl overflow-clip hover:shadow-md transition-all duration-150 space-y-2">
+										<div class="object-contain aspect-square relative">
+											<div class="absolute left-4 top-4 flex gap-2 h-6 items-center">
+												<input
+													on:change={() => handleCheckboxChange(image)}
+													id={String(image.id)}
+													aria-label={image.alt ?? ''}
+													name={image.storage_key}
+													type="checkbox"
+													class="h-5 w-5 rounded border-gray-300 text-cyan-600 focus:ring-cyan-600"
+												>
+												<label for={String(image.id)}>{image.file_name ?? ''}</label>
+											</div>
+											<button class="absolute right-4 top-4 flex h-6 items-center" on:click={() => openEdit(image)}>
+												<Edit classList="h-6 w-6 text-gray-400 hover:text-cyan-600" />
+											</button>
+											<img
+												src={`${data.prefix}/cdn-cgi/image/format=auto,width=480/${data.prefix}/${image.storage_key}`}
+												class="img-bg h-full w-full object-contain"
+												alt={image.alt ?? ''}
+											/>
 										</div>
-										<button class="absolute right-4 top-4 flex h-6 items-center" on:click={() => openEdit(image)}>
-											<Edit classList="h-6 w-6 text-gray-400 hover:text-cyan-600" />
-										</button>
-										<img
-											src={`${data.prefix}/cdn-cgi/image/format=auto,width=480/${data.prefix}/${image.storage_key}`}
-											class="img-bg h-full w-full object-contain"
-											alt={image.alt ?? ''}
-										/>
 									</div>
-								</div>
-							{/each}
-						</div>
+								{/each}
+							</div>
+						{:else}
+							<UnsplashBrowser supabase={supabase} on:import={handleUnsplashImported} />
+						{/if}
 					</div>
 					<div class="sticky bottom-0 p-4 bg-white border-t border-gray-200 flex justify-between">
 						<button
