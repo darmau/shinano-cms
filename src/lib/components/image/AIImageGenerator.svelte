@@ -103,8 +103,14 @@
 			});
 
 			if (!response.ok) {
-				const errorMessage = await response.text().catch(() => '生成图片失败，请稍后再试。');
-				throw new Error(errorMessage || '生成图片失败，请稍后再试。');
+				let errorMessage = '生成图片失败，请稍后再试。';
+				try {
+					const payload = (await response.json()) as { error?: string };
+					errorMessage = payload.error ?? errorMessage;
+				} catch {
+					errorMessage = (await response.text().catch(() => errorMessage)) || errorMessage;
+				}
+				throw new Error(errorMessage);
 			}
 
 			const payload = (await response.json()) as GenerateResponse;

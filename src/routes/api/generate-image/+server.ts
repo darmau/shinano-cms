@@ -82,43 +82,76 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 
 	try {
 		const requestPayload: Record<string, unknown> = {
-			model: 'gpt-image-1',
-			prompt,
-			n: 1
+			model: 'gpt-5',
+			input: prompt,
+			tools: [{ type: 'image_generation' }]
+		};
+
+		const toolConfig: { image_generation: Record<string, unknown> } = {
+			image_generation: {}
 		};
 
 		if (size !== 'auto') {
-			requestPayload.size = size;
+			toolConfig.image_generation.size = size;
 		}
 
 		if (quality !== 'auto') {
-			requestPayload.quality = quality;
+			toolConfig.image_generation.quality = quality;
 		}
 
-		const response = await openai.images.generate(requestPayload as never);
+		if (Object.keys(toolConfig.image_generation).length > 0) {
+			requestPayload.tool_config = toolConfig;
+		}
 
-		const image = response.data?.[0];
+		const response = await openai.responses.create(requestPayload as never);
 
-		if (!image?.b64_json) {
+		type ImageGenerationCall = {
+			type: 'image_generation_call';
+			result?: string | null;
+		};
+
+		function isImageGenerationCall(output: unknown): output is ImageGenerationCall {
+			return (
+				typeof output === 'object' &&
+				output !== null &&
+				(output as { type?: unknown }).type === 'image_generation_call'
+			);
+		}
+
+		const outputs = ((response as unknown as { output?: unknown[] }).output ?? []) as unknown[];
+		const imageOutputs = outputs.filter(isImageGenerationCall);
+		const base64Image = imageOutputs
+			.map((item) => item.result)
+			.find((result): result is string => typeof result === 'string' && result.length > 0);
+
+		if (!base64Image) {
 			console.error('OpenAI response missing image payload', response);
-			error(502, 'Image generation failed');
+			return new Response(
+				JSON.stringify({ error: 'Image generation failed: empty response from model.' }),
+				{
+					status: 502,
+					headers: { 'Content-Type': 'application/json' }
+				}
+			);
 		}
 
 		const { width, height } = parseDimensions(size);
 
-		const generatedWidth = (image as { width?: number | null | undefined }).width;
-		const generatedHeight = (image as { height?: number | null | undefined }).height;
-
 		return new Response(
 			JSON.stringify({
 				image: {
-					b64_json: image.b64_json,
-					revised_prompt: image.revised_prompt ?? null,
-					width: generatedWidth ?? width,
-					height: generatedHeight ?? height,
-					mime_type: 'image/png'
+					b64_json: base64Image,
+					revised_prompt:
+						((response as unknown as { output_text?: string | null }).output_text ?? '')?.trim() ||
+						null,
+					width,
+					height,
+					mime_type: 'image/webp'
 				},
-				created: response.created
+				created:
+					(response as unknown as { created?: number }).created ??
+					(response as unknown as { created_at?: number }).created_at ??
+					Date.now()
 			}),
 			{
 				headers: { 'Content-Type': 'application/json' }
@@ -126,6 +159,14 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		);
 	} catch (err) {
 		console.error('OpenAI image generation failed', err);
-		error(502, 'Image generation failed');
+		const message =
+			err && typeof err === 'object' && 'message' in err && typeof err.message === 'string'
+				? err.message
+				: 'Image generation failed.';
+
+		return new Response(JSON.stringify({ error: message }), {
+			status: 502,
+			headers: { 'Content-Type': 'application/json' }
+		});
 	}
 };
