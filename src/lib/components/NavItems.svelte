@@ -14,7 +14,6 @@
 	import UnreadBadge from '$components/UnreadBadge.svelte';
 	import Book from '$assets/icons/book.svelte';
 
-	export let data;
 	export let menuOpen;
 	export let message;
 	export let comment;
