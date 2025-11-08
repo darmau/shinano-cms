@@ -5,11 +5,12 @@
 	import EditImage from '$components/image/EditImage.svelte';
 	import UploadFile from '$components/image/UploadFile.svelte';
 	import UnsplashBrowser from '$components/image/UnsplashBrowser.svelte';
+	import AIImageGenerator from '$components/image/AIImageGenerator.svelte';
 	import { t } from '$lib/functions/i18n';
 	import { browser } from '$app/environment';
 	import { getSupabaseBrowserClient } from '$lib/supabaseClient';
 	import type { ImagesModelData, SelectedImage } from '$lib/types/editor';
-	import type { UploadedImageRecord } from '$lib/api/unsplash';
+	import type { MediaImageRecord } from '$lib/api/media';
 
 	const PAGE_SIZE = 24;
 	const toastStore = getToastStore();
@@ -31,7 +32,7 @@ type ImagesModelCallback = (images: SelectedImage[]) => void;
 	let page = 1;
 	let selectedImages = new Map<number, SelectedImage>();
 	$: selectedCount = selectedImages.size;
-	let viewMode: 'library' | 'unsplash' = 'library';
+	let viewMode: 'library' | 'unsplash' | 'ai' = 'library';
 
 	export let closeModel: () => void;
 	export let onSelect: ImagesModelCallback;
@@ -109,7 +110,7 @@ type ImagesModelCallback = (images: SelectedImage[]) => void;
 		imageData = image;
 	}
 
-	async function handleUnsplashImported(event: CustomEvent<{ image: UploadedImageRecord }>) {
+async function handleUnsplashImported(event: CustomEvent<{ image: MediaImageRecord }>) {
 		const { image } = event.detail;
 
 		await getImages(1);
@@ -130,6 +131,28 @@ type ImagesModelCallback = (images: SelectedImage[]) => void;
 		viewMode = 'library';
 		submitSelection();
 	}
+
+async function handleAIImported(event: CustomEvent<{ image: MediaImageRecord }>) {
+	const { image } = event.detail;
+
+	await getImages(1);
+
+	selectedImages = new Map<number, SelectedImage>([
+		[
+			image.id,
+			{
+				id: image.id,
+				storage_key: image.storage_key,
+				prefix: data.prefix,
+				alt: image.alt,
+				caption: image.caption ?? null
+			}
+		]
+	]);
+
+	viewMode = 'library';
+	submitSelection();
+}
 
 	async function deleteImages() {
 		if (!selectedImages.size) {
@@ -213,6 +236,17 @@ type ImagesModelCallback = (images: SelectedImage[]) => void;
 									>
 										Unsplash
 									</button>
+									<button
+										type="button"
+										on:click={() => (viewMode = 'ai')}
+										class={`rounded-md px-3 py-1.5 text-sm font-medium transition ${
+											viewMode === 'ai'
+												? 'bg-cyan-600 text-white shadow-sm'
+												: 'text-gray-600 hover:bg-gray-100'
+										}`}
+									>
+										AI 生成
+									</button>
 								</div>
 								<button
 									on:click={deleteImages}
@@ -225,8 +259,10 @@ type ImagesModelCallback = (images: SelectedImage[]) => void;
 							<div class="text-sm text-gray-600">
 								{#if viewMode === 'library'}
 									{selectedCount} Selected
-								{:else}
+								{:else if viewMode === 'unsplash'}
 									点击图片即可导入 Unsplash 图片
+								{:else}
+									输入提示词生成图片，满意后保存至媒体库
 								{/if}
 							</div>
 							<button
@@ -268,8 +304,10 @@ type ImagesModelCallback = (images: SelectedImage[]) => void;
 									</div>
 								{/each}
 							</div>
-						{:else}
+						{:else if viewMode === 'unsplash'}
 							<UnsplashBrowser supabase={supabase} on:import={handleUnsplashImported} />
+						{:else}
+							<AIImageGenerator supabase={supabase} on:import={handleAIImported} />
 						{/if}
 					</div>
 					<div class="sticky bottom-0 p-4 bg-white border-t border-gray-200 flex justify-between">

@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { uploadImageFile, updateImageMetadata, type MediaImageRecord } from '$lib/api/media';
 
 export type UnsplashUser = {
 	name?: string;
@@ -32,15 +33,6 @@ export type UnsplashPhoto = {
 export type UnsplashConfig = {
 	accessKey: string;
 	secretKey: string;
-};
-
-export type UploadedImageRecord = {
-	id: number;
-	storage_key: string;
-	alt: string | null;
-	caption?: string | null;
-	width?: number | null;
-	height?: number | null;
 };
 
 const CONFIG_ACCESS_KEY = 'config_UNSPLASH_ACCESS_KEY';
@@ -210,7 +202,7 @@ export async function importUnsplashPhoto({
 	photo,
 	accessKey,
 	supabase
-}: ImportParams): Promise<UploadedImageRecord> {
+}: ImportParams): Promise<MediaImageRecord> {
 	if (!accessKey) {
 		throw new Error('Missing Unsplash access key');
 	}
@@ -239,68 +231,21 @@ export async function importUnsplashPhoto({
 		type: blob.type || 'image/jpeg'
 	});
 
-	const formData = new FormData();
-	formData.append('file', file);
-	if (photo.width) {
-		formData.append('width', String(photo.width));
-	}
-	if (photo.height) {
-		formData.append('height', String(photo.height));
-	}
-
-	const uploadResponse = await fetch('/api/image', {
-		method: 'POST',
-		body: formData
+	const uploadedRecord = await uploadImageFile({
+		file,
+		width: photo.width,
+		height: photo.height
 	});
-
-	if (!uploadResponse.ok) {
-		throw new Error(`Failed to upload image to media library: ${uploadResponse.status}`);
-	}
-
-	const uploadPayload = await uploadResponse.json();
-	const [record] = Array.isArray(uploadPayload) ? uploadPayload : [];
-
-	if (!record?.id) {
-		throw new Error('Upload succeeded but no image record was returned');
-	}
 
 	const alt = deriveAltText(photo);
 	const caption = deriveCaption(photo);
 
-	let finalRecord: UploadedImageRecord = {
-		id: record.id,
-		storage_key: record.storage_key,
-		alt: alt ?? null,
-		caption: caption ?? null,
-		width: record.width ?? null,
-		height: record.height ?? null
-	};
+	const updatedRecord =
+		(await updateImageMetadata(supabase, uploadedRecord.id, {
+			alt: alt ?? null,
+			caption: caption ?? null
+		})) ?? uploadedRecord;
 
-	if (supabase) {
-		const { data, error } = await supabase
-			.from('image')
-			.update({
-				alt: alt ?? null,
-				caption: caption ?? null
-			})
-			.eq('id', record.id)
-			.select()
-			.maybeSingle();
-
-		if (error) {
-			console.error('Failed to update image metadata with Unsplash info', error);
-		} else if (data) {
-			finalRecord = {
-				id: data.id,
-				storage_key: data.storage_key,
-				alt: (data.alt as string | null) ?? finalRecord.alt,
-				caption: (data.caption as string | null) ?? finalRecord.caption,
-				width: (data.width as number | null) ?? finalRecord.width,
-				height: (data.height as number | null) ?? finalRecord.height
-			};
-		}
-	}
-
-	return finalRecord;
+	return updatedRecord;
 }
 

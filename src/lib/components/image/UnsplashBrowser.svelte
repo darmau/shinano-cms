@@ -2,16 +2,16 @@
 	import { createEventDispatcher, onMount } from 'svelte';
 	import { getToastStore, ProgressRadial } from '$lib/toast';
 	import type { SupabaseClient } from '@supabase/supabase-js';
-	import {
-		fetchUnsplashPhotos,
-		importUnsplashPhoto,
-		loadUnsplashConfig,
-		type UnsplashPhoto,
-		type UploadedImageRecord
-	} from '$lib/api/unsplash';
+import {
+	fetchUnsplashPhotos,
+	importUnsplashPhoto,
+	loadUnsplashConfig,
+	type UnsplashPhoto
+} from '$lib/api/unsplash';
+import type { MediaImageRecord } from '$lib/api/media';
 
-	type ImportEventDetail = {
-		image: UploadedImageRecord;
+type ImportEventDetail = {
+	image: MediaImageRecord;
 	};
 
 	const dispatch = createEventDispatcher<{ import: ImportEventDetail }>();
