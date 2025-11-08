@@ -1,6 +1,8 @@
 import { error, type RequestHandler } from '@sveltejs/kit';
-import { WORKERS_TOKEN, WORKERS_URL } from '$env/static/private';
+import exifr from 'exifr';
 import getDateFormat from '$lib/functions/dateFormat';
+import { deleteFromR2, getR2Bucket, type CfPlatform, uploadToR2 } from '$lib/server/r2';
+import { resolveLocationWithSupabase } from '$lib/server/location';
 
 type ExifMetadata = Record<string, unknown>;
 
@@ -9,11 +11,26 @@ type GeoJsonPoint = {
 	coordinates: [number, number];
 };
 
-interface WorkerResponse {
-	storage_key: string;
-	location: string | null;
-	taken_at: string | null;
-	exif: ExifMetadata | null;
+const SUPPORTED_EXIF_TYPES = new Set(['image/jpeg', 'image/png', 'image/avif']);
+
+async function parseExifMetadata(file: File, buffer: ArrayBuffer) {
+	if (!SUPPORTED_EXIF_TYPES.has(file.type)) {
+		return null;
+	}
+
+	try {
+		return ((await exifr.parse(buffer)) as ExifMetadata) ?? null;
+	} catch (err) {
+		console.error('Failed to parse EXIF metadata', err);
+		return null;
+	}
+}
+
+function toOptionalString(value: FormDataEntryValue | null) {
+	if (typeof value === 'string' && value.length > 0) {
+		return value;
+	}
+	return undefined;
 }
 
 function getExifValue(exif: ExifMetadata | null | undefined, ...keys: string[]) {
@@ -200,32 +217,43 @@ function extractGpsPoint(exif: ExifMetadata | null | undefined): GeoJsonPoint | 
 	};
 }
 
-export const POST: RequestHandler = async({ request, locals: { supabase } }) => {
-	// 接收一个file
+export const POST: RequestHandler = async ({ request, locals: { supabase }, platform }) => {
 	const formData = await request.formData();
-	const file = formData.get('file') as File;
-	const width = formData.get('width') as string;
-	const height = formData.get('height') as string;
+	const file = formData.get('file');
+	const width = toOptionalString(formData.get('width'));
+	const height = toOptionalString(formData.get('height'));
 
-	if (!file) {
-		return new Response('Bad request: Missing `file`', { status: 400 });
+	if (!(file instanceof File)) {
+		error(400, 'Bad request: Missing `file`');
 	}
 
-	// 请求workers，上传文件，获得存储的key以及exif
-	const workersResponse: WorkerResponse = await fetch(`${WORKERS_URL}/r2`, {
-		method: 'POST',
-		headers: {
-			'Authorization': `Bearer ${WORKERS_TOKEN}`,
-		},
-		body: formData
-	}).then(res => res.json())
-	.catch(err => {
-		console.error(err);
-		error(502, 'Error uploading file');
-	});
+	const bucket = getR2Bucket(platform as CfPlatform);
+	if (!bucket) {
+		error(500, 'R2 bucket binding is not configured');
+	}
 
+	const fileBuffer = await file.arrayBuffer();
+	const exif = await parseExifMetadata(file, fileBuffer);
+	const takenAt = (exif?.DateTimeOriginal as string | Date | null | undefined) ?? null;
+	const location = exif
+		? await resolveLocationWithSupabase({ exif }, supabase).catch((err) => {
+				console.error('Failed to resolve location', err);
+				return null;
+			})
+		: 'No GPS data';
+
+	const gpsPoint = extractGpsPoint(exif);
+	const { storageKey } = await uploadToR2({
+		bucket,
+		file,
+		arrayBuffer: fileBuffer,
+		metadata: {
+			width,
+			height,
+			location: location ?? ''
+		}
+	});
 	const dateString = new Date().toISOString();
-	const gpsPoint = extractGpsPoint(workersResponse.exif);
 
 	// 存储到supabase
 	// 对于 PostGIS GEOGRAPHY 类型，使用 WKT 格式字符串
@@ -233,10 +261,10 @@ export const POST: RequestHandler = async({ request, locals: { supabase } }) => 
 	const insertData: Record<string, unknown> = {
 		folder: 'default',
 		file_name: file.name,
-		storage_key: workersResponse.storage_key,
-		location: workersResponse.location,
-		taken_at: workersResponse.taken_at,
-		exif: workersResponse.exif,
+		storage_key: storageKey,
+		location,
+		taken_at: takenAt,
+		exif,
 		date: getDateFormat(dateString, false),
 		width,
 		height,
@@ -268,33 +296,32 @@ export const POST: RequestHandler = async({ request, locals: { supabase } }) => 
 	});
 }
 
-export const DELETE: RequestHandler = async({ request, locals: { supabase } }) => {
-	// 接收key数组
+export const DELETE: RequestHandler = async ({ request, locals: { supabase }, platform }) => {
 	const { keys }: { keys: string[] } = await request.json();
 
-	// 请求workers，删除文件
-	const deleteResponse = await fetch(`${WORKERS_URL}/r2`, {
-		method: 'DELETE',
-		headers: {
-			'Authorization': `Bearer ${WORKERS_TOKEN}`,
-			'Content-Type': 'application/json'
-		},
-		body: JSON.stringify({ keys })
-	}).then(res => res.text())
-	.catch(err => {
-		console.error(err);
-		error(502, 'Error deleting file');
-	});
+	if (!Array.isArray(keys) || keys.length === 0) {
+		error(400, 'Bad request: Missing `keys`');
+	}
 
-	// 从supabase删除
-	const { error: deleteDataError } = await supabase.from('image').delete().in('storage_key', keys).select();
+	const bucket = getR2Bucket(platform as CfPlatform);
+	if (!bucket) {
+		error(500, 'R2 bucket binding is not configured');
+	}
+
+	await deleteFromR2(bucket, keys);
+
+	const { error: deleteDataError } = await supabase
+		.from('image')
+		.delete()
+		.in('storage_key', keys)
+		.select();
 
 	if (deleteDataError) {
 		console.error(deleteDataError);
 		error(502, 'Error deleting data');
 	}
 
-	return new Response(deleteResponse, {
+	return new Response(`Successfully deleted ${keys.length} images`, {
 		headers: { 'Content-Type': 'text/plain' }
 	});
 }
