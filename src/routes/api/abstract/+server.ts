@@ -41,6 +41,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 			model: 'gpt-5-nano',
 			instructions: prompt,
 			input: content,
+			max_output_tokens: 150,
 		});
 
 		generatedAbstract = response.output_text?.trim() ?? '';
