@@ -1,30 +1,18 @@
 import { error, type RequestHandler } from '@sveltejs/kit';
+import { getR2Bucket, type CfPlatform } from '$lib/server/r2';
 
 type WorkersAI = { run: (model: string, input: unknown) => Promise<unknown> };
 type CfEnv = { AI?: WorkersAI } & Record<string, unknown>;
-type CfPlatform = { env?: CfEnv } | undefined;
-type CfImageTransform = {
-	width?: number;
-	height?: number;
-	format?: 'jpeg' | 'png' | 'webp';
-	quality?: number;
-	fit?: 'cover' | 'contain' | 'fill' | 'inside' | 'outside' | 'scale-down';
-};
+type CfPlatformWithAI = { env?: CfEnv } | undefined;
 
 const DEFAULT_PROMPT =
 	'Generate a caption for this image, do not try to guess the location, just describe the image.';
 
-const IMAGE_TRANSFORM: CfImageTransform = {
-	width: 384,
-	format: 'webp',
-	quality: 75,
-	fit: 'scale-down'
-};
-
 export const POST: RequestHandler = async ({ request, locals, platform }) => {
-	const { prefix, img_key } = await request.json();
+	const { storage_key, img_key } = await request.json();
+	const targetKey = typeof storage_key === 'string' ? storage_key : img_key;
 
-	if (!prefix || !img_key) {
+	if (!targetKey) {
 		error(400, 'Invalid image key');
 	}
 
@@ -42,28 +30,24 @@ export const POST: RequestHandler = async ({ request, locals, platform }) => {
 
 	const prompt = data?.value ?? DEFAULT_PROMPT;
 
-	const env = (platform as CfPlatform)?.env;
+	const env = (platform as CfPlatformWithAI)?.env;
 	const aiBinding = env?.AI;
 
 	if (!aiBinding) {
 		error(500, 'Workers AI binding not configured');
 	}
 
-	const storageUrl = `${prefix}/${img_key}`;
-	const requestInit: RequestInit & { cf?: { image?: CfImageTransform } } = {
-		cf: {
-			image: IMAGE_TRANSFORM
-		}
-	};
-
-	const imageResponse = await fetch(storageUrl, requestInit);
-
-	if (!imageResponse.ok) {
-		console.error('Failed to fetch image from storage', storageUrl, imageResponse.status, imageResponse.statusText);
-		error(502, 'Failed to fetch image');
+	const bucket = getR2Bucket(platform as CfPlatform);
+	if (!bucket) {
+		error(500, 'R2 bucket binding not configured');
 	}
 
-	const blob = await imageResponse.arrayBuffer();
+	const object = await bucket.get(targetKey);
+	if (!object) {
+		error(404, 'Image not found in storage');
+	}
+
+	const blob = await object.arrayBuffer();
 	const byteArray = Array.from(new Uint8Array(blob));
 	const input = { image: byteArray, prompt, max_tokens: 512 };
 

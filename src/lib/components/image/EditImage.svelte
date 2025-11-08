@@ -17,23 +17,39 @@
 		imageData.taken_at.toString().slice(0,16) :
 		new Date().toISOString().slice(0, 16);
 
-	// 该变量负责记录表单是否被修改，如果修改，则为true
-	let isFormChanged = false;
+// 该变量负责记录表单是否被修改，如果修改，则为true
+let isFormChanged = false;
+let isGeneratingAlt = false;
 
-	// 生成alt
-	async function generateAlt() {
+// 生成alt
+async function generateAlt() {
+	if (isGeneratingAlt) {
+		return;
+	}
+
+	isGeneratingAlt = true;
+	try {
 		imageData.alt = await fetch(`/api/img-alt`, {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json'
 			},
-			body: JSON.stringify({
-				prefix: data.prefix,
-				img_key: imageData.storage_key
-			})
+				body: JSON.stringify({
+					storage_key: imageData.storage_key
+				})
 		}).then(res => res.text());
 		isFormChanged = true;
+	} catch (error) {
+		console.error('Failed to generate alt text', error);
+		toastStore.trigger({
+			message: '生成描述失败，请稍后重试。',
+			hideDismiss: true,
+			background: 'variant-filled-error'
+		});
+	} finally {
+		isGeneratingAlt = false;
 	}
+}
 
 	// 提交更新数据
 	async function submitForm(event: Event) {
@@ -143,9 +159,10 @@
 									<button
 									 type="button"
 									 on:click = {generateAlt}
-									 class="text-cyan-600 text-sm"
+									 disabled = {isGeneratingAlt}
+									 class="text-cyan-600 text-sm disabled:text-gray-400 disabled:cursor-not-allowed"
 									>
-										{$t('generate-alt')}
+										{isGeneratingAlt ? $t('generating') : $t('generate-alt')}
 									</button>
 								</div>
 								<textarea

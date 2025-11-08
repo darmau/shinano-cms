@@ -374,8 +374,12 @@ import type { EditorHandle, ImagesModelData } from '$lib/types/editor';
 	const newLanguageVersions: Language[] = generateNewLanguageVersions();
 
 	// 检查slug
-	let isCheckingSlug = false;
-	let slugExists = false;
+let isCheckingSlug = false;
+let slugExists = false;
+let isGeneratingSlug = false;
+let isGeneratingAbstract = false;
+let isGeneratingTags = false;
+let isTranslatingContent = false;
 
 	async function checkSlug(slug: string): Promise<boolean> {
 		isCheckingSlug = true;
@@ -409,28 +413,74 @@ import type { EditorHandle, ImagesModelData } from '$lib/types/editor';
 
 	// 生成slug
 	async function generateSlug(): Promise<void> {
-		const title = photoContent.title;
-		photoContent.slug = await fetch('/api/slug', {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json'
-			},
-			body: JSON.stringify({ title })
-		}).then((res) => res.text());
-		isChanged = true;
+		if (isGeneratingSlug) {
+			return;
+		}
+
+		const title = photoContent.title?.trim();
+		if (!title) {
+			toastStore.trigger({
+				message: '请先填写标题。',
+				background: 'variant-filled-error'
+			});
+			return;
+		}
+
+		isGeneratingSlug = true;
+		try {
+			photoContent.slug = await fetch('/api/slug', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({ title })
+			}).then((res) => res.text());
+			isChanged = true;
+		} catch (err) {
+			console.error('Failed to generate slug', err);
+			toastStore.trigger({
+				message: '生成 slug 失败，请稍后重试。',
+				background: 'variant-filled-error'
+			});
+		} finally {
+			isGeneratingSlug = false;
+		}
 	}
 
 	// 生成摘要
 	async function generateAbstract(): Promise<void> {
+		if (isGeneratingAbstract) {
+			return;
+		}
+
 		const content = photoContent.content_text;
-		photoContent.abstract = await fetch('/api/abstract', {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json'
-			},
-			body: JSON.stringify({ content })
-		}).then((res) => res.text());
-		isChanged = true;
+		if (!content?.trim()) {
+			toastStore.trigger({
+				message: '正文内容为空，无法生成摘要。',
+				background: 'variant-filled-error'
+			});
+			return;
+		}
+
+		isGeneratingAbstract = true;
+		try {
+			photoContent.abstract = await fetch('/api/abstract', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({ content })
+			}).then((res) => res.text());
+			isChanged = true;
+		} catch (err) {
+			console.error('Failed to generate abstract', err);
+			toastStore.trigger({
+				message: '生成摘要失败，请稍后重试。',
+				background: 'variant-filled-error'
+			});
+		} finally {
+			isGeneratingAbstract = false;
+		}
 	}
 
 	// 监控正文变动
@@ -474,17 +524,40 @@ import type { EditorHandle, ImagesModelData } from '$lib/types/editor';
 
 	// 生成tags
 	async function generateTags(): Promise<void> {
+		if (isGeneratingTags) {
+			return;
+		}
+
 		const content = photoContent.content_text;
-		const result = await fetch('/api/tags', {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json'
-			},
-			body: JSON.stringify({ content })
-		}).then((res) => res.json() as Promise<{ tags?: string[] }>);
-		topics = result.tags ?? [];
-		photoContent.topic = [...topics];
-		isChanged = true;
+		if (!content?.trim()) {
+			toastStore.trigger({
+				message: '正文内容为空，无法生成标签。',
+				background: 'variant-filled-error'
+			});
+			return;
+		}
+
+		isGeneratingTags = true;
+		try {
+			const result = await fetch('/api/tags', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({ content })
+			}).then((res) => res.json() as Promise<{ tags?: string[] }>);
+			topics = result.tags ?? [];
+			photoContent.topic = [...topics];
+			isChanged = true;
+		} catch (err) {
+			console.error('Failed to generate tags', err);
+			toastStore.trigger({
+				message: '生成标签失败，请稍后重试。',
+				background: 'variant-filled-error'
+			});
+		} finally {
+			isGeneratingTags = false;
+		}
 	}
 
 	// 防止误关页面
@@ -503,18 +576,42 @@ import type { EditorHandle, ImagesModelData } from '$lib/types/editor';
 	}
 
 	async function getTranslation() {
-		const translatedHTML = await fetch('/api/translation', {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json'
-			},
-			body: JSON.stringify({
-				lang: data.currentLanguage.locale,
-				content: photoContent.content_text
-			})
-		}).then((res) => res.text());
-		photoContent.content_html = translatedHTML;
-		isChanged = true;
+		if (isTranslatingContent) {
+			return;
+		}
+
+		const content = photoContent.content_text;
+		if (!content?.trim()) {
+			toastStore.trigger({
+				message: '正文内容为空，无法翻译。',
+				background: 'variant-filled-error'
+			});
+			return;
+		}
+
+		isTranslatingContent = true;
+		try {
+			const translatedHTML = await fetch('/api/translation', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({
+					lang: data.currentLanguage.locale,
+					content
+				})
+			}).then((res) => res.text());
+			photoContent.content_html = translatedHTML;
+			isChanged = true;
+		} catch (err) {
+			console.error('Failed to translate content', err);
+			toastStore.trigger({
+				message: '翻译失败，请稍后重试。',
+				background: 'variant-filled-error'
+			});
+		} finally {
+			isTranslatingContent = false;
+		}
 	}
 
 	beforeNavigate((navigation) => {
@@ -579,8 +676,9 @@ import type { EditorHandle, ImagesModelData } from '$lib/types/editor';
 				<button
 					type="button"
 					on:click={generateSlug}
-					class="w-fit break-keep rounded bg-cyan-50 px-3 py-1 text-sm font-semibold text-cyan-600 shadow-sm hover:bg-cyan-100 cursor-pointer"
-					>{$t('generate')}</button
+					disabled={isGeneratingSlug}
+					class="w-fit break-keep rounded bg-cyan-50 px-3 py-1 text-sm font-semibold text-cyan-600 shadow-sm hover:bg-cyan-100 cursor-pointer disabled:cursor-not-allowed disabled:opacity-70"
+					>{isGeneratingSlug ? $t('generating') : $t('generate')}</button
 				>
 			</div>
 			{#if isCheckingSlug}
@@ -601,8 +699,9 @@ import type { EditorHandle, ImagesModelData } from '$lib/types/editor';
 		<button
 			type="button"
 			on:click={getTranslation}
-			class="rounded-md bg-cyan-50 px-3 py-2 text-sm font-semibold text-cyan-600 shadow-sm hover:bg-cyan-100 cursor-pointer"
-			>{$t('translate')}</button
+			disabled={isTranslatingContent}
+			class="rounded-md bg-cyan-50 px-3 py-2 text-sm font-semibold text-cyan-600 shadow-sm hover:bg-cyan-100 cursor-pointer disabled:cursor-not-allowed disabled:opacity-70"
+			>{isTranslatingContent ? $t('generating') : $t('translate')}</button
 		>
 
 		<!--图片-->
@@ -779,8 +878,9 @@ import type { EditorHandle, ImagesModelData } from '$lib/types/editor';
 				<button
 					type="button"
 					on:click={generateTags}
-					class="rounded bg-cyan-600 px-2 py-1 text-sm font-semibold text-white shadow-sm hover:bg-cyan-500 cursor-pointer"
-					>{$t('generate')}</button
+					disabled={isGeneratingTags}
+					class="rounded bg-cyan-600 px-2 py-1 text-sm font-semibold text-white shadow-sm hover:bg-cyan-500 cursor-pointer disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
+					>{isGeneratingTags ? $t('generating') : $t('generate')}</button
 				>
 			</div>
 			<div class="relative mt-2">
@@ -827,8 +927,9 @@ import type { EditorHandle, ImagesModelData } from '$lib/types/editor';
 				<button
 					type="button"
 					on:click={generateAbstract}
-					class="rounded bg-cyan-600 px-2 py-1 text-sm font-semibold text-white shadow-sm hover:bg-cyan-500 cursor-pointer"
-					>{$t('generate')}</button
+					disabled={isGeneratingAbstract}
+					class="rounded bg-cyan-600 px-2 py-1 text-sm font-semibold text-white shadow-sm hover:bg-cyan-500 cursor-pointer disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
+					>{isGeneratingAbstract ? $t('generating') : $t('generate')}</button
 				>
 			</div>
 			<div class="mt-2">

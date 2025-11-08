@@ -1,5 +1,12 @@
 type R2CustomMetadata = Record<string, string>;
 
+export type R2ObjectBody = {
+	arrayBuffer: () => Promise<ArrayBuffer>;
+	text?: () => Promise<string>;
+	json?: () => Promise<unknown>;
+	size?: number;
+} & Record<string, unknown>;
+
 export type R2Bucket = {
 	put: (
 		key: string,
@@ -7,6 +14,7 @@ export type R2Bucket = {
 		options?: { customMetadata?: R2CustomMetadata }
 	) => Promise<unknown>;
 	delete: (key: string) => Promise<unknown>;
+	get: (key: string) => Promise<R2ObjectBody | null>;
 };
 
 export type CfEnv = {

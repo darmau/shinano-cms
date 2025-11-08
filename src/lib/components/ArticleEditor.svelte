@@ -74,8 +74,12 @@
 	let coverImage: ArticleCoverImage | null = initialArticle.cover ?? null;
 	let localTime: string | null =
 		articleContent.published_at ? getDateFormat(articleContent.published_at, true) : null;
-	let slugExists = false;
-	let isCheckingSlug = false;
+let slugExists = false;
+let isCheckingSlug = false;
+let isGeneratingSlug = false;
+let isGeneratingAbstract = false;
+let isGeneratingTags = false;
+let isTranslatingContent = false;
 	let editorComponent: EditorHandle | null = null;
 	let topicInput = '';
 
@@ -299,28 +303,74 @@
 
 	// 生成slug
 	async function generateSlug() {
-		const title = articleContent.title;
-		articleContent.slug = await fetch('/api/slug', {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json'
-			},
-			body: JSON.stringify({ title })
-		}).then((res) => res.text());
-		isChanged = true;
+		if (isGeneratingSlug) {
+			return;
+		}
+
+		const title = articleContent.title?.trim();
+		if (!title) {
+			toastStore.trigger({
+				message: '请先填写标题。',
+				background: 'variant-filled-error'
+			});
+			return;
+		}
+
+		isGeneratingSlug = true;
+		try {
+			articleContent.slug = await fetch('/api/slug', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({ title })
+			}).then((res) => res.text());
+			isChanged = true;
+		} catch (err) {
+			console.error('Failed to generate slug', err);
+			toastStore.trigger({
+				message: '生成 slug 失败，请稍后重试。',
+				background: 'variant-filled-error'
+			});
+		} finally {
+			isGeneratingSlug = false;
+		}
 	}
 
 	// 生成摘要
 	async function generateAbstract() {
+		if (isGeneratingAbstract) {
+			return;
+		}
+
 		const content = articleContent.content_text;
-		articleContent.abstract = await fetch('/api/abstract', {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json'
-			},
-			body: JSON.stringify({ content })
-		}).then((res) => res.text());
-		isChanged = true;
+		if (!content?.trim()) {
+			toastStore.trigger({
+				message: '正文内容为空，无法生成摘要。',
+				background: 'variant-filled-error'
+			});
+			return;
+		}
+
+		isGeneratingAbstract = true;
+		try {
+			articleContent.abstract = await fetch('/api/abstract', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({ content })
+			}).then((res) => res.text());
+			isChanged = true;
+		} catch (err) {
+			console.error('Failed to generate abstract', err);
+			toastStore.trigger({
+				message: '生成摘要失败，请稍后重试。',
+				background: 'variant-filled-error'
+			});
+		} finally {
+			isGeneratingAbstract = false;
+		}
 	}
 
 	// 话题
@@ -341,17 +391,40 @@
 
 	// 生成tags
 	async function generateTags() {
+		if (isGeneratingTags) {
+			return;
+		}
+
 		const content = articleContent.content_text;
-		const result: TagsResponse = await fetch('/api/tags', {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json'
-			},
-			body: JSON.stringify({ content })
-		}).then((res) => res.json());
-		topics = result.tags ?? [];
-		articleContent.topic = topics;
-		isChanged = true;
+		if (!content?.trim()) {
+			toastStore.trigger({
+				message: '正文内容为空，无法生成标签。',
+				background: 'variant-filled-error'
+			});
+			return;
+		}
+
+		isGeneratingTags = true;
+		try {
+			const result: TagsResponse = await fetch('/api/tags', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({ content })
+			}).then((res) => res.json());
+			topics = result.tags ?? [];
+			articleContent.topic = topics;
+			isChanged = true;
+		} catch (err) {
+			console.error('Failed to generate tags', err);
+			toastStore.trigger({
+				message: '生成标签失败，请稍后重试。',
+				background: 'variant-filled-error'
+			});
+		} finally {
+			isGeneratingTags = false;
+		}
 	}
 
 	// 翻译
@@ -364,18 +437,42 @@
 	}
 
 	async function getTranslation() {
-		articleContent.content_html = await fetch('/api/translation', {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json'
-			},
-			body: JSON.stringify({
-				lang: data.currentLanguage.locale,
-				content: articleContent.content_html
-			})
-		}).then((res) => res.text());
-		generateContent(articleContent.content_html);
-		isChanged = true;
+		if (isTranslatingContent) {
+			return;
+		}
+
+		const content = articleContent.content_html;
+		if (!content?.trim()) {
+			toastStore.trigger({
+				message: '正文内容为空，无法翻译。',
+				background: 'variant-filled-error'
+			});
+			return;
+		}
+
+		isTranslatingContent = true;
+		try {
+			articleContent.content_html = await fetch('/api/translation', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({
+					lang: data.currentLanguage.locale,
+					content
+				})
+			}).then((res) => res.text());
+			generateContent(articleContent.content_html);
+			isChanged = true;
+		} catch (err) {
+			console.error('Failed to translate content', err);
+			toastStore.trigger({
+				message: '翻译失败，请稍后重试。',
+				background: 'variant-filled-error'
+			});
+		} finally {
+			isTranslatingContent = false;
+		}
 	}
 
 	// 防止误关页面
@@ -454,8 +551,9 @@
 				<button
 					type="button"
 					on:click = {generateSlug}
-				  class="w-fit break-keep rounded bg-cyan-50 px-3 py-1 text-sm font-semibold text-cyan-600 shadow-sm hover:bg-cyan-100 cursor-pointer"
-				>{$t('generate')}</button>
+					disabled = {isGeneratingSlug}
+				  class="w-fit break-keep rounded bg-cyan-50 px-3 py-1 text-sm font-semibold text-cyan-600 shadow-sm hover:bg-cyan-100 cursor-pointer disabled:cursor-not-allowed disabled:opacity-70"
+				>{isGeneratingSlug ? $t('generating') : $t('generate')}</button>
 			</div>
 			{#if isCheckingSlug}
 				<p class="mt-2 text-sm text-gray-600">Checking...</p>
@@ -499,8 +597,9 @@
 		<button
 			type="button"
 			on:click = {getTranslation}
-			class="rounded-md bg-cyan-50 p-2 text-sm font-semibold text-cyan-600 shadow-sm hover:bg-cyan-100 cursor-pointer"
-		>{$t('translate')}</button>
+			disabled = {isTranslatingContent}
+			class="rounded-md bg-cyan-50 p-2 text-sm font-semibold text-cyan-600 shadow-sm hover:bg-cyan-100 cursor-pointer disabled:cursor-not-allowed disabled:opacity-70"
+		>{isTranslatingContent ? $t('generating') : $t('translate')}</button>
 	</div>
 
 	<aside class = "col-span-1 space-y-8">
@@ -607,8 +706,9 @@
 				<button
 					type="button"
 					on:click = {generateTags}
-					class = "rounded bg-cyan-600 px-2 py-1 text-sm font-semibold text-white shadow-sm hover:bg-cyan-500 cursor-pointer"
-				>{$t('generate')}</button>
+					disabled = {isGeneratingTags}
+					class = "rounded bg-cyan-600 px-2 py-1 text-sm font-semibold text-white shadow-sm hover:bg-cyan-500 cursor-pointer disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
+				>{isGeneratingTags ? $t('generating') : $t('generate')}</button>
 			</div>
 			<div class="relative mt-2">
 				<div
@@ -688,8 +788,9 @@
 				<button
 					type="button"
 					on:click = {generateAbstract}
-					class = "rounded bg-cyan-600 px-2 py-1 text-sm font-semibold text-white shadow-sm hover:bg-cyan-500 cursor-pointer"
-				>{$t('generate')}</button>
+					disabled = {isGeneratingAbstract}
+					class = "rounded bg-cyan-600 px-2 py-1 text-sm font-semibold text-white shadow-sm hover:bg-cyan-500 cursor-pointer disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
+				>{isGeneratingAbstract ? $t('generating') : $t('generate')}</button>
 			</div>
 			<div class = "mt-2">
 				<textarea
