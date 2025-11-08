@@ -38,7 +38,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	let generatedAbstract = '';
 	try {
 		const response = await openai.responses.create({
-			model: 'gpt-5-mini',
+			model: 'gpt-5-nano',
 			instructions: prompt,
 			input: content,
 		});
