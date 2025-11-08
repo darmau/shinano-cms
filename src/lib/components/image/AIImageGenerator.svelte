@@ -8,21 +8,21 @@
 		type MediaImageRecord
 	} from '$lib/api/media';
 
-	type ImageSize = '1024x1024' | '1024x576' | '576x1024' | '512x512';
-	type ImageQuality = 'standard' | 'high';
+	type ImageSize = 'auto' | '1024x1024' | '1536x1024' | '1024x1536';
+	type ImageQuality = 'auto' | 'low' | 'medium' | 'high';
 
-const SIZE_OPTIONS: Array<{ value: ImageSize; label: string }> = [
-	{ value: '1024x1024', label: '正方形 1024×1024' },
-	{ value: '1536x1024', label: '横向 1536×1024' },
-	{ value: '1024x1536', label: '纵向 1024×1536' },
-	{ value: '1792x1024', label: '宽屏 1792×1024' },
-	{ value: '1024x1792', label: '竖屏 1024×1792' },
-	{ value: '512x512', label: '正方形 512×512（快速）' }
-];
+	const SIZE_OPTIONS: Array<{ value: ImageSize; label: string }> = [
+		{ value: 'auto', label: '自动（与主题匹配）' },
+		{ value: '1024x1024', label: '正方形 1024×1024' },
+		{ value: '1536x1024', label: '横向 1536×1024' },
+		{ value: '1024x1536', label: '纵向 1024×1536' }
+	];
 
 	const QUALITY_OPTIONS: Array<{ value: ImageQuality; label: string }> = [
-		{ value: 'high', label: '高质量' },
-		{ value: 'standard', label: '标准质量' }
+		{ value: 'auto', label: '自动' },
+		{ value: 'low', label: '较低' },
+		{ value: 'medium', label: '中等' },
+		{ value: 'high', label: '高质量' }
 	];
 
 	type GenerateResponse = {
@@ -45,8 +45,8 @@ const SIZE_OPTIONS: Array<{ value: ImageSize; label: string }> = [
 	export let supabase: SupabaseClient | null = null;
 
 	let prompt = '';
-	let size: ImageSize = '1024x1024';
-	let quality: ImageQuality = 'high';
+	let size: ImageSize = 'auto';
+	let quality: ImageQuality = 'auto';
 
 	let isGenerating = false;
 	let isUploading = false;
@@ -119,7 +119,7 @@ const SIZE_OPTIONS: Array<{ value: ImageSize; label: string }> = [
 				revised_prompt: image.revised_prompt,
 				width: image.width,
 				height: image.height,
-				mime_type: image.mime_type ?? 'image/png'
+				mime_type: 'image/webp'
 			};
 
 			previewUrl = `data:${generatedImage.mime_type};base64,${generatedImage.b64_json}`;
@@ -140,15 +140,32 @@ const SIZE_OPTIONS: Array<{ value: ImageSize; label: string }> = [
 		}
 	}
 
-	function base64ToFile(base64: string, mimeType: string, fileName: string) {
-		const binaryString = atob(base64);
-		const len = binaryString.length;
-		const bytes = new Uint8Array(len);
-		for (let i = 0; i < len; i += 1) {
-			bytes[i] = binaryString.charCodeAt(i);
+	async function convertBase64ToWebpFile(base64: string, fileName: string) {
+		const img = new Image();
+		img.crossOrigin = 'anonymous';
+		img.src = `data:image/png;base64,${base64}`;
+
+		await new Promise<void>((resolve, reject) => {
+			img.onload = () => resolve();
+			img.onerror = (event) => reject(event);
+		});
+
+		const canvas = document.createElement('canvas');
+		canvas.width = img.naturalWidth || img.width;
+		canvas.height = img.naturalHeight || img.height;
+		const ctx = canvas.getContext('2d');
+
+		if (!ctx) {
+			throw new Error('无法创建 Canvas 上下文，转换失败。');
 		}
-		const blob = new Blob([bytes], { type: mimeType });
-		return new File([blob], fileName, { type: mimeType });
+
+		ctx.drawImage(img, 0, 0);
+
+		const dataUrl = canvas.toDataURL('image/webp', 0.95);
+		const response = await fetch(dataUrl);
+		const blob = await response.blob();
+
+		return new File([blob], fileName, { type: 'image/webp' });
 	}
 
 	async function uploadImage() {
@@ -159,12 +176,8 @@ const SIZE_OPTIONS: Array<{ value: ImageSize; label: string }> = [
 		isUploading = true;
 
 		try {
-			const fileName = `ai-${Date.now()}.png`;
-			const file = base64ToFile(
-				generatedImage.b64_json,
-				generatedImage.mime_type ?? 'image/png',
-				fileName
-			);
+			const fileName = `ai-${Date.now()}.webp`;
+			const file = await convertBase64ToWebpFile(generatedImage.b64_json, fileName);
 
 			const uploaded = await uploadImageFile({
 				file,
