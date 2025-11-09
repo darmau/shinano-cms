@@ -636,7 +636,7 @@ let isTranslatingContent = false;
 {/if}
 
 <div class="grid grid-cols-1 gap-6 md:grid-cols-4">
-	<div class="space-y-8 xl:col-span-3">
+	<div class="space-y-8 md:col-span-3">
 		<!--标题-->
 		<div>
 			<label for="title" class="block text-sm font-medium leading-6 text-gray-900"
