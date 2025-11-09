@@ -602,6 +602,7 @@ let isTranslatingContent = false;
 				})
 			}).then((res) => res.text());
 			photoContent.content_html = translatedHTML;
+			generateContent(translatedHTML);
 			isChanged = true;
 		} catch (err) {
 			console.error('Failed to translate content', err);
