@@ -1,6 +1,5 @@
 <script lang="ts">
 	import PageTitle from '$components/PageTitle.svelte';
-	import StatsChart from '$components/admin/StatsChart.svelte';
 	import type { StatsMetricKey, StatsRow } from '$lib/types/stats';
 
 	type PageData = {
@@ -76,24 +75,6 @@
 				</p>
 			</section>
 		{/if}
-
-		<section class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-			<header class="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-				<div>
-					<h3 class="text-lg font-semibold text-slate-900">内容趋势</h3>
-					<p class="text-sm text-slate-500">最近 30 天内容与互动数据走势</p>
-				</div>
-				{#if latestSnapshot}
-					<p class="text-sm text-slate-400">
-						最后更新：{new Date(latestSnapshot.date).toLocaleDateString('zh-CN')}
-					</p>
-				{/if}
-			</header>
-
-			<div class="mt-6">
-				<StatsChart stats={data.stats} />
-			</div>
-		</section>
 
 		{#if data.stats.length === 0}
 			<section class="rounded-lg border border-dashed border-slate-200 bg-slate-50 p-6 text-center text-slate-500">
