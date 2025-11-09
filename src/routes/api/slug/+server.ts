@@ -1,6 +1,7 @@
 import { error, type RequestHandler } from '@sveltejs/kit';
 import type { ConfigRow } from '$lib/types/config';
 import OpenAI from 'openai';
+import { DEFAULT_AI_CONFIG } from '$lib/types/prompts';
 
 export const POST: RequestHandler = async ({ request, locals }) => {
 	const { title } = await request.json();
@@ -9,7 +10,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	const { data, error: supabaseError } = await supabase
 		.from('config')
 		.select('key, value')
-		.in('key', ['config_OPENAI', 'prompt_SLUG']);
+		.in('key', ['config_OPENAI', 'prompt_SLUG', 'model_SLUG']);
 
 	if (supabaseError) {
 		console.error(supabaseError);
@@ -20,6 +21,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	const configMap = new Map(rows.map(({ key, value }) => [key, value ?? '']));
 	const openaiApiKey = configMap.get('config_OPENAI');
 	const prompt = configMap.get('prompt_SLUG');
+	const model = configMap.get('model_SLUG') ?? DEFAULT_AI_CONFIG.model_SLUG;
 
 	if (!openaiApiKey) {
 		error(500, 'OpenAI API key not configured');
@@ -34,9 +36,9 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	let slug = '';
 	try {
 		const response = await openai.responses.create({
-			model: 'gpt-5-nano',
+			model,
 			instructions: prompt,
-			input: title,
+			input: title
 		});
 		slug = response.output_text?.trim() ?? '';
 	} catch (err) {
