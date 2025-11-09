@@ -175,22 +175,22 @@ const getAPIConfig = async () => {
 		</div>
 		<div>
 			<label
-				for="perspective"
+				for="resend"
 				class = "block text-sm font-medium leading-6 text-gray-900"
 			>
-				Perspective
+				Resend
 			</label>
 			<input
 				type="text"
-				id="perspective"
-				name="config_PERSPECTIVE"
-				bind:value={API.config_PERSPECTIVE}
+				id="resend"
+				name="config_RESEND"
+				bind:value={API.config_RESEND}
 				class="font-mono text-gray-900 ring-gray-300 placeholder:text-gray-400 focus:ring-indigo-600 block w-full rounded-md border-0 py-1.5 px-2 shadow-sm ring-1 ring-inset focus:ring-2 focus:ring-inset sm:text-sm sm:leading-6"
 			/>
 			<p
 				class="mt-2 text-sm text-gray-500"
 			>
-				{$t('api-perspective')}
+				{$t('api-resend')}
 			</p>
 		</div>
 		<button
