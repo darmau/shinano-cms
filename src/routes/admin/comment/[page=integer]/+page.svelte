@@ -25,7 +25,7 @@
 			});
 		} else {
 			toastStore.trigger({
-				message: `成功设为公开`,
+				message: $t('set_public_success'),
 				hideDismiss: true,
 				background: 'variant-filled-success'
 			});
@@ -45,7 +45,7 @@
 			});
 		} else {
 			toastStore.trigger({
-				message: `成功设为屏蔽`,
+				message: $t('block_comment_success'),
 				hideDismiss: true,
 				background: 'variant-filled-success'
 			});
@@ -65,7 +65,7 @@
 			});
 		} else {
 			toastStore.trigger({
-				message: `成功取消屏蔽`,
+				message: $t('unblock_comment_success'),
 				hideDismiss: true,
 				background: 'variant-filled-success'
 			});
@@ -73,10 +73,16 @@
 		await invalidateAll();
 	}
 
-	// 删除评论
-	async function deleteComment(id: number) {
+	// 删除评论（带确认）
+	async function deleteComment(id: number, content: string) {
+		const preview = content.length > 50 ? content.substring(0, 50) + '...' : content;
+		const confirmed = confirm(`${$t('confirm_delete_comment')}\n\n"${preview}"`);
+		
+		if (!confirmed) return;
+
 		const { error: deleteError } = await
 			supabase.from('comment').delete().eq('id', id);
+		
 		if (deleteError) {
 			toastStore.trigger({
 				message: deleteError.message,
@@ -85,11 +91,12 @@
 			});
 		} else {
 			toastStore.trigger({
-				message: `成功删除评论`,
+				message: $t('delete_comment_success'),
 				hideDismiss: true,
 				background: 'variant-filled-success'
 			});
 		}
+		
 		await invalidateAll();
 	}
 </script>
@@ -168,7 +175,7 @@
 				{/if}
 				<button
 					class="text-sm font-medium text-red-500"
-					on:click = {() => deleteComment(comment.id)}
+					on:click = {() => deleteComment(comment.id, comment.content_text)}
 				>
 					{$t('delete_comment')}
 				</button>
