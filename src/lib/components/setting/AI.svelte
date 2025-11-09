@@ -229,6 +229,7 @@ async function submitForm(event: Event) {
 				id="prompt_seo"
 				name="prompt_SEO"
 				bind:value={AIObj.prompt_SEO}
+				rows="4"
 				class="text-gray-900 ring-gray-300 placeholder:text-gray-400 focus:ring-indigo-600 block w-full rounded-md border-0 py-1.5 px-2 shadow-sm ring-1 ring-inset focus:ring-2 focus:ring-inset sm:text-sm sm:leading-6"
 			></textarea>
 		</div>
@@ -259,6 +260,7 @@ async function submitForm(event: Event) {
 				id="prompt_translation"
 				name="prompt_TRANSLATION"
 				bind:value={AIObj.prompt_TRANSLATION}
+				rows="4"
 				class="text-gray-900 ring-gray-300 placeholder:text-gray-400 focus:ring-indigo-600 block w-full rounded-md border-0 py-1.5 px-2 shadow-sm ring-1 ring-inset focus:ring-2 focus:ring-inset sm:text-sm sm:leading-6"
 			></textarea>
 		</div>
@@ -273,6 +275,7 @@ async function submitForm(event: Event) {
 				id="prompt_image_alt"
 				name="prompt_IMAGE_ALT"
 				bind:value={AIObj.prompt_IMAGE_ALT}
+				rows="4"
 				class="text-gray-900 ring-gray-300 placeholder:text-gray-400 focus:ring-indigo-600 block w-full rounded-md border-0 py-1.5 px-2 shadow-sm ring-1 ring-inset focus:ring-2 focus:ring-inset sm:text-sm sm:leading-6"
 			></textarea>
 		</div>
@@ -303,6 +306,7 @@ async function submitForm(event: Event) {
 				id="prompt_tags"
 				name="prompt_TAGS"
 				bind:value={AIObj.prompt_TAGS}
+				rows="4"
 				class="text-gray-900 ring-gray-300 placeholder:text-gray-400 focus:ring-indigo-600 block w-full rounded-md border-0 py-1.5 px-2 shadow-sm ring-1 ring-inset focus:ring-2 focus:ring-inset sm:text-sm sm:leading-6"
 			></textarea>
 		</div>
