@@ -14,7 +14,7 @@
 	const toastStore = getToastStore();
 
 	// 设为公开
-	async function setPublic(id) {
+	async function setPublic(id: number) {
 		const { error: publicError } = await
 			supabase.from('comment').update({ is_public: true }).eq('id', id);
 		if (publicError) {
@@ -25,7 +25,7 @@
 			});
 		} else {
 			toastStore.trigger({
-				message: `成功设为公开`,
+				message: $t('set_public_success'),
 				hideDismiss: true,
 				background: 'variant-filled-success'
 			});
@@ -34,7 +34,7 @@
 	}
 
 	// 设为屏蔽
-	async function setBlock(id) {
+	async function setBlock(id: number) {
 		const { error: blockError } = await
 			supabase.from('comment').update({ is_blocked: true }).eq('id', id);
 		if (blockError) {
@@ -45,7 +45,7 @@
 			});
 		} else {
 			toastStore.trigger({
-				message: `成功设为屏蔽`,
+				message: $t('block_comment_success'),
 				hideDismiss: true,
 				background: 'variant-filled-success'
 			});
@@ -54,7 +54,7 @@
 	}
 
 	// 取消屏蔽
-	async function cancelBlock(id) {
+	async function cancelBlock(id: number) {
 		const { error: cancelError } = await
 			supabase.from('comment').update({ is_blocked: false }).eq('id', id);
 		if (cancelError) {
@@ -65,11 +65,38 @@
 			});
 		} else {
 			toastStore.trigger({
-				message: `成功取消屏蔽`,
+				message: $t('unblock_comment_success'),
 				hideDismiss: true,
 				background: 'variant-filled-success'
 			});
 		}
+		await invalidateAll();
+	}
+
+	// 删除评论（带确认）
+	async function deleteComment(id: number, content: string) {
+		const preview = content.length > 50 ? content.substring(0, 50) + '...' : content;
+		const confirmed = confirm(`${$t('confirm_delete_comment')}\n\n"${preview}"`);
+		
+		if (!confirmed) return;
+
+		const { error: deleteError } = await
+			supabase.from('comment').delete().eq('id', id);
+		
+		if (deleteError) {
+			toastStore.trigger({
+				message: deleteError.message,
+				hideDismiss: true,
+				background: 'variant-filled-error'
+			});
+		} else {
+			toastStore.trigger({
+				message: $t('delete_comment_success'),
+				hideDismiss: true,
+				background: 'variant-filled-success'
+			});
+		}
+		
 		await invalidateAll();
 	}
 </script>
@@ -146,6 +173,12 @@
 						{$t('unblock_comment')}
 					</button>
 				{/if}
+				<button
+					class="text-sm font-medium text-red-500"
+					on:click = {() => deleteComment(comment.id, comment.content_text)}
+				>
+					{$t('delete_comment')}
+				</button>
 			</div>
 
 		</div>
