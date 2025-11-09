@@ -14,7 +14,7 @@
 	const toastStore = getToastStore();
 
 	// 设为公开
-	async function setPublic(id) {
+	async function setPublic(id: number) {
 		const { error: publicError } = await
 			supabase.from('comment').update({ is_public: true }).eq('id', id);
 		if (publicError) {
@@ -34,7 +34,7 @@
 	}
 
 	// 设为屏蔽
-	async function setBlock(id) {
+	async function setBlock(id: number) {
 		const { error: blockError } = await
 			supabase.from('comment').update({ is_blocked: true }).eq('id', id);
 		if (blockError) {
@@ -54,7 +54,7 @@
 	}
 
 	// 取消屏蔽
-	async function cancelBlock(id) {
+	async function cancelBlock(id: number) {
 		const { error: cancelError } = await
 			supabase.from('comment').update({ is_blocked: false }).eq('id', id);
 		if (cancelError) {
@@ -66,6 +66,26 @@
 		} else {
 			toastStore.trigger({
 				message: `成功取消屏蔽`,
+				hideDismiss: true,
+				background: 'variant-filled-success'
+			});
+		}
+		await invalidateAll();
+	}
+
+	// 删除评论
+	async function deleteComment(id: number) {
+		const { error: deleteError } = await
+			supabase.from('comment').delete().eq('id', id);
+		if (deleteError) {
+			toastStore.trigger({
+				message: deleteError.message,
+				hideDismiss: true,
+				background: 'variant-filled-error'
+			});
+		} else {
+			toastStore.trigger({
+				message: `成功删除评论`,
 				hideDismiss: true,
 				background: 'variant-filled-success'
 			});
@@ -146,6 +166,12 @@
 						{$t('unblock_comment')}
 					</button>
 				{/if}
+				<button
+					class="text-sm font-medium text-red-500"
+					on:click = {() => deleteComment(comment.id)}
+				>
+					{$t('delete_comment')}
+				</button>
 			</div>
 
 		</div>
