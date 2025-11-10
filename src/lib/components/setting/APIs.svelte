@@ -131,7 +131,7 @@ const getAPIConfig = async () => {
 				/>
 			</div>
 		</div>
-		<div class="border-b border-gray-900/10 pb-12 space-y-4">
+		<div class="border-b border-gray-900/10 pb-8 space-y-4">
 			<div>
 				<label
 					for="mapbox"
@@ -173,7 +173,7 @@ const getAPIConfig = async () => {
 				</p>
 			</div>
 		</div>
-		<div>
+		<div class="border-b border-gray-900/10 pb-8">
 			<label
 				for="resend"
 				class = "block text-sm font-medium leading-6 text-gray-900"
@@ -191,6 +191,26 @@ const getAPIConfig = async () => {
 				class="mt-2 text-sm text-gray-500"
 			>
 				{$t('api-resend')}
+			</p>
+		</div>
+		<div class="border-b border-gray-900/10 pb-8">
+		  <label
+				for="bark"
+				class = "block text-sm font-medium leading-6 text-gray-900"
+			>
+				Bark
+			</label>
+			<input
+				type="text"
+				id="resend"
+				name="config_BARK_SERVER"
+				bind:value={API.config_BARK_SERVER}
+				class="font-mono text-gray-900 ring-gray-300 placeholder:text-gray-400 focus:ring-indigo-600 block w-full rounded-md border-0 py-1.5 px-2 shadow-sm ring-1 ring-inset focus:ring-2 focus:ring-inset sm:text-sm sm:leading-6"
+			/>
+			<p
+				class="mt-2 text-sm text-gray-500"
+			>
+				{$t('api-bark-server')}
 			</p>
 		</div>
 		<button
