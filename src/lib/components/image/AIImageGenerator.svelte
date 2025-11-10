@@ -233,7 +233,7 @@
 			placeholder="例如：黄金时刻的山脉日出，温暖色调，高细节摄影风格"
 			bind:value={prompt}
 			disabled={isGenerating || isUploading}
-		/>
+		></textarea>
 		<div class="grid grid-cols-1 gap-3 md:grid-cols-2">
 			<label class="flex flex-col gap-1 text-sm text-gray-700">
 				<span class="font-medium text-gray-900">尺寸</span>
@@ -312,23 +312,29 @@
 			</div>
 			<div class="space-y-3">
 				<div>
-					<label class="block text-xs font-semibold uppercase tracking-wide text-gray-500"
+					<label 
+					class="block text-xs font-semibold uppercase tracking-wide text-gray-500"
+					for="alt-text"
 						>Alt 文本</label
 					>
 					<textarea
+						id="alt-text"
 						class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-cyan-600 focus:outline-none focus:ring-1 focus:ring-cyan-600"
 						rows="2"
 						bind:value={altText}
 						placeholder="用于无障碍阅读的图片描述"
 						disabled={isUploading}
-					/>
+					></textarea>
 				</div>
 				<div>
-					<label class="block text-xs font-semibold uppercase tracking-wide text-gray-500"
+					<label 
+					class="block text-xs font-semibold uppercase tracking-wide text-gray-500"
+					for="caption-text"
 						>图片说明（可选）</label
 					>
 					<input
 						type="text"
+						id="caption-text"
 						class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-cyan-600 focus:outline-none focus:ring-1 focus:ring-cyan-600"
 						bind:value={captionText}
 						placeholder="例如：Generated via AI"
