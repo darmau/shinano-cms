@@ -253,6 +253,8 @@ CREATE TABLE
     "content_text" TEXT,
     "content_html" TEXT,
     "is_public" BOOLEAN DEFAULT true,
+    "ip" INET,
+    "ip_info" JSON,
     FOREIGN KEY ("user_id") REFERENCES users ("id") ON UPDATE CASCADE ON DELETE CASCADE,
     FOREIGN KEY ("reply_to") REFERENCES comment ("id") ON UPDATE CASCADE ON DELETE SET NULL,
     FOREIGN KEY ("to_article") REFERENCES article ("id") ON UPDATE CASCADE ON DELETE CASCADE,
@@ -269,6 +271,8 @@ CREATE INDEX ON comment ("to_thought", "is_public");
 CREATE INDEX ON comment ("to_photo", "is_public");
 
 CREATE INDEX ON comment ("created_at");
+
+CREATE INDEX ON comment ("ip");
 
 -- 添加约束，若is_anonymous为true，必须有name和email；若is_anonymous为false，则user_id不能为空
 ALTER TABLE comment
