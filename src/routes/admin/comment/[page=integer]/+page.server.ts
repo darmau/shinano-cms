@@ -21,7 +21,8 @@ export const load: PageServerLoad = async ({ url,params: { page }, locals: { sup
 	  created_at,
 	  to_article (title, slug, language!inner (lang)),
 	  to_photo (title, slug, language!inner (lang)),
-	  to_thought (content_text, slug)
+	  to_thought (content_text, slug),
+		ip_info
 	`)
 	.range((pageNumber - 1) * limit, pageNumber * limit - 1)
 	.order('is_public', { ascending: true })
