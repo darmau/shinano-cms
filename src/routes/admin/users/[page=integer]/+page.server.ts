@@ -1,9 +1,9 @@
 import type { PageServerLoad } from './$types';
 import { error } from '@sveltejs/kit';
 
-export const load: PageServerLoad = async ({ url,params: { page }, locals: { supabase } }) => {
-	const pageNumber = Number(page)
-	const limit = url.searchParams.get('limit') ? Number(url.searchParams.get('limit')) : 16
+export const load: PageServerLoad = async ({ url, params: { page }, locals: { supabase } }) => {
+	const pageNumber = Number(page);
+	const limit = url.searchParams.get('limit') ? Number(url.searchParams.get('limit')) : 16;
 
 	const { data: users, error: fetchError } = await supabase
 		.from('users')
@@ -16,7 +16,7 @@ export const load: PageServerLoad = async ({ url,params: { page }, locals: { sup
 
 	if (fetchError) {
 		console.error(error);
-		error(Number(fetchError.code), { message: fetchError.message })
+		error(Number(fetchError.code), { message: fetchError.message });
 	}
 
 	// 获取url中域名开始到page之间的字符串

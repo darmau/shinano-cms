@@ -84,11 +84,7 @@ function toFiniteNumber(value: unknown): number | null {
 			const numeratorValue = toFiniteNumber(numerator);
 			const denominatorValue = toFiniteNumber(denominator);
 
-			if (
-				numeratorValue !== null &&
-				denominatorValue !== null &&
-				denominatorValue !== 0
-			) {
+			if (numeratorValue !== null && denominatorValue !== null && denominatorValue !== 0) {
 				return numeratorValue / denominatorValue;
 			}
 		}
@@ -110,8 +106,8 @@ function toDecimalDegrees(value: unknown): number | null {
 			return null;
 		}
 
-		const min = minRaw !== undefined ? toFiniteNumber(minRaw) ?? 0 : 0;
-		const sec = secRaw !== undefined ? toFiniteNumber(secRaw) ?? 0 : 0;
+		const min = minRaw !== undefined ? (toFiniteNumber(minRaw) ?? 0) : 0;
+		const sec = secRaw !== undefined ? (toFiniteNumber(secRaw) ?? 0) : 0;
 
 		return deg + min / 60 + sec / 3600;
 	}
@@ -185,7 +181,13 @@ function extractGpsPoint(exif: ExifMetadata | null | undefined): GeoJsonPoint | 
 		'lng',
 		'lon'
 	);
-	const latRef = getExifValue(exif, 'GPSLatitudeRef', 'gpsLatitudeRef', 'LatitudeRef', 'latitudeRef');
+	const latRef = getExifValue(
+		exif,
+		'GPSLatitudeRef',
+		'gpsLatitudeRef',
+		'LatitudeRef',
+		'latitudeRef'
+	);
 	const lonRef = getExifValue(
 		exif,
 		'GPSLongitudeRef',
@@ -197,7 +199,10 @@ function extractGpsPoint(exif: ExifMetadata | null | undefined): GeoJsonPoint | 
 	let latitude = parseCoordinate(latValue, latRef);
 	let longitude = parseCoordinate(lonValue, lonRef);
 
-	if ((latitude === null || longitude === null) && typeof getExifValue(exif, 'GPSPosition') === 'string') {
+	if (
+		(latitude === null || longitude === null) &&
+		typeof getExifValue(exif, 'GPSPosition') === 'string'
+	) {
 		const position = getExifValue(exif, 'GPSPosition') as string;
 		const [latPart, lonPart] = position.split(/[,;]/).map((part) => part.trim());
 
@@ -280,10 +285,7 @@ export const POST: RequestHandler = async ({ request, locals: { supabase }, plat
 		insertData.gps_location = `POINT(${longitude} ${latitude})`;
 	}
 
-	const { data, error: saveDataError } = await supabase
-		.from('image')
-		.insert(insertData)
-		.select();
+	const { data, error: saveDataError } = await supabase.from('image').insert(insertData).select();
 
 	if (saveDataError) {
 		console.error(saveDataError);
@@ -294,7 +296,7 @@ export const POST: RequestHandler = async ({ request, locals: { supabase }, plat
 	return new Response(JSON.stringify(data), {
 		headers: { 'Content-Type': 'application/json' }
 	});
-}
+};
 
 export const DELETE: RequestHandler = async ({ request, locals: { supabase }, platform }) => {
 	const { keys }: { keys: string[] } = await request.json();
@@ -324,4 +326,4 @@ export const DELETE: RequestHandler = async ({ request, locals: { supabase }, pl
 	return new Response(`Successfully deleted ${keys.length} images`, {
 		headers: { 'Content-Type': 'text/plain' }
 	});
-}
+};

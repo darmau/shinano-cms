@@ -33,24 +33,23 @@
 	];
 </script>
 
-<nav class = "flex flex-1 flex-col">
-	<ul role = "list" class = "flex flex-1 flex-col gap-y-2">
-
+<nav class="flex flex-1 flex-col">
+	<ul role="list" class="flex flex-1 flex-col gap-y-2">
 		{#each navItems as item}
-			<li class = "relative">
+			<li class="relative">
 				<a
-					href = {item.href}
-					on:click = {() => menuOpen = false}
-					data-sveltekit-preload-data = "tap"
-					class = {$page.url.pathname === item.href ?
-					'text-cyan-600 bg-gray-50 group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold' : 'text-gray-700 hover:text-cyan-600 hover:bg-gray-50 group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold cursor-pointer'}
+					href={item.href}
+					on:click={() => (menuOpen = false)}
+					data-sveltekit-preload-data="tap"
+					class={$page.url.pathname === item.href
+						? 'text-cyan-600 bg-gray-50 group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold'
+						: 'text-gray-700 hover:text-cyan-600 hover:bg-gray-50 group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold cursor-pointer'}
 				>
 					<svelte:component
-						this = {item.icon} classList = {
-                    $page.url.pathname === item.href
-                      ? 'h-6 w-6 shrink-0 text-cyan-600'
-                      : 'h-6 w-6 shrink-0 text-gray-400 group-hover:text-cyan-600'
-                    }
+						this={item.icon}
+						classList={$page.url.pathname === item.href
+							? 'h-6 w-6 shrink-0 text-cyan-600'
+							: 'h-6 w-6 shrink-0 text-gray-400 group-hover:text-cyan-600'}
 					/>
 					{$t(item.name)}
 				</a>
@@ -61,6 +60,5 @@
 				{/if}
 			</li>
 		{/each}
-
 	</ul>
 </nav>

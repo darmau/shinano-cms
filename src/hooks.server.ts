@@ -52,7 +52,10 @@ const authGuard: Handle = async ({ event, resolve }) => {
 	event.locals.user = user ?? undefined;
 
 	if (!event.locals.session) {
-		if (event.url.pathname.startsWith('/auth/signup') || event.url.pathname.startsWith('/api/auth')) {
+		if (
+			event.url.pathname.startsWith('/auth/signup') ||
+			event.url.pathname.startsWith('/api/auth')
+		) {
 			return resolve(event);
 		}
 		if (!event.url.pathname.startsWith('/auth/login')) {

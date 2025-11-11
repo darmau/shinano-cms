@@ -23,7 +23,7 @@
 		caption?: string | null;
 	};
 
-type ImagesModelCallback = (images: SelectedImage[]) => void;
+	type ImagesModelCallback = (images: SelectedImage[]) => void;
 
 	export let data: ImagesModelData;
 	const supabase = browser ? getSupabaseBrowserClient() : null;
@@ -110,9 +110,7 @@ type ImagesModelCallback = (images: SelectedImage[]) => void;
 		imageData = image;
 	}
 
-async function handleUnsplashImported(event: CustomEvent<{ image: MediaImageRecord }>) {
-		const { image } = event.detail;
-
+	async function handleUnsplashImported({ image }: { image: MediaImageRecord }) {
 		await getImages(1);
 
 		selectedImages = new Map<number, SelectedImage>([
@@ -132,27 +130,25 @@ async function handleUnsplashImported(event: CustomEvent<{ image: MediaImageReco
 		submitSelection();
 	}
 
-async function handleAIImported(event: CustomEvent<{ image: MediaImageRecord }>) {
-	const { image } = event.detail;
+	async function handleAIImported({ image }: { image: MediaImageRecord }) {
+		await getImages(1);
 
-	await getImages(1);
+		selectedImages = new Map<number, SelectedImage>([
+			[
+				image.id,
+				{
+					id: image.id,
+					storage_key: image.storage_key,
+					prefix: data.prefix,
+					alt: image.alt,
+					caption: image.caption ?? null
+				}
+			]
+		]);
 
-	selectedImages = new Map<number, SelectedImage>([
-		[
-			image.id,
-			{
-				id: image.id,
-				storage_key: image.storage_key,
-				prefix: data.prefix,
-				alt: image.alt,
-				caption: image.caption ?? null
-			}
-		]
-	]);
-
-	viewMode = 'library';
-	submitSelection();
-}
+		viewMode = 'library';
+		submitSelection();
+	}
 
 	async function deleteImages() {
 		if (!selectedImages.size) {
@@ -201,7 +197,7 @@ async function handleAIImported(event: CustomEvent<{ image: MediaImageRecord }>)
 </script>
 
 {#if isEditing}
-	<EditImage data={data} {closeEdit} imageData={imageData} />
+	<EditImage {data} {closeEdit} {imageData} />
 {/if}
 
 <div class="dialog">
@@ -209,7 +205,9 @@ async function handleAIImported(event: CustomEvent<{ image: MediaImageRecord }>)
 	<div>
 		<div class="fixed inset-0 z-10 sm:w-11/12 mx-auto overflow-y-auto">
 			<div class="flex items-end justify-center p-4 text-center sm:items-center sm:p-0">
-				<div class="relative transform overflow-y-scroll rounded-lg bg-white px-4 text-left shadow-xl transition-all sm:w-full max-h-screen">
+				<div
+					class="relative transform overflow-y-scroll rounded-lg bg-white px-4 text-left shadow-xl transition-all sm:w-full max-h-screen"
+				>
 					<div class="flex flex-col gap-4 sticky top-0 z-50 w-full bg-white p-4 shadow-sm">
 						<div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
 							<div class="flex flex-wrap items-center gap-3">
@@ -276,10 +274,13 @@ async function handleAIImported(event: CustomEvent<{ image: MediaImageRecord }>)
 					</div>
 					<div class="bg-white p-4">
 						{#if viewMode === 'library'}
-							<UploadFile refresh={refresh} />
+							<UploadFile {refresh} />
 							<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4">
 								{#each imagesList as image (image.id)}
-									<div data-image-id={image.id} class="bg-white border-2 border-gray-200 rounded-xl overflow-clip hover:shadow-md transition-all duration-150 space-y-2">
+									<div
+										data-image-id={image.id}
+										class="bg-white border-2 border-gray-200 rounded-xl overflow-clip hover:shadow-md transition-all duration-150 space-y-2"
+									>
 										<div class="object-contain aspect-square relative">
 											<div class="absolute left-4 top-4 flex gap-2 h-6 items-center">
 												<input
@@ -289,10 +290,13 @@ async function handleAIImported(event: CustomEvent<{ image: MediaImageRecord }>)
 													name={image.storage_key}
 													type="checkbox"
 													class="h-5 w-5 rounded border-gray-300 text-cyan-600 focus:ring-cyan-600"
-												>
+												/>
 												<label for={String(image.id)}>{image.file_name ?? ''}</label>
 											</div>
-											<button class="absolute right-4 top-4 flex h-6 items-center" on:click={() => openEdit(image)}>
+											<button
+												class="absolute right-4 top-4 flex h-6 items-center"
+												on:click={() => openEdit(image)}
+											>
 												<Edit classList="h-6 w-6 text-gray-400 hover:text-cyan-600" />
 											</button>
 											<img
@@ -305,9 +309,9 @@ async function handleAIImported(event: CustomEvent<{ image: MediaImageRecord }>)
 								{/each}
 							</div>
 						{:else if viewMode === 'unsplash'}
-							<UnsplashBrowser supabase={supabase} on:import={handleUnsplashImported} />
+							<UnsplashBrowser {supabase} onImport={handleUnsplashImported} />
 						{:else}
-							<AIImageGenerator supabase={supabase} on:import={handleAIImported} />
+							<AIImageGenerator {supabase} onImport={handleAIImported} />
 						{/if}
 					</div>
 					<div class="sticky bottom-0 p-4 bg-white border-t border-gray-200 flex justify-between">

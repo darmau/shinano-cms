@@ -6,17 +6,19 @@ export const load: PageServerLoad = async ({ params, locals: { supabase } }) => 
 	const thoughtId = params.id;
 
 	const { data: thoughtData, error: thoughtError } = await supabase
-	.from('thought')
-	.select(`
+		.from('thought')
+		.select(
+			`
 	  id,
 	  content_json,
 	  content_html,
 	  content_text,
 	  topic,
 	  thought_image (order, image (id, alt, storage_key))
-  `)
-	.eq('id', thoughtId)
-	.single();
+  `
+		)
+		.eq('id', thoughtId)
+		.single();
 
 	if (thoughtError) {
 		console.error('Error fetching thought data:', thoughtError);
@@ -30,10 +32,10 @@ export const load: PageServerLoad = async ({ params, locals: { supabase } }) => 
 		content_text: thoughtData!.content_text,
 		topic: thoughtData!.topic,
 		images: thoughtData?.thought_image
-	}
+	};
 
 	return {
 		prefix: URL_PREFIX,
 		thoughtContent
-	}
-}
+	};
+};

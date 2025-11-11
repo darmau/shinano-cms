@@ -39,18 +39,8 @@ const toArticleListItem = (article: unknown): ArticleListItem | null => {
 		return null;
 	}
 
-	const {
-		id,
-		title,
-		subtitle,
-		slug,
-		lang,
-		category,
-		is_draft,
-		is_featured,
-		is_top,
-		is_premium
-	} = article as Record<string, unknown>;
+	const { id, title, subtitle, slug, lang, category, is_draft, is_featured, is_top, is_premium } =
+		article as Record<string, unknown>;
 
 	if (
 		typeof id !== 'number' ||
@@ -106,7 +96,9 @@ export const load: PageServerLoad = async ({ url, params: { page }, locals }) =>
 
 	const { data: articles, error: fetchError } = await supabase
 		.from('article')
-		.select(`id, title, subtitle, lang (id, locale), slug, category (id, title), is_draft, is_featured, is_top, is_premium`)
+		.select(
+			`id, title, subtitle, lang (id, locale), slug, category (id, title), is_draft, is_featured, is_top, is_premium`
+		)
 		.range((pageNumber - 1) * limit, pageNumber * limit - 1)
 		.order('updated_at', { ascending: false });
 

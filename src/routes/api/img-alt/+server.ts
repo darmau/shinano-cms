@@ -71,7 +71,7 @@ export const POST: RequestHandler = async ({ request, locals, platform }) => {
 
 	const description =
 		typeof aiResult === 'object' && aiResult !== null && 'description' in aiResult
-			? (aiResult as { description?: string }).description ?? ''
+			? ((aiResult as { description?: string }).description ?? '')
 			: '';
 
 	if (!description) {
@@ -81,4 +81,4 @@ export const POST: RequestHandler = async ({ request, locals, platform }) => {
 	return new Response(description, {
 		headers: { 'Content-Type': 'text/plain' }
 	});
-}
+};

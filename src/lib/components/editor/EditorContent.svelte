@@ -57,7 +57,7 @@
 		newElement.append(...childNodes);
 
 		editor.setOptions({
-			element: newElement,
+			element: newElement
 		});
 	});
 </script>

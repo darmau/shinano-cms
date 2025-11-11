@@ -14,7 +14,7 @@ export interface CustomCodeBlockOptions extends CodeBlockOptions {
  */
 export const CustomCodeBlock = CodeBlock.extend<CustomCodeBlockOptions>({
 	name: 'codeBlock',
-	
+
 	// 添加自定义属性，同时保留父类的所有属性
 	addAttributes() {
 		return {
@@ -23,25 +23,25 @@ export const CustomCodeBlock = CodeBlock.extend<CustomCodeBlockOptions>({
 			// 添加 data-language 属性用于存储编程语言
 			'data-language': {
 				default: null,
-				parseHTML: element => element.getAttribute('data-language'),
-				renderHTML: attributes => {
+				parseHTML: (element) => element.getAttribute('data-language'),
+				renderHTML: (attributes) => {
 					if (!attributes['data-language']) {
 						return {};
 					}
 					return {
-						'data-language': attributes['data-language'],
+						'data-language': attributes['data-language']
 					};
-				},
+				}
 			},
 			// 同步 language 属性（与 data-language 保持一致）
 			language: {
 				default: null,
-				parseHTML: element => element.getAttribute('data-language'),
-				renderHTML: attributes => {
+				parseHTML: (element) => element.getAttribute('data-language'),
+				renderHTML: (attributes) => {
 					// language 属性不直接渲染到 HTML，只用于内部存储
 					return {};
-				},
-			},
+				}
+			}
 		};
 	},
 
@@ -51,13 +51,10 @@ export const CustomCodeBlock = CodeBlock.extend<CustomCodeBlockOptions>({
 		const mergedAttributes = {
 			...HTMLAttributes,
 			'data-language': node.attrs['data-language'] || '',
-			class: `${HTMLAttributes?.class || ''} bg-gray-900 text-gray-100 rounded-md p-4 overflow-x-auto relative font-mono text-sm`.trim(),
+			class:
+				`${HTMLAttributes?.class || ''} bg-gray-900 text-gray-100 rounded-md p-4 overflow-x-auto relative font-mono text-sm`.trim()
 		};
 
-		return [
-			'pre',
-			mergedAttributes,
-			['code', {}, 0],
-		];
-	},
+		return ['pre', mergedAttributes, ['code', {}, 0]];
+	}
 });

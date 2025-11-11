@@ -10,14 +10,8 @@ export const load: LayoutServerLoad = async ({ locals }) => {
 		const supabase = locals.supabase;
 
 		const [{ count: messages }, { count: comments }] = await Promise.all([
-			supabase
-				.from('message')
-				.select('id', { count: 'exact', head: true })
-				.eq('is_read', false),
-			supabase
-				.from('comment')
-				.select('id', { count: 'exact', head: true })
-				.eq('is_public', false)
+			supabase.from('message').select('id', { count: 'exact', head: true }).eq('is_read', false),
+			supabase.from('comment').select('id', { count: 'exact', head: true }).eq('is_public', false)
 		]);
 
 		messageCount = messages ?? 0;

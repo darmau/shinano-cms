@@ -1,5 +1,5 @@
 import type { ComponentType } from 'svelte';
-import type { Content } from '@tiptap/core';
+import type { Content, JSONContent } from '@tiptap/core';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 /**
@@ -11,6 +11,12 @@ export type MenuItem = {
 	command: () => void;
 	content: ComponentType;
 	active: () => boolean;
+};
+
+export type EditorContentUpdateDetail = {
+	json: JSONContent;
+	html: string;
+	text: string;
 };
 
 /**

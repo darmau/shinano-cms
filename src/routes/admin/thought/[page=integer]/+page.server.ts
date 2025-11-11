@@ -2,7 +2,7 @@ import type { PageServerLoad } from './$types';
 import { error } from '@sveltejs/kit';
 import { URL_PREFIX } from '$env/static/private';
 
-export const load: PageServerLoad = async ({ url, params: {page},locals: { supabase } }) => {
+export const load: PageServerLoad = async ({ url, params: { page }, locals: { supabase } }) => {
 	const pageNumber = Number(page);
 	const limit = url.searchParams.get('limit') ? Number(url.searchParams.get('limit')) : 10;
 
@@ -10,16 +10,18 @@ export const load: PageServerLoad = async ({ url, params: {page},locals: { supab
 	const { count } = await supabase.from('thought').select('id', { count: 'exact' });
 
 	const { data: thoughts, error: fetchError } = await supabase
-	.from('thought')
-	.select(`
+		.from('thought')
+		.select(
+			`
 	  id,
 	  slug,
 	  created_at,
 	  content_text,
 	  thought_image (count)
-	`)
-	.range((pageNumber - 1) * limit, pageNumber * limit - 1)
-	.order('created_at', { ascending: false });
+	`
+		)
+		.range((pageNumber - 1) * limit, pageNumber * limit - 1)
+		.order('created_at', { ascending: false });
 
 	if (fetchError) {
 		console.error(error);
@@ -34,6 +36,6 @@ export const load: PageServerLoad = async ({ url, params: {page},locals: { supab
 		count: count ?? 0,
 		thoughts: thoughts ?? [],
 		limit,
-		path,
+		path
 	};
 };

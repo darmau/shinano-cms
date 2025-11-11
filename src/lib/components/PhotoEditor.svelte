@@ -6,7 +6,7 @@
 	import { beforeNavigate, goto } from '$app/navigation';
 	import getDateFormat from '$lib/functions/dateFormat';
 	import { onMount } from 'svelte';
-import ImagesModel from '$components/editor/ImagesModel.svelte';
+	import ImagesModel from '$components/editor/ImagesModel.svelte';
 	import { flip } from 'svelte/animate';
 	import PhotoIcon from '$assets/icons/photo.svelte';
 	import DeleteIcon from '$assets/icons/delete.svelte';
@@ -14,15 +14,15 @@ import ImagesModel from '$components/editor/ImagesModel.svelte';
 	import { getSupabaseBrowserClient } from '$lib/supabaseClient';
 	import type { SupabaseClient } from '@supabase/supabase-js';
 	import type { Content } from '@tiptap/core';
-import type {
-	AlbumPicture,
-	SelectedImage,
-	PhotoContent,
-	PageData,
-	PhotoImageInsert,
-	Language
-} from '$lib/types/photo';
-import type { EditorHandle, ImagesModelData } from '$lib/types/editor';
+	import type {
+		AlbumPicture,
+		SelectedImage,
+		PhotoContent,
+		PageData,
+		PhotoImageInsert,
+		Language
+	} from '$lib/types/photo';
+	import type { EditorContentUpdateDetail, EditorHandle, ImagesModelData } from '$lib/types/editor';
 
 	export let data: PageData;
 	export let isSaved: boolean = false;
@@ -374,12 +374,12 @@ import type { EditorHandle, ImagesModelData } from '$lib/types/editor';
 	const newLanguageVersions: Language[] = generateNewLanguageVersions();
 
 	// 检查slug
-let isCheckingSlug = false;
-let slugExists = false;
-let isGeneratingSlug = false;
-let isGeneratingAbstract = false;
-let isGeneratingTags = false;
-let isTranslatingContent = false;
+	let isCheckingSlug = false;
+	let slugExists = false;
+	let isGeneratingSlug = false;
+	let isGeneratingAbstract = false;
+	let isGeneratingTags = false;
+	let isTranslatingContent = false;
 
 	async function checkSlug(slug: string): Promise<boolean> {
 		isCheckingSlug = true;
@@ -484,16 +484,13 @@ let isTranslatingContent = false;
 	}
 
 	// 监控正文变动
-	let contentJSON: Content | undefined = photoContent.content_json 
-		? (photoContent.content_json as Content) 
+	let contentJSON: Content | undefined = photoContent.content_json
+		? (photoContent.content_json as Content)
 		: undefined;
 	let contentHTML = photoContent.content_html;
 	let contentText = photoContent.content_text;
 
-	function handleContentUpdate(
-		event: CustomEvent<{ json: Content; html: string; text: string }>
-	): void {
-		const { json, html, text } = event.detail;
+	function handleContentUpdate({ json, html, text }: EditorContentUpdateDetail): void {
 		contentJSON = json;
 		contentHTML = html;
 		contentText = text;
@@ -693,7 +690,7 @@ let isTranslatingContent = false;
 
 		<!--编辑器-->
 		<SimpleEditor
-			on:contentUpdate={handleContentUpdate}
+			onContentUpdate={handleContentUpdate}
 			content={contentJSON}
 			bind:this={editorComponent}
 		/>

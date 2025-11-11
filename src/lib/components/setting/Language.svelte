@@ -15,12 +15,14 @@
 
 	// 获取所有语言
 	const getLanguages = async () => {
-		const { data, error: fetchError } = await
-			supabase.from('language').select('lang, locale, is_default').order('is_default', { ascending: false });
+		const { data, error: fetchError } = await supabase
+			.from('language')
+			.select('lang, locale, is_default')
+			.order('is_default', { ascending: false });
 		if (fetchError) {
 			console.error(fetchError);
 			toastStore.trigger({
-				message: "Failed to fetch languages.",
+				message: 'Failed to fetch languages.',
 				background: 'variant-filled-error'
 			});
 		}
@@ -38,14 +40,13 @@
 		toastStore.trigger({
 			message: $t('language-set-default'),
 			hideDismiss: true,
-			background: 'variant-filled-success',
+			background: 'variant-filled-success'
 		});
 	};
 
 	// 添加语言
 	const addLanguage = async (lang, locale) => {
-		const { error: dataError } = await
-			supabase.from('language').insert({ lang, locale }).select();
+		const { error: dataError } = await supabase.from('language').insert({ lang, locale }).select();
 		if (dataError) {
 			console.error(dataError);
 			toastStore.trigger({
@@ -58,28 +59,26 @@
 		toastStore.trigger({
 			message: $t('language-added'),
 			hideDismiss: true,
-			background: 'variant-filled-success',
+			background: 'variant-filled-success'
 		});
 	};
 
 	// 删除语言
 	const deleteLanguage = async (lang: string) => {
-		const { error: deleteError } = await
-			supabase.from('language').delete().eq('lang',
-				lang);
+		const { error: deleteError } = await supabase.from('language').delete().eq('lang', lang);
 		if (deleteError) {
 			console.error(deleteError);
 			toastStore.trigger({
 				message: $t('language-delete-fail'),
 				hideDismiss: true,
-				background: 'variant-filled-error',
+				background: 'variant-filled-error'
 			});
 		}
 		await getLanguages();
 		toastStore.trigger({
 			message: $t('language-deleted'),
 			hideDismiss: true,
-			background: 'variant-filled-success',
+			background: 'variant-filled-success'
 		});
 	};
 
@@ -89,17 +88,15 @@
 	function closeAddLanguage() {
 		isAdding = false;
 	}
-
 </script>
 
-<main class = "py-8 flex flex-col gap-4">
+<main class="py-8 flex flex-col gap-4">
 	<button
-		on:click = {() => isAdding = true}
-		type = "button"
-		class =
-			"self-end inline-flex items-center gap-x-1.5 rounded-md bg-cyan-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-cyan-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+		on:click={() => (isAdding = true)}
+		type="button"
+		class="self-end inline-flex items-center gap-x-1.5 rounded-md bg-cyan-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-cyan-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
 	>
-		<PlusIcon classList = "w-4 h-4" />
+		<PlusIcon classList="w-4 h-4" />
 		{$t('add-language')}
 	</button>
 	{#if isAdding}
@@ -112,32 +109,33 @@
 			</div>
 		{:else}
 			{#each languages as language}
-				<div class = "border-b border-gray-200 flex justify-between py-4">
+				<div class="border-b border-gray-200 flex justify-between py-4">
 					<div>
-						<h3 class = "font-medium flex items-center gap-2">
+						<h3 class="font-medium flex items-center gap-2">
 							{language.locale}
 							{#if language.is_default}
 								<span
-									class = "inline-flex items-center rounded-md bg-yellow-50 px-2 py-1 text-xs font-medium text-yellow-800 ring-1 ring-inset ring-yellow-600/20"
-								>{$t('default')}</span>
+									class="inline-flex items-center rounded-md bg-yellow-50 px-2 py-1 text-xs font-medium text-yellow-800 ring-1 ring-inset ring-yellow-600/20"
+									>{$t('default')}</span
+								>
 							{/if}
 						</h3>
-						<p class = "text-sm text-zinc-600 font-mono">{language.lang}</p>
+						<p class="text-sm text-zinc-600 font-mono">{language.lang}</p>
 					</div>
-					<div class = "flex gap-4">
+					<div class="flex gap-4">
 						{#if !language.is_default}
 							<button
-								on:click = {() => setDefaultLanguage(language.lang)}
-								type = "button"
-								class = "uppercase text-cyan-600 text-sm hover:text-cyan-700 hover:font-semibold"
-							>{$t('set-default')}
+								on:click={() => setDefaultLanguage(language.lang)}
+								type="button"
+								class="uppercase text-cyan-600 text-sm hover:text-cyan-700 hover:font-semibold"
+								>{$t('set-default')}
 							</button>
 						{/if}
 						<button
-							type = "button"
-							on:click = {() => deleteLanguage(language.lang)}
-							class = "uppercase text-sm text-red-600 hover:text-red-700 hover:font-semibold"
-						>{$t('delete')}
+							type="button"
+							on:click={() => deleteLanguage(language.lang)}
+							class="uppercase text-sm text-red-600 hover:text-red-700 hover:font-semibold"
+							>{$t('delete')}
 						</button>
 					</div>
 				</div>

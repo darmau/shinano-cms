@@ -1,61 +1,61 @@
 <script lang="ts">
-import { fileSize } from '$lib/functions/fileSize';
-import { t } from '$lib/functions/i18n';
-import shutterSpeed from '$lib/functions/shutterSpeed';
-import { getToastStore } from '$lib/toast';
-import { invalidateAll } from '$app/navigation';
-import EditImage from '$components/image/EditImage.svelte';
-import UnsplashBrowser from '$components/image/UnsplashBrowser.svelte';
-import AIImageGenerator from '$components/image/AIImageGenerator.svelte';
-import Edit from '$assets/icons/edit.svelte';
-import { browser } from '$app/environment';
-import { getSupabaseBrowserClient } from '$lib/supabaseClient';
-import type { MediaImageRecord } from '$lib/api/media';
+	import { fileSize } from '$lib/functions/fileSize';
+	import { t } from '$lib/functions/i18n';
+	import shutterSpeed from '$lib/functions/shutterSpeed';
+	import { getToastStore } from '$lib/toast';
+	import { invalidateAll } from '$app/navigation';
+	import EditImage from '$components/image/EditImage.svelte';
+	import UnsplashBrowser from '$components/image/UnsplashBrowser.svelte';
+	import AIImageGenerator from '$components/image/AIImageGenerator.svelte';
+	import Edit from '$assets/icons/edit.svelte';
+	import { browser } from '$app/environment';
+	import { getSupabaseBrowserClient } from '$lib/supabaseClient';
+	import type { MediaImageRecord } from '$lib/api/media';
 
-type ImageExif = Partial<{
-	Make: string;
-	Model: string;
-	LensModel: string;
-	FNumber: string | number;
-	ExposureTime: string | number;
-	ISO: string | number;
-}>;
+	type ImageExif = Partial<{
+		Make: string;
+		Model: string;
+		LensModel: string;
+		FNumber: string | number;
+		ExposureTime: string | number;
+		ISO: string | number;
+	}>;
 
-type ImageItem = {
-	id: number;
-	storage_key: string;
-	file_name?: string | null;
-	alt?: string | null;
-	caption?: string | null;
-	width?: number | null;
-	height?: number | null;
-	size?: number | null;
-	taken_at?: string | null;
-	location?: string | null;
-	exif?: ImageExif | null;
-	[key: string]: unknown;
-};
+	type ImageItem = {
+		id: number;
+		storage_key: string;
+		file_name?: string | null;
+		alt?: string | null;
+		caption?: string | null;
+		width?: number | null;
+		height?: number | null;
+		size?: number | null;
+		taken_at?: string | null;
+		location?: string | null;
+		exif?: ImageExif | null;
+		[key: string]: unknown;
+	};
 
-type MediaPageData = {
-	page: number;
-	images: ImageItem[];
-	prefix: string;
-	count: number;
-	limit: number;
-	path: string;
-};
+	type MediaPageData = {
+		page: number;
+		images: ImageItem[];
+		prefix: string;
+		count: number;
+		limit: number;
+		path: string;
+	};
 
-export let data: MediaPageData;
+	export let data: MediaPageData;
 	const supabase = browser ? getSupabaseBrowserClient() : null;
 
 	const toastStore = getToastStore();
 
-let deleteImageList: number[] = []; // ids of images to be deleted
+	let deleteImageList: number[] = []; // ids of images to be deleted
 	let selectedImages = `${deleteImageList.length} ${$t('selected')}`;
 	let deletable = true;
 	let isGeneratingAlt = false; // 是否正在生成 alt
-let showUnsplashModal = false;
-let showAIModal = false;
+	let showUnsplashModal = false;
+	let showAIModal = false;
 
 	function updateSelectedImages() {
 		selectedImages = `${deleteImageList.length} ${$t('selected')}`;
@@ -72,8 +72,8 @@ let showAIModal = false;
 			deletable = true;
 			// 从data.images中提取要删除的图片的storage_keys
 			const keysToDelete = data.images
-			.filter(image => deleteImageList.includes(image.id))
-			.map(image => image.storage_key);
+				.filter((image) => deleteImageList.includes(image.id))
+				.map((image) => image.storage_key);
 
 			// 并行执行数据库删除和存储删除操作
 			await Promise.all([
@@ -113,7 +113,7 @@ let showAIModal = false;
 		}
 
 		isGeneratingAlt = true;
-		const selectedImagesData = data.images.filter(image => deleteImageList.includes(image.id));
+		const selectedImagesData = data.images.filter((image) => deleteImageList.includes(image.id));
 		let successCount = 0;
 		let failCount = 0;
 
@@ -130,7 +130,7 @@ let showAIModal = false;
 						body: JSON.stringify({
 							storage_key: image.storage_key
 						})
-					}).then(res => res.text());
+					}).then((res) => res.text());
 
 					// 更新数据库
 					const { error: updateError } = await supabase
@@ -144,9 +144,11 @@ let showAIModal = false;
 					} else {
 						successCount++;
 						// 成功生成后，从选中列表中移除该图片
-						deleteImageList = deleteImageList.filter(id => id !== image.id);
+						deleteImageList = deleteImageList.filter((id) => id !== image.id);
 						// 更新复选框状态
-						const checkbox = document.querySelector<HTMLInputElement>(`input[type="checkbox"][id="${image.id}"]`);
+						const checkbox = document.querySelector<HTMLInputElement>(
+							`input[type="checkbox"][id="${image.id}"]`
+						);
 						if (checkbox) {
 							checkbox.checked = false;
 						}
@@ -191,50 +193,50 @@ let showAIModal = false;
 
 	// 打开图片编辑窗口
 	let isEditing = false;
-let imageData: ImageItem | Record<string, unknown> = {};
+	let imageData: ImageItem | Record<string, unknown> = {};
 
 	function closeEdit() {
 		isEditing = false;
 	}
 
-function openEdit(image: ImageItem) {
+	function openEdit(image: ImageItem) {
 		isEditing = true;
 		imageData = image;
 	}
 
-function closeUnsplashModal() {
-	showUnsplashModal = false;
-}
+	function closeUnsplashModal() {
+		showUnsplashModal = false;
+	}
 
-function closeAIModal() {
-	showAIModal = false;
-}
+	function closeAIModal() {
+		showAIModal = false;
+	}
 
-async function handleUnsplashImported(_event: CustomEvent<{ image: MediaImageRecord }>) {
-	closeUnsplashModal();
-	deleteImageList = [];
-	updateSelectedImages();
-	await invalidateAll();
-}
+	async function handleUnsplashImported(_: { image: MediaImageRecord }) {
+		closeUnsplashModal();
+		deleteImageList = [];
+		updateSelectedImages();
+		await invalidateAll();
+	}
 
-async function handleAIImported(_event: CustomEvent<{ image: MediaImageRecord }>) {
-	closeAIModal();
-	deleteImageList = [];
-	updateSelectedImages();
-	await invalidateAll();
-}
+	async function handleAIImported(_: { image: MediaImageRecord }) {
+		closeAIModal();
+		deleteImageList = [];
+		updateSelectedImages();
+		await invalidateAll();
+	}
 
 	// 选中所有图片，并且添加到selectedImages数组中
 	function switchSelectAllImages() {
 		const checkboxes = document.querySelectorAll<HTMLInputElement>('input[type="checkbox"]');
 		if (deleteImageList.length === data.images.length) {
-			checkboxes.forEach(checkbox => {
+			checkboxes.forEach((checkbox) => {
 				checkbox.checked = false;
 			});
 			deleteImageList = [];
 		} else {
-			deleteImageList = data.images.map(image => image.id);
-			checkboxes.forEach(checkbox => {
+			deleteImageList = data.images.map((image) => image.id);
+			checkboxes.forEach((checkbox) => {
 				checkbox.checked = true;
 			});
 		}
@@ -243,13 +245,13 @@ async function handleAIImported(_event: CustomEvent<{ image: MediaImageRecord }>
 </script>
 
 {#if isEditing}
-	<EditImage data = {data} {closeEdit} imageData = {imageData} />
+	<EditImage {data} {closeEdit} {imageData} />
 {/if}
 
-<div class = "flex justify-between items-center my-8">
+<div class="flex justify-between items-center my-8">
 	<p>{selectedImages}</p>
-	<button on:click = {switchSelectAllImages}>Select All</button>
-	<div class = "mt-4 flex md:ml-4 md:mt-0 gap-2">
+	<button on:click={switchSelectAllImages}>Select All</button>
+	<div class="mt-4 flex md:ml-4 md:mt-0 gap-2">
 		<button
 			type="button"
 			on:click={() => (showAIModal = true)}
@@ -265,65 +267,61 @@ async function handleAIImported(_event: CustomEvent<{ image: MediaImageRecord }>
 			从 Unsplash 导入
 		</button>
 		<button
-			on:click = {generateAltForImages}
-			disabled = {deletable || isGeneratingAlt} type = "button"
-			class =
-				"inline-flex w-full justify-center rounded-md bg-cyan-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-cyan-500 sm:ml-3 sm:w-auto disabled:bg-gray-300"
+			on:click={generateAltForImages}
+			disabled={deletable || isGeneratingAlt}
+			type="button"
+			class="inline-flex w-full justify-center rounded-md bg-cyan-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-cyan-500 sm:ml-3 sm:w-auto disabled:bg-gray-300"
 		>
 			{isGeneratingAlt ? $t('generating') : $t('generate-alt')}
 		</button>
 		<button
-			on:click = {deleteImages}
-			disabled = {deletable || isGeneratingAlt} type = "button"
-			class =
-				"inline-flex w-full justify-center rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 sm:ml-3 sm:w-auto disabled:bg-gray-300"
-		>{$t('delete')}
+			on:click={deleteImages}
+			disabled={deletable || isGeneratingAlt}
+			type="button"
+			class="inline-flex w-full justify-center rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 sm:ml-3 sm:w-auto disabled:bg-gray-300"
+			>{$t('delete')}
 		</button>
 	</div>
 </div>
-<div
-	class =
-		"grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4"
->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4">
 	{#each data.images as image (image.id)}
 		<div
-			data-image-id = {image.id}
-			class = "bg-white border border-gray-200 rounded-xl overflow-clip hover:shadow-md transition-all duration-150 space-y-2"
+			data-image-id={image.id}
+			class="bg-white border border-gray-200 rounded-xl overflow-clip hover:shadow-md transition-all duration-150 space-y-2"
 		>
-			<div class = "object-contain aspect-square relative">
-				<div class = "absolute left-4 top-4 flex h-6 items-center">
+			<div class="object-contain aspect-square relative">
+				<div class="absolute left-4 top-4 flex h-6 items-center">
 					<input
-						on:change = {() => {
+						on:change={() => {
 							if (deleteImageList.includes(image.id)) {
 								deleteImageList = deleteImageList.filter((id) => id !== image.id);
-								updateSelectedImages()
+								updateSelectedImages();
 							} else {
 								deleteImageList.push(image.id);
-								updateSelectedImages()
+								updateSelectedImages();
 							}
 						}}
-						id = {String(image.id)}
+						id={String(image.id)}
 						aria-label={image.alt ?? image.file_name ?? ''}
-						name = {image.storage_key}
-						type = "checkbox"
-						class =
-							"h-5 w-5 rounded border-gray-300 text-cyan-600 focus:ring-cyan-600"
-					>
+						name={image.storage_key}
+						type="checkbox"
+						class="h-5 w-5 rounded border-gray-300 text-cyan-600 focus:ring-cyan-600"
+					/>
 				</div>
 				<button
-					class = "absolute right-4 top-4 flex h-6 items-center"
-					on:click = {() => openEdit(image)}
+					class="absolute right-4 top-4 flex h-6 items-center"
+					on:click={() => openEdit(image)}
 				>
-					<Edit classList = "h-6 w-6 text-gray-400 hover:text-cyan-600" />
+					<Edit classList="h-6 w-6 text-gray-400 hover:text-cyan-600" />
 				</button>
 				<img
-					src = {`${data.prefix}/cdn-cgi/image/format=auto,width=480/${data.prefix}/${image.storage_key}`}
-					class = "img-bg h-full w-full object-contain"
-					alt = {image.alt}
+					src={`${data.prefix}/cdn-cgi/image/format=auto,width=480/${data.prefix}/${image.storage_key}`}
+					class="img-bg h-full w-full object-contain"
+					alt={image.alt}
 				/>
 			</div>
-			<div class = "p-4 space-y-4 break-words">
-				<h3 class = "font-medium">{image.file_name}</h3>
+			<div class="p-4 space-y-4 break-words">
+				<h3 class="font-medium">{image.file_name}</h3>
 				<small>
 					<span>{image.width ?? '-'}</span>
 					×
@@ -331,84 +329,72 @@ async function handleAIImported(_event: CustomEvent<{ image: MediaImageRecord }>
 					|
 					<span>{fileSize(Number(image.size ?? 0))}</span>
 				</small>
-				<div class = "space-y-1">
-					<h4 class = "font-medium text-sm mb-1">alt</h4>
+				<div class="space-y-1">
+					<h4 class="font-medium text-sm mb-1">alt</h4>
 					{#if image.alt}
-						<p class = "text-gray-700 text-sm">{image.alt}</p>
+						<p class="text-gray-700 text-sm">{image.alt}</p>
 					{:else}
-						<p class = "text-gray-400 text-sm">No alt</p>
+						<p class="text-gray-400 text-sm">No alt</p>
 					{/if}
 				</div>
-				<div class = "space-y-1">
-					<h4 class = "font-medium text-sm mb-1">{$t('image-caption')}</h4>
+				<div class="space-y-1">
+					<h4 class="font-medium text-sm mb-1">{$t('image-caption')}</h4>
 					{#if image.caption}
-						<p class = "text-gray-700 text-sm">{image.caption}</p>
+						<p class="text-gray-700 text-sm">{image.caption}</p>
 					{:else}
-						<p class = "text-gray-400 text-sm">No description</p>
+						<p class="text-gray-400 text-sm">No description</p>
 					{/if}
 				</div>
 				{#if image.taken_at}
 					<div>
-						<h4 class = "font-medium text-sm mb-1">{$t('shooting-time')}</h4>
-						<p class = "text-sm text-gray-700">{image.taken_at}</p>
+						<h4 class="font-medium text-sm mb-1">{$t('shooting-time')}</h4>
+						<p class="text-sm text-gray-700">{image.taken_at}</p>
 					</div>
 				{/if}
 				{#if image.location}
 					<div>
-						<h4 class = "font-medium text-sm mb-1">拍摄地点</h4>
-						<p class = "text-sm text-gray-700">{image.location}</p>
+						<h4 class="font-medium text-sm mb-1">拍摄地点</h4>
+						<p class="text-sm text-gray-700">{image.location}</p>
 					</div>
 				{/if}
 				{#if image.exif}
-					<ul class = "space-y-1">
+					<ul class="space-y-1">
 						{#if image.exif.Make}
-							<li class = "flex justify-between gap-4">
-								<h4 class = "font-medium text-sm mb-1 shrink-0">{$t('brand')}</h4>
-								<p
-									class = "text-sm text-gray-700 text-right"
-								>{image.exif.Make}</p>
+							<li class="flex justify-between gap-4">
+								<h4 class="font-medium text-sm mb-1 shrink-0">{$t('brand')}</h4>
+								<p class="text-sm text-gray-700 text-right">{image.exif.Make}</p>
 							</li>
 						{/if}
 						{#if image.exif.Model}
-							<li class = "flex justify-between gap-4">
-								<h4 class = "font-medium text-sm mb-1 shrink-0">{$t('model')}</h4>
-								<p
-									class = "text-sm text-gray-700 text-right"
-								>{image.exif.Model}</p>
+							<li class="flex justify-between gap-4">
+								<h4 class="font-medium text-sm mb-1 shrink-0">{$t('model')}</h4>
+								<p class="text-sm text-gray-700 text-right">{image.exif.Model}</p>
 							</li>
 						{/if}
 						{#if image.exif.LensModel}
-							<li class = "flex justify-between gap-4">
-								<h4 class = "font-medium text-sm mb-1 shrink-0">{$t('lens')}</h4>
-								<p
-									class = "text-sm text-gray-700 text-right"
-								>{image.exif.LensModel}</p>
+							<li class="flex justify-between gap-4">
+								<h4 class="font-medium text-sm mb-1 shrink-0">{$t('lens')}</h4>
+								<p class="text-sm text-gray-700 text-right">{image.exif.LensModel}</p>
 							</li>
 						{/if}
 						{#if image.exif.FNumber}
-							<li class = "flex justify-between gap-4">
-								<h4
-									class = "font-medium text-sm mb-1 shrink-0"
-								>{$t('aperture')}</h4>
-								<p
-									class = "text-sm text-gray-700 text-right"
-								>{image.exif.FNumber}</p>
+							<li class="flex justify-between gap-4">
+								<h4 class="font-medium text-sm mb-1 shrink-0">{$t('aperture')}</h4>
+								<p class="text-sm text-gray-700 text-right">{image.exif.FNumber}</p>
 							</li>
 						{/if}
 						{#if image.exif.ExposureTime}
-							<li class = "flex justify-between gap-4">
-								<h4
-									class = "font-medium text-sm mb-1 shrink-0"
-								>{$t('shutter-speed')}</h4>
-								<p
-									class = "text-sm text-gray-700 text-right"
-								>{shutterSpeed(String(image.exif.ExposureTime))}</p>
+							<li class="flex justify-between gap-4">
+								<h4 class="font-medium text-sm mb-1 shrink-0">{$t('shutter-speed')}</h4>
+								<p class="text-sm text-gray-700 text-right">
+									{shutterSpeed(String(image.exif.ExposureTime))}
+								</p>
 							</li>
 						{/if}
 						{#if image.exif.ISO}
-							<li class = "flex justify-between gap-4">
-								<h4 class = "font-medium text-sm mb-1 shrink-0">{$t('iso')}</h4>
-								<p class = "text-sm text-gray-700 text-right">{image.exif.ISO}</p>
+							<li class="flex justify-between gap-4">
+								<h4 class="font-medium text-sm mb-1 shrink-0">{$t('iso')}</h4>
+								<p class="text-sm text-gray-700 text-right">{image.exif.ISO}</p>
 							</li>
 						{/if}
 					</ul>
@@ -431,7 +417,7 @@ async function handleAIImported(_event: CustomEvent<{ image: MediaImageRecord }>
 				</button>
 			</div>
 			<div class="max-h-[80vh] overflow-y-auto px-6 py-6">
-				<UnsplashBrowser supabase={supabase} on:import={handleUnsplashImported} />
+				<UnsplashBrowser {supabase} onImport={handleUnsplashImported} />
 			</div>
 		</div>
 	</div>
@@ -450,7 +436,7 @@ async function handleAIImported(_event: CustomEvent<{ image: MediaImageRecord }>
 				</button>
 			</div>
 			<div class="max-h-[80vh] overflow-y-auto px-6 py-6">
-				<AIImageGenerator supabase={supabase} on:import={handleAIImported} />
+				<AIImageGenerator {supabase} onImport={handleAIImported} />
 			</div>
 		</div>
 	</div>

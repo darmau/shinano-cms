@@ -21,8 +21,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	const configMap = new Map(rows.map(({ key, value }) => [key, value ?? '']));
 	const openaiApiKey = configMap.get('config_OPENAI');
 	const prompt = configMap.get('prompt_TRANSLATION');
-	const model =
-		configMap.get('model_TRANSLATION') ?? DEFAULT_AI_CONFIG.model_TRANSLATION;
+	const model = configMap.get('model_TRANSLATION') ?? DEFAULT_AI_CONFIG.model_TRANSLATION;
 
 	if (!openaiApiKey) {
 		error(500, 'OpenAI API key not configured');
@@ -51,4 +50,4 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	return new Response(translatedHtml, {
 		headers: { 'Content-Type': 'text/plain' }
 	});
-}
+};

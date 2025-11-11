@@ -4,9 +4,10 @@ import { error } from '@sveltejs/kit';
 export const load: PageServerLoad = async ({ params, locals: { supabase } }) => {
 	const messageId = params.id;
 
-	const {data: messageData, error: messageError} = await supabase
-	.from('message')
-	.select(`
+	const { data: messageData, error: messageError } = await supabase
+		.from('message')
+		.select(
+			`
 	  id,
 	  message,
 	  contact_type,
@@ -14,9 +15,10 @@ export const load: PageServerLoad = async ({ params, locals: { supabase } }) => 
 	  name,
 	  created_at,
 	  users (source)
-	`)
-	.eq('id', messageId)
-	.single();
+	`
+		)
+		.eq('id', messageId)
+		.single();
 
 	if (messageError) {
 		console.error('Error fetching message data:', messageError);
@@ -25,5 +27,5 @@ export const load: PageServerLoad = async ({ params, locals: { supabase } }) => 
 
 	return {
 		messageData
-	}
-}
+	};
+};

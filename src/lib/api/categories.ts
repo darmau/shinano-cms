@@ -32,4 +32,3 @@ export const deleteCategories = async (ids: number[]) => {
 
 	return { success: true };
 };
-
