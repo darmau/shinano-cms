@@ -22,7 +22,7 @@ import type {
 	PhotoImageInsert,
 	Language
 } from '$lib/types/photo';
-import type { EditorHandle, ImagesModelData } from '$lib/types/editor';
+import type { EditorContentUpdateDetail, EditorHandle, ImagesModelData } from '$lib/types/editor';
 
 	export let data: PageData;
 	export let isSaved: boolean = false;
@@ -490,10 +490,7 @@ let isTranslatingContent = false;
 	let contentHTML = photoContent.content_html;
 	let contentText = photoContent.content_text;
 
-	function handleContentUpdate(
-		event: CustomEvent<{ json: Content; html: string; text: string }>
-	): void {
-		const { json, html, text } = event.detail;
+	function handleContentUpdate({ json, html, text }: EditorContentUpdateDetail): void {
 		contentJSON = json;
 		contentHTML = html;
 		contentText = text;
@@ -693,7 +690,7 @@ let isTranslatingContent = false;
 
 		<!--编辑器-->
 		<SimpleEditor
-			on:contentUpdate={handleContentUpdate}
+			onContentUpdate={handleContentUpdate}
 			content={contentJSON}
 			bind:this={editorComponent}
 		/>

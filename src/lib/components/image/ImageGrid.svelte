@@ -210,14 +210,14 @@ function closeAIModal() {
 	showAIModal = false;
 }
 
-async function handleUnsplashImported(_event: CustomEvent<{ image: MediaImageRecord }>) {
+async function handleUnsplashImported(_: { image: MediaImageRecord }) {
 	closeUnsplashModal();
 	deleteImageList = [];
 	updateSelectedImages();
 	await invalidateAll();
 }
 
-async function handleAIImported(_event: CustomEvent<{ image: MediaImageRecord }>) {
+async function handleAIImported(_: { image: MediaImageRecord }) {
 	closeAIModal();
 	deleteImageList = [];
 	updateSelectedImages();
@@ -431,7 +431,7 @@ async function handleAIImported(_event: CustomEvent<{ image: MediaImageRecord }>
 				</button>
 			</div>
 			<div class="max-h-[80vh] overflow-y-auto px-6 py-6">
-				<UnsplashBrowser supabase={supabase} on:import={handleUnsplashImported} />
+				<UnsplashBrowser supabase={supabase} onImport={handleUnsplashImported} />
 			</div>
 		</div>
 	</div>
@@ -450,7 +450,7 @@ async function handleAIImported(_event: CustomEvent<{ image: MediaImageRecord }>
 				</button>
 			</div>
 			<div class="max-h-[80vh] overflow-y-auto px-6 py-6">
-				<AIImageGenerator supabase={supabase} on:import={handleAIImported} />
+				<AIImageGenerator supabase={supabase} onImport={handleAIImported} />
 			</div>
 		</div>
 	</div>

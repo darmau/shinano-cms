@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { createEventDispatcher, onMount, onDestroy } from 'svelte';
+	import { onMount, onDestroy } from 'svelte';
 	import type { Readable } from 'svelte/store';
 	import type { Content } from '@tiptap/core';
 	import type { Editor as CoreEditor } from '@tiptap/core';
@@ -47,11 +47,15 @@
 	import ImagesModel from '$components/editor/ImagesModel.svelte';
 	import Image from '$components/editor/Image';
 	import Gapcursor from '@tiptap/extension-gapcursor';
-	import type { ImagesModelData, MenuItem, SelectedImage } from '$lib/types/editor';
-
-	const dispatch = createEventDispatcher();
+	import type {
+		EditorContentUpdateDetail,
+		ImagesModelData,
+		MenuItem,
+		SelectedImage
+	} from '$lib/types/editor';
 	export let data: ImagesModelData;
 	export let content: Content | undefined = undefined;
+	export let onContentUpdate: ((detail: EditorContentUpdateDetail) => void) | undefined;
 
 	let editor: Readable<Editor> | undefined;
 	let unsubscribe: (() => void) | undefined;
@@ -380,7 +384,7 @@
 				updateCodeBlockLabels(editor);
 
 				// 触发自定义事件
-				dispatch('contentUpdate', { json, html, text });
+				onContentUpdate?.({ json, html, text });
 			}
 		});
 

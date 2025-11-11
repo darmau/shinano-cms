@@ -110,8 +110,7 @@ type ImagesModelCallback = (images: SelectedImage[]) => void;
 		imageData = image;
 	}
 
-async function handleUnsplashImported(event: CustomEvent<{ image: MediaImageRecord }>) {
-		const { image } = event.detail;
+async function handleUnsplashImported({ image }: { image: MediaImageRecord }) {
 
 		await getImages(1);
 
@@ -132,8 +131,7 @@ async function handleUnsplashImported(event: CustomEvent<{ image: MediaImageReco
 		submitSelection();
 	}
 
-async function handleAIImported(event: CustomEvent<{ image: MediaImageRecord }>) {
-	const { image } = event.detail;
+async function handleAIImported({ image }: { image: MediaImageRecord }) {
 
 	await getImages(1);
 
@@ -305,9 +303,9 @@ async function handleAIImported(event: CustomEvent<{ image: MediaImageRecord }>)
 								{/each}
 							</div>
 						{:else if viewMode === 'unsplash'}
-							<UnsplashBrowser supabase={supabase} on:import={handleUnsplashImported} />
+							<UnsplashBrowser supabase={supabase} onImport={handleUnsplashImported} />
 						{:else}
-							<AIImageGenerator supabase={supabase} on:import={handleAIImported} />
+							<AIImageGenerator supabase={supabase} onImport={handleAIImported} />
 						{/if}
 					</div>
 					<div class="sticky bottom-0 p-4 bg-white border-t border-gray-200 flex justify-between">

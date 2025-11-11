@@ -10,7 +10,7 @@
 	import { browser } from '$app/environment';
 	import { getSupabaseBrowserClient } from '$lib/supabaseClient';
 	import type { SupabaseClient } from '@supabase/supabase-js';
-	import type { ImagesModelData } from '$lib/types/editor';
+import type { EditorContentUpdateDetail, ImagesModelData } from '$lib/types/editor';
 	import type { SelectedImage } from '$lib/types/photo';
 	import type {
 		ThoughtContent,
@@ -44,10 +44,7 @@
 	let contentHTML: string = thoughtContent.content_html;
 	let contentText: string = thoughtContent.content_text;
 
-	function handleContentUpdate(
-		event: CustomEvent<{ json: Record<string, unknown>; html: string; text: string }>
-	): void {
-		const { json, html, text } = event.detail;
+function handleContentUpdate({ json, html, text }: EditorContentUpdateDetail): void {
 		contentJSON = json;
 		contentHTML = html;
 		contentText = text;
@@ -264,7 +261,10 @@
 
 	<div class = "space-y-6">
 		<!--内容-->
-		<SimpleEditor on:contentUpdate={handleContentUpdate} content={thoughtContent.content_json} />
+		<SimpleEditor
+			onContentUpdate={handleContentUpdate}
+			content={thoughtContent.content_json}
+		/>
 
 		<!--图片-->
 		<div>

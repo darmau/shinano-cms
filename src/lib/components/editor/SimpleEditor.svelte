@@ -22,13 +22,12 @@
 	import OrderedListIcon from '$assets/icons/editor/olist.svelte';
 	import HardBreakIcon from '$assets/icons/editor/break.svelte';
 	import { Typography } from '@tiptap/extension-typography';
-	import { createEventDispatcher } from 'svelte';
 	import Gapcursor from '@tiptap/extension-gapcursor';
 	import Heading, { type Level } from '@tiptap/extension-heading';
-	import type { MenuItem } from '$lib/types/editor';
+	import type { EditorContentUpdateDetail, MenuItem } from '$lib/types/editor';
 
-	const dispatch = createEventDispatcher();
 	export let content: Content | undefined = undefined;
+	export let onContentUpdate: ((detail: EditorContentUpdateDetail) => void) | undefined;
 
 	let editor: Readable<Editor>;
 
@@ -59,8 +58,8 @@
 				const html = editor.getHTML();
 				const text = editor.getText();
 
-				// 触发自定义事件
-				dispatch('contentUpdate', { json, html, text });
+				// 回调通知内容变更
+				onContentUpdate?.({ json, html, text });
 			}
 		});
 	});

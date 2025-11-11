@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { createEventDispatcher, onMount } from 'svelte';
+	import { onMount } from 'svelte';
 	import { getToastStore, ProgressRadial } from '$lib/toast';
 	import type { SupabaseClient } from '@supabase/supabase-js';
 import {
@@ -14,11 +14,10 @@ type ImportEventDetail = {
 	image: MediaImageRecord;
 	};
 
-	const dispatch = createEventDispatcher<{ import: ImportEventDetail }>();
-
 	export let supabase: SupabaseClient | null;
 	export let perPage = 24;
 	export let autoLoad = true;
+export let onImport: ((detail: ImportEventDetail) => void) | undefined;
 
 	const toastStore = getToastStore();
 
@@ -129,7 +128,7 @@ type ImportEventDetail = {
 				background: 'variant-filled-success'
 			});
 
-			dispatch('import', { image });
+			onImport?.({ image });
 			await refresh();
 		} catch (err) {
 			console.error('Failed to import Unsplash photo', err);

@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { createEventDispatcher } from 'svelte';
 	import { getToastStore, ProgressRadial } from '$lib/toast';
 	import type { SupabaseClient } from '@supabase/supabase-js';
 	import {
@@ -40,7 +39,8 @@
 	};
 
 	const toastStore = getToastStore();
-	const dispatch = createEventDispatcher<{ import: ImportEventDetail }>();
+
+	export let onImport: ((detail: ImportEventDetail) => void) | undefined;
 
 	export let supabase: SupabaseClient | null = null;
 
@@ -206,7 +206,7 @@
 				background: 'variant-filled-success'
 			});
 
-			dispatch('import', { image: updated });
+			onImport?.({ image: updated });
 			resetState();
 			prompt = '';
 		} catch (err) {

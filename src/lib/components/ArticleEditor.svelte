@@ -17,13 +17,12 @@
 		ArticleCoverImage,
 		ArticleEditorPageData
 	} from '$lib/types/article';
-	import type { EditorHandle, ImagesModelData, SelectedImage } from '$lib/types/editor';
-
-	type EditorContentUpdatePayload = {
-		json: JSONContent;
-		html: string;
-		text: string;
-	};
+	import type {
+		EditorContentUpdateDetail,
+		EditorHandle,
+		ImagesModelData,
+		SelectedImage
+	} from '$lib/types/editor';
 
 	type SlugCheckResponse = {
 		error?: string;
@@ -168,8 +167,7 @@ let isTranslatingContent = false;
 	}
 
 	// 监控正文变动
-	function handleContentUpdate(event: CustomEvent<EditorContentUpdatePayload>) {
-		const { json, html, text } = event.detail;
+	function handleContentUpdate({ json, html, text }: EditorContentUpdateDetail) {
 		contentJSON = json;
 		contentHTML = html;
 		contentText = text;
@@ -589,7 +587,7 @@ let isTranslatingContent = false;
 
 		<!--Content-->
 		<Tiptap
-			on:contentUpdate={handleContentUpdate}
+			onContentUpdate={handleContentUpdate}
 			data={imagesModelData}
 			content={articleContent.content_json}
 			bind:this={editorComponent}
