@@ -43,18 +43,18 @@
 		line-height: 1.6;
 	}
 
-	h4 {
-		font-size: 1.125em;
-		font-weight: 600;
-		margin-top: 1.4em;
-		margin-bottom: 0.5em;
-		line-height: 1.5555556;
-	}
+  h4 {
+    font-size: 1.125em;
+    font-weight: 600;
+    margin-top: 1.4em;
+    margin-bottom: 0.5em;
+    line-height: 1.5555556;
+  }
 
-	p {
-		margin: 1.25em 0;
-		line-height: 1.6;
-	}
+  p {
+    margin: 1.25em 0;
+    line-height: 1.6;
+  }
 
 	/* 行内代码样式 */
 	code {
@@ -68,20 +68,20 @@
 		font-weight: 400;
 	}
 
-	/* 代码块内的 code 标签不应用行内代码样式 */
-	pre code {
-		background-color: transparent;
-		color: inherit;
-		padding: 0;
-		border-radius: 0;
-		font-size: inherit;
-	}
+  /* 代码块内的 code 标签不应用行内代码样式 */
+  pre code {
+    background-color: transparent;
+    color: inherit;
+    padding: 0;
+    border-radius: 0;
+    font-size: inherit;
+  }
 
-	/* 链接样式 */
-	a {
-		color: oklch(58.8% 0.158 241.966);
-		text-decoration: underline;
-	}
+  /* 链接样式 */
+  a {
+    color: oklch(58.8% 0.158 241.966);
+    text-decoration: underline;
+  }
 
 	/* 高亮样式 */
 	mark {
