@@ -19,12 +19,7 @@ function parseSize(value: unknown): ImageSize {
 		return DEFAULT_SIZE;
 	}
 
-	const allowedSizes: ImageSize[] = [
-		'auto',
-		'1024x1024',
-		'1536x1024',
-		'1024x1536'
-	];
+	const allowedSizes: ImageSize[] = ['auto', '1024x1024', '1536x1024', '1024x1536'];
 	return allowedSizes.includes(value as ImageSize) ? (value as ImageSize) : DEFAULT_SIZE;
 }
 

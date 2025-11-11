@@ -9,12 +9,7 @@ export const DELETE: RequestHandler = async ({ params, locals }) => {
 	}
 
 	const { supabase } = locals;
-	const { data, error } = await supabase
-		.from('category')
-		.delete()
-		.eq('id', id)
-		.select()
-		.single();
+	const { data, error } = await supabase.from('category').delete().eq('id', id).select().single();
 
 	if (error) {
 		return json({ error: error.message }, { status: 500 });
@@ -22,4 +17,3 @@ export const DELETE: RequestHandler = async ({ params, locals }) => {
 
 	return json(data);
 };
-

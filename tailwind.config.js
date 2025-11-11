@@ -3,9 +3,7 @@ import forms from '@tailwindcss/forms';
 
 export default {
 	darkMode: 'class',
-	content: [
-		'./src/**/*.{html,js,svelte,ts}'
-	],
+	content: ['./src/**/*.{html,js,svelte,ts}'],
 	theme: {
 		extend: {
 			screens: {
@@ -13,9 +11,5 @@ export default {
 			}
 		}
 	},
-	plugins: [
-		require('@tailwindcss/container-queries'),
-		forms,
-		require('@tailwindcss/typography')
-	]
+	plugins: [require('@tailwindcss/container-queries'), forms, require('@tailwindcss/typography')]
 };

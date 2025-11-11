@@ -57,7 +57,10 @@ export async function loadLocationConfig(supabase: SupabaseClient) {
 	};
 }
 
-export async function resolveLocationWithSupabase(payload: LocationPayload, supabase: SupabaseClient) {
+export async function resolveLocationWithSupabase(
+	payload: LocationPayload,
+	supabase: SupabaseClient
+) {
 	const config = await loadLocationConfig(supabase);
 	return resolveLocation(payload, config);
 }
@@ -114,7 +117,10 @@ function normalizeCoordinates(payload: unknown): Coordinates | null {
 		return null;
 	}
 
-	const source = payload as { latitude?: number | string | null; longitude?: number | string | null };
+	const source = payload as {
+		latitude?: number | string | null;
+		longitude?: number | string | null;
+	};
 	const latitude = Number(source.latitude ?? (source as Record<string, unknown>)?.['lat']);
 	const longitude = Number(source.longitude ?? (source as Record<string, unknown>)?.['lng']);
 
@@ -139,7 +145,11 @@ async function getCountryCode(coordinates: Coordinates, mapboxToken: string) {
 		);
 
 		if (!response.ok) {
-			console.error('mapbox country lookup request failed', response.status, await safeReadBody(response));
+			console.error(
+				'mapbox country lookup request failed',
+				response.status,
+				await safeReadBody(response)
+			);
 			return null;
 		}
 
@@ -206,7 +216,11 @@ async function reverseGeocodeWithMapbox(
 		);
 
 		if (!response.ok) {
-			console.error('mapbox reverse geocode request failed', response.status, await safeReadBody(response));
+			console.error(
+				'mapbox reverse geocode request failed',
+				response.status,
+				await safeReadBody(response)
+			);
 			return null;
 		}
 

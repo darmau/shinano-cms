@@ -16,7 +16,12 @@ function normalizeLanguage(lang: unknown): Language | null {
 		return null;
 	}
 
-	const { id, lang: langCode, locale, is_default } = lang as {
+	const {
+		id,
+		lang: langCode,
+		locale,
+		is_default
+	} = lang as {
 		id?: number;
 		lang?: string;
 		locale?: string;
@@ -144,10 +149,10 @@ export const load: PageServerLoad = async ({ url, locals: { supabase } }) => {
 	if (isCompleteNew) {
 		// 从language表中获取is_default为true的语言
 		const { data: defaultLanguageRaw } = await supabase
-		.from('language')
-		.select('id, lang, locale')
-		.eq('is_default', true)
-		.single();
+			.from('language')
+			.select('id, lang, locale')
+			.eq('is_default', true)
+			.single();
 
 		const defaultLanguage = normalizeLanguage(defaultLanguageRaw);
 
@@ -160,12 +165,10 @@ export const load: PageServerLoad = async ({ url, locals: { supabase } }) => {
 		// 根据defaultLanguage.data.id在category表中获取type为article的分类
 		const defaultLanguageId = currentLanguage?.id ?? allLanguages[0].id;
 		const { data: categoryListRaw } = await supabase
-		.from('category')
-		.select('id, title, slug')
-		.eq('lang', defaultLanguageId)
-		.eq('type', 'photo')
-		;
-
+			.from('category')
+			.select('id, title, slug')
+			.eq('lang', defaultLanguageId)
+			.eq('type', 'photo');
 		categories = (categoryListRaw ?? [])
 			.map(normalizeCategory)
 			.filter((category): category is Category => category !== null);
@@ -182,14 +185,14 @@ export const load: PageServerLoad = async ({ url, locals: { supabase } }) => {
 			lang: defaultLanguageId,
 			topic: [],
 			content_json: {
-				'type': 'doc',
-				'content': [
+				type: 'doc',
+				content: [
 					{
-						'type': 'paragraph',
-						'content': [
+						type: 'paragraph',
+						content: [
 							{
-								'type': 'text',
-								'text': '添加关于摄影的介绍'
+								type: 'text',
+								text: '添加关于摄影的介绍'
 							}
 						]
 					}
@@ -207,8 +210,9 @@ export const load: PageServerLoad = async ({ url, locals: { supabase } }) => {
 
 		// 从photo表获取数据
 		const { data: sourcePhoto, error: sourceError } = await supabase
-		.from('photo')
-		.select(`
+			.from('photo')
+			.select(
+				`
 		    id,
 				title,
 				slug,
@@ -225,9 +229,10 @@ export const load: PageServerLoad = async ({ url, locals: { supabase } }) => {
 				cover,
 				category,
 				photo_image (order, image (id, alt, storage_key, caption))
-		  `)
-		.eq('id', copyFromId)
-		.single();
+		  `
+			)
+			.eq('id', copyFromId)
+			.single();
 
 		if (sourceError) {
 			console.error(sourceError);
@@ -266,21 +271,20 @@ export const load: PageServerLoad = async ({ url, locals: { supabase } }) => {
 
 		// 查询category表中type为article，lang为currentLanguage.id的分类
 		const { data: categoryList } = await supabase
-		.from('category')
-		.select('id, title, slug')
-		.eq('lang', currentLanguage.id)
-		.eq('type', 'photo')
-		;
+			.from('category')
+			.select('id, title, slug')
+			.eq('lang', currentLanguage.id)
+			.eq('type', 'photo');
 		categories = (categoryList ?? [])
 			.map(normalizeCategory)
 			.filter((category): category is Category => category !== null);
 
 		// 查询article表中除了当前语言版本的其他语言版本 查询slug相等但lang不等于currentLanguage.id的文章
 		const { data: otherVersionsRaw } = await supabase
-		.from('photo')
-		.select('id, lang (id, lang, locale)')
-		.eq('slug', photoContent.slug)
-		.neq('lang', currentLanguage.id);
+			.from('photo')
+			.select('id, lang (id, lang, locale)')
+			.eq('slug', photoContent.slug)
+			.neq('lang', currentLanguage.id);
 
 		otherVersions = (otherVersionsRaw ?? [])
 			.map((version) => {

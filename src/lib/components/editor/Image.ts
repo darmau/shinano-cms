@@ -21,8 +21,8 @@ export default Node.create({
 	parseHTML() {
 		return [
 			{
-				tag: 'img[data-storage-key]',
-			},
+				tag: 'img[data-storage-key]'
+			}
 		];
 	},
 	renderHTML({ HTMLAttributes }) {
@@ -38,8 +38,8 @@ export default Node.create({
 				class: classList,
 				'data-prefix': prefix ?? '',
 				'data-storage-key': storage_key ?? '',
-				'data-caption': caption ?? '',
-			}),
+				'data-caption': caption ?? ''
+			})
 		];
 	},
 	addNodeView() {
@@ -60,31 +60,31 @@ export default Node.create({
 
 			return {
 				dom: figure,
-				ignoreMutation: () => true,
+				ignoreMutation: () => true
 			};
 		};
 	},
 	addAttributes() {
 		return {
 			id: {
-				default: null,
+				default: null
 			},
 			alt: {
 				default: '',
-				parseHTML: (element) => element.getAttribute('alt') ?? '',
+				parseHTML: (element) => element.getAttribute('alt') ?? ''
 			},
 			storage_key: {
 				default: '',
-				parseHTML: (element) => element.getAttribute('data-storage-key') ?? '',
+				parseHTML: (element) => element.getAttribute('data-storage-key') ?? ''
 			},
 			prefix: {
 				default: '',
-				parseHTML: (element) => element.getAttribute('data-prefix') ?? '',
+				parseHTML: (element) => element.getAttribute('data-prefix') ?? ''
 			},
 			caption: {
 				default: '',
-				parseHTML: (element) => element.getAttribute('data-caption') ?? '',
+				parseHTML: (element) => element.getAttribute('data-caption') ?? ''
 			}
 		};
-	},
+	}
 });

@@ -5,7 +5,7 @@ import { DEFAULT_AI_CONFIG } from '$lib/types/prompts';
 
 export const POST: RequestHandler = async ({ request, locals }) => {
 	const { content } = await request.json();
-	
+
 	const supabase = locals.supabase;
 	const { data, error: supabaseError } = await supabase
 		.from('config')
@@ -49,17 +49,17 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 							tags: {
 								type: 'array',
 								items: {
-									type: 'string',
+									type: 'string'
 								},
 								minItems: 1,
-								maxItems: 8,
-							},
+								maxItems: 8
+							}
 						},
 						required: ['tags'],
-						additionalProperties: false,
-					},
-				},
-			},
+						additionalProperties: false
+					}
+				}
+			}
 		});
 		tags = response.output_text?.trim() ?? '';
 	} catch (err) {
@@ -70,4 +70,4 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	return new Response(tags, {
 		headers: { 'Content-Type': 'application/json' }
 	});
-}
+};

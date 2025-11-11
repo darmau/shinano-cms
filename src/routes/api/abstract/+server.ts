@@ -25,8 +25,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	const configMap = new Map(rows.map(({ key, value }) => [key, value ?? '']));
 	const openaiApiKey = configMap.get('config_OPENAI');
 	const prompt = configMap.get('prompt_SEO');
-	const model =
-		configMap.get('model_ABSTRACT') ?? DEFAULT_AI_CONFIG.model_ABSTRACT;
+	const model = configMap.get('model_ABSTRACT') ?? DEFAULT_AI_CONFIG.model_ABSTRACT;
 
 	if (!openaiApiKey) {
 		error(500, 'OpenAI API key not configured');

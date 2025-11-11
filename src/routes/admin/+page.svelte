@@ -27,8 +27,8 @@
 	$: latestSnapshot = data.stats.length ? data.stats[data.stats.length - 1] : undefined;
 	$: previousSnapshot = data.stats.length > 1 ? data.stats[data.stats.length - 2] : undefined;
 	$: summary = summaryMetrics.map((metric) => {
-		const currentValue = latestSnapshot ? latestSnapshot[metric.key] ?? 0 : 0;
-		const previousValue = previousSnapshot ? previousSnapshot[metric.key] ?? 0 : 0;
+		const currentValue = latestSnapshot ? (latestSnapshot[metric.key] ?? 0) : 0;
+		const previousValue = previousSnapshot ? (previousSnapshot[metric.key] ?? 0) : 0;
 		return {
 			...metric,
 			value: currentValue,
@@ -77,7 +77,9 @@
 		{/if}
 
 		{#if data.stats.length === 0}
-			<section class="rounded-lg border border-dashed border-slate-200 bg-slate-50 p-6 text-center text-slate-500">
+			<section
+				class="rounded-lg border border-dashed border-slate-200 bg-slate-50 p-6 text-center text-slate-500"
+			>
 				<p>统计数据尚未生成，稍后再来查看仪表盘。</p>
 			</section>
 		{/if}

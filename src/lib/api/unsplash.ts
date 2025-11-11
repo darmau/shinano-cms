@@ -50,9 +50,7 @@ function toUniqueArray<T>(array: T[] | null | undefined) {
 	return Array.from(new Set(array));
 }
 
-export async function loadUnsplashConfig(
-	supabase: SupabaseClient | null
-): Promise<UnsplashConfig> {
+export async function loadUnsplashConfig(supabase: SupabaseClient | null): Promise<UnsplashConfig> {
 	if (!supabase) {
 		return { accessKey: '', secretKey: '' };
 	}
@@ -164,7 +162,8 @@ function deriveCaption(photo: UnsplashPhoto): string | null {
 		return null;
 	}
 
-	const profileLink = user.links?.html ?? (user.username ? `https://unsplash.com/@${user.username}` : '');
+	const profileLink =
+		user.links?.html ?? (user.username ? `https://unsplash.com/@${user.username}` : '');
 	if (profileLink) {
 		return `Photo by ${name} on Unsplash (${profileLink})`;
 	}
@@ -248,4 +247,3 @@ export async function importUnsplashPhoto({
 
 	return updatedRecord;
 }
-

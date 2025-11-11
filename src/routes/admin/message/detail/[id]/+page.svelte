@@ -13,10 +13,7 @@
 
 	// 进入该页面，将该数据的is_read字段设为true
 	const setRead = async () => {
-		const { error } = await supabase
-			.from('message')
-			.update({ is_read: true })
-			.eq('id', message.id);
+		const { error } = await supabase.from('message').update({ is_read: true }).eq('id', message.id);
 
 		if (error) {
 			console.error(error);
@@ -34,11 +31,13 @@
 	});
 </script>
 
-<div class = "max-w-3xl mx-auto space-y-4 my-12">
+<div class="max-w-3xl mx-auto space-y-4 my-12">
 	<h1 class="font-medium text-gray-800 text-xl">{message.name}</h1>
 	<p class="text-base space-x-2">
-		<span class="capitalize text-cyan-700 font-medium">{message.contact_type}
-			: </span>
+		<span class="capitalize text-cyan-700 font-medium"
+			>{message.contact_type}
+			:
+		</span>
 		<span>{message.contact_detail}</span>
 	</p>
 	<p class="text-lg text-gray-800">{message.message}</p>

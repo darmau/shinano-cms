@@ -6,11 +6,11 @@ export class ThirdPartyAPIs {
 		['config_AMAP', ''],
 		['config_URL_PREFIX', ''],
 		['config_RESEND', ''],
-		['config_BARK_SERVER', ''],
-	])
+		['config_BARK_SERVER', '']
+	]);
 
 	public array() {
-		return Array.from(this.apiNames.keys())
+		return Array.from(this.apiNames.keys());
 	}
 
 	public emptyObject() {

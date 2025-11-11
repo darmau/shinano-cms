@@ -11,7 +11,7 @@
 
 	function getImageDimensions(file: File): Promise<{
 		width: number;
-		height: number
+		height: number;
 	}> {
 		return new Promise((resolve, reject) => {
 			const img = new Image();
@@ -79,19 +79,17 @@
 				hideDismiss: true,
 				background: 'variant-filled-error'
 			});
-			error(500, { message: '上传失败' })
+			error(500, { message: '上传失败' });
 		}
 	}
 </script>
 
-<div class = "my-8">
+<div class="my-8">
 	{#if isLoading}
-		<div class = "flex justify-center items-center min-h-32">
-			<ProgressRadial value = {undefined} width = "w-12" />
+		<div class="flex justify-center items-center min-h-32">
+			<ProgressRadial value={undefined} width="w-12" />
 		</div>
 	{:else}
-		<FileDropzone
-			name = "files" bind:files = {files} on:change = {uploadFiles}
-		/>
+		<FileDropzone name="files" bind:files on:change={uploadFiles} />
 	{/if}
 </div>

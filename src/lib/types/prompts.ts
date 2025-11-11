@@ -21,9 +21,7 @@ export class AI {
 	private readonly defaultsMap: Map<AIConfigKey, string>;
 
 	public constructor() {
-		this.defaultsMap = new Map(
-			Object.entries(DEFAULT_AI_CONFIG) as [AIConfigKey, string][]
-		);
+		this.defaultsMap = new Map(Object.entries(DEFAULT_AI_CONFIG) as [AIConfigKey, string][]);
 	}
 
 	public array(): AIConfigKey[] {

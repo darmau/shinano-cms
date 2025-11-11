@@ -92,4 +92,3 @@ export async function updateImageMetadata(
 		height: (data.height as number | null) ?? null
 	};
 }
-

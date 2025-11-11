@@ -17,12 +17,9 @@
 	<title>{$t('media')}</title>
 </svelte:head>
 
-<div class = "">
-	<PageTitle title = {$t('media')} />
+<div class="">
+	<PageTitle title={$t('media')} />
 	<UploadFile {refresh} />
-	<ImageGrid data = {data} />
-	<Pagination
-		count = {data.count} page = {data.page} limit = {data.limit}
-		path = {data.path}
-	/>
+	<ImageGrid {data} />
+	<Pagination count={data.count} page={data.page} limit={data.limit} path={data.path} />
 </div>

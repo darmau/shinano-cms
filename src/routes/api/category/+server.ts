@@ -19,4 +19,3 @@ export const DELETE: RequestHandler = async ({ request, locals }) => {
 
 	return json({ success: true });
 };
-

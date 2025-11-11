@@ -14,7 +14,12 @@ const normalizeLanguage = (lang: unknown): Language | null => {
 		return null;
 	}
 
-	const { id, lang: langCode, locale, is_default } = lang as {
+	const {
+		id,
+		lang: langCode,
+		locale,
+		is_default
+	} = lang as {
 		id?: number;
 		lang?: string;
 		locale?: string;
@@ -75,18 +80,8 @@ const toPhotoListItem = (photo: unknown): PhotoListItem | null => {
 		return null;
 	}
 
-	const {
-		id,
-		title,
-		slug,
-		is_draft,
-		is_featured,
-		is_top,
-		lang,
-		category,
-		cover,
-		photo_image
-	} = photo as Record<string, unknown>;
+	const { id, title, slug, is_draft, is_featured, is_top, lang, category, cover, photo_image } =
+		photo as Record<string, unknown>;
 
 	if (
 		typeof id !== 'number' ||
@@ -134,8 +129,9 @@ export const load: PageServerLoad = async ({ url, params: { page }, locals: { su
 
 	// 同时获取photo_image表中photo_id为photo表中id的数据数量
 	const { data: photos, error: fetchError } = await supabase
-	.from('photo')
-	.select(`
+		.from('photo')
+		.select(
+			`
 	  id, 
 	  title, 
 	  lang (id, lang, locale), 
@@ -146,9 +142,10 @@ export const load: PageServerLoad = async ({ url, params: { page }, locals: { su
 	  is_top,
 	  cover (id, alt, storage_key, caption),
 	  photo_image (count)
-	  `)
-	.range((pageNumber - 1) * limit, pageNumber * limit - 1)
-	.order('updated_at', { ascending: false });
+	  `
+		)
+		.range((pageNumber - 1) * limit, pageNumber * limit - 1)
+		.order('updated_at', { ascending: false });
 
 	if (fetchError) {
 		console.error(error);

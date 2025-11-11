@@ -71,14 +71,15 @@
 	let isChanged = false;
 	let isModalOpen = false;
 	let coverImage: ArticleCoverImage | null = initialArticle.cover ?? null;
-	let localTime: string | null =
-		articleContent.published_at ? getDateFormat(articleContent.published_at, true) : null;
-let slugExists = false;
-let isCheckingSlug = false;
-let isGeneratingSlug = false;
-let isGeneratingAbstract = false;
-let isGeneratingTags = false;
-let isTranslatingContent = false;
+	let localTime: string | null = articleContent.published_at
+		? getDateFormat(articleContent.published_at, true)
+		: null;
+	let slugExists = false;
+	let isCheckingSlug = false;
+	let isGeneratingSlug = false;
+	let isGeneratingAbstract = false;
+	let isGeneratingTags = false;
+	let isTranslatingContent = false;
 	let editorComponent: EditorHandle | null = null;
 	let topicInput = '';
 
@@ -121,7 +122,10 @@ let isTranslatingContent = false;
 				console.error('Missing article id when attempting to save existing article.');
 				return;
 			}
-			const { error } = await supabase.from('article').update(articleContent).eq('id', articleContent.id);
+			const { error } = await supabase
+				.from('article')
+				.update(articleContent)
+				.eq('id', articleContent.id);
 			if (error) {
 				console.error(error);
 				toastStore.trigger({
@@ -222,7 +226,10 @@ let isTranslatingContent = false;
 			localTime = null;
 		}
 
-		const { error } = await supabase.from('article').update(articleContent).eq('id', articleContent.id);
+		const { error } = await supabase
+			.from('article')
+			.update(articleContent)
+			.eq('id', articleContent.id);
 		if (error) {
 			console.error(error);
 			toastStore.trigger({
@@ -501,87 +508,83 @@ let isTranslatingContent = false;
 	<ImagesModel data={imagesModelData} {closeModel} onSelect={selectCoverImage} />
 {/if}
 
-<div class = "grid grid-cols-1 gap-6 xl:grid-cols-4">
-	<div class = "space-y-8 xl:col-span-3">
-
+<div class="grid grid-cols-1 gap-6 xl:grid-cols-4">
+	<div class="space-y-8 xl:col-span-3">
 		<!--title-->
 		<div>
-			<label
-				for = "title"
-				class = "block text-sm font-medium leading-6 text-gray-900"
-			>{$t('title')}</label>
-			<div class = "mt-2">
+			<label for="title" class="block text-sm font-medium leading-6 text-gray-900"
+				>{$t('title')}</label
+			>
+			<div class="mt-2">
 				<input
-					type = "text" name = "title" id = "title"
-					value = {articleContent.title}
-					on:input = {(event: Event) => {
-						isChanged = true
-						articleContent.title = (event.currentTarget as HTMLInputElement).value
-						}}
+					type="text"
+					name="title"
+					id="title"
+					value={articleContent.title}
+					on:input={(event: Event) => {
+						isChanged = true;
+						articleContent.title = (event.currentTarget as HTMLInputElement).value;
+					}}
 					required
-					class =
-						"block w-full rounded-md border-0 p-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-cyan-600 sm:text-sm sm:leading-6"
-					placeholder = "必须填写标题"
-				>
+					class="block w-full rounded-md border-0 p-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-cyan-600 sm:text-sm sm:leading-6"
+					placeholder="必须填写标题"
+				/>
 			</div>
 		</div>
 
 		<!--slug-->
 		<div>
-			<label
-				for = "slug"
-				class = "block text-sm font-medium leading-6 text-gray-900"
-			>Slug</label>
-			<div class = "mt-2 flex gap-4">
+			<label for="slug" class="block text-sm font-medium leading-6 text-gray-900">Slug</label>
+			<div class="mt-2 flex gap-4">
 				<input
-					type = "text" name = "slug" id = "slug"
-					value = {articleContent.slug}
-					on:input = {(event: Event) => {
+					type="text"
+					name="slug"
+					id="slug"
+					value={articleContent.slug}
+					on:input={(event: Event) => {
 						const target = event.currentTarget as HTMLInputElement;
 						articleContent.slug = target.value;
 						checkSlug(target.value);
 						isChanged = true;
-						}}
+					}}
 					required
-					class =
-						"block font-mono w-full rounded-md border-0 p-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-cyan-600 sm:text-sm sm:leading-6"
-				>
+					class="block font-mono w-full rounded-md border-0 p-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-cyan-600 sm:text-sm sm:leading-6"
+				/>
 				<button
 					type="button"
-					on:click = {generateSlug}
-					disabled = {isGeneratingSlug}
-				  class="w-fit break-keep rounded bg-cyan-50 px-3 py-1 text-sm font-semibold text-cyan-600 shadow-sm hover:bg-cyan-100 cursor-pointer disabled:cursor-not-allowed disabled:opacity-70"
-				>{isGeneratingSlug ? $t('generating') : $t('generate')}</button>
+					on:click={generateSlug}
+					disabled={isGeneratingSlug}
+					class="w-fit break-keep rounded bg-cyan-50 px-3 py-1 text-sm font-semibold text-cyan-600 shadow-sm hover:bg-cyan-100 cursor-pointer disabled:cursor-not-allowed disabled:opacity-70"
+					>{isGeneratingSlug ? $t('generating') : $t('generate')}</button
+				>
 			</div>
 			{#if isCheckingSlug}
 				<p class="mt-2 text-sm text-gray-600">Checking...</p>
+			{:else if slugExists}
+				<p class="mt-2 text-sm text-red-600">{$t('slug-has-been-used')}</p>
 			{:else}
-				{#if slugExists}
-					<p class="mt-2 text-sm text-red-600">{$t('slug-has-been-used')}</p>
-				{:else}
-					<p class="mt-2 text-sm text-green-600">{$t('slug-is-available')}</p>
-				{/if}
+				<p class="mt-2 text-sm text-green-600">{$t('slug-is-available')}</p>
 			{/if}
 		</div>
 
 		<!--subtitle-->
 		<div>
-			<label
-				for = "subtitle"
-				class = "block text-sm font-medium leading-6 text-gray-900"
-			>{$t('subtitle')}</label>
-			<div class = "mt-2">
+			<label for="subtitle" class="block text-sm font-medium leading-6 text-gray-900"
+				>{$t('subtitle')}</label
+			>
+			<div class="mt-2">
 				<input
-					type = "text" name = "subtitle" id = "subtitle"
-					value = {articleContent.subtitle}
-					on:input = {(event: Event) => {
+					type="text"
+					name="subtitle"
+					id="subtitle"
+					value={articleContent.subtitle}
+					on:input={(event: Event) => {
 						isChanged = true;
-						articleContent.subtitle = (event.currentTarget as HTMLInputElement).value
-						}}
+						articleContent.subtitle = (event.currentTarget as HTMLInputElement).value;
+					}}
 					required
-					class =
-						"block w-full rounded-md border-0 p-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-cyan-600 sm:text-sm sm:leading-6"
-				>
+					class="block w-full rounded-md border-0 p-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-cyan-600 sm:text-sm sm:leading-6"
+				/>
 			</div>
 		</div>
 
@@ -594,38 +597,37 @@ let isTranslatingContent = false;
 		/>
 		<button
 			type="button"
-			on:click = {getTranslation}
-			disabled = {isTranslatingContent}
+			on:click={getTranslation}
+			disabled={isTranslatingContent}
 			class="rounded-md bg-cyan-50 p-2 text-sm font-semibold text-cyan-600 shadow-sm hover:bg-cyan-100 cursor-pointer disabled:cursor-not-allowed disabled:opacity-70"
-		>{isTranslatingContent ? $t('generating') : $t('translate')}</button>
+			>{isTranslatingContent ? $t('generating') : $t('translate')}</button
+		>
 	</div>
 
-	<aside class = "col-span-1 space-y-8">
+	<aside class="col-span-1 space-y-8">
 		<!--发布时间-->
 		<div>
-			<label
-				for="publish-time"
-				class = "text-sm font-medium leading-6 text-gray-900">{$t('publish-time')}</label>
+			<label for="publish-time" class="text-sm font-medium leading-6 text-gray-900"
+				>{$t('publish-time')}</label
+			>
 			<input
 				type="datetime-local"
 				class="mt-2 w-full rounded-md border-0 p-1.5 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-cyan-600 sm:text-sm sm:leading-6"
 				defaultValue={localTime ? new Date(localTime).toISOString().slice(0, 16) : undefined}
 				bind:value={localTime}
-				on:change = {(event: Event) => {
-					isChanged = true
-					localTime = (event.currentTarget as HTMLInputElement).value
-					}}
+				on:change={(event: Event) => {
+					isChanged = true;
+					localTime = (event.currentTarget as HTMLInputElement).value;
+				}}
 			/>
 		</div>
 
 		<!--语言-->
 		<div>
-			<h2
-				class = "text-sm font-medium leading-6 text-gray-900"
-			>{$t('language')}</h2>
-			<ul class = "mt-2 flex gap-2">
+			<h2 class="text-sm font-medium leading-6 text-gray-900">{$t('language')}</h2>
+			<ul class="mt-2 flex gap-2">
 				<li
-					class = "inline-flex items-center gap-x-1.5 rounded-md bg-green-100 px-2 py-1 text-xs font-medium text-green-700"
+					class="inline-flex items-center gap-x-1.5 rounded-md bg-green-100 px-2 py-1 text-xs font-medium text-green-700"
 				>
 					<svg class="h-1.5 w-1.5 fill-green-500" viewBox="0 0 6 6" aria-hidden="true">
 						<circle cx="3" cy="3" r="3" />
@@ -634,13 +636,9 @@ let isTranslatingContent = false;
 				</li>
 				{#each data.otherVersions as version}
 					<li
-						class =
-							"inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-600/20 hover:bg-blue-200"
+						class="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-600/20 hover:bg-blue-200"
 					>
-						<a
-							data-sveltekit-reload
-							href= {`/admin/article/edit/${version.id}`}
-						>
+						<a data-sveltekit-reload href={`/admin/article/edit/${version.id}`}>
 							{version.lang.locale}
 						</a>
 					</li>
@@ -648,13 +646,11 @@ let isTranslatingContent = false;
 				{#if articleContent.id}
 					{#each newLanguageVersions as newVersion}
 						<li
-							class =
-								"inline-flex items-center rounded-md bg-gray-100 px-2 py-1 text-xs font-medium text-gray-600 hover:bg-gray-200"
+							class="inline-flex items-center rounded-md bg-gray-100 px-2 py-1 text-xs font-medium text-gray-600 hover:bg-gray-200"
 						>
 							<a
 								data-sveltekit-reload
-								href=
-									{`/admin/article/new?from=${articleContent.id}&lang=${newVersion.id}`}
+								href={`/admin/article/new?from=${articleContent.id}&lang=${newVersion.id}`}
 							>
 								+ {newVersion.locale}
 							</a>
@@ -667,69 +663,75 @@ let isTranslatingContent = false;
 		<!--分类-->
 		<div>
 			<header class="flex justify-between">
-				<label
-					class = "text-sm font-medium leading-6 text-gray-900"
-					for="category"
-				>{$t('category')}</label>
-				<a
-				  href="/admin/category/new"
-					target="_blank"
+				<label class="text-sm font-medium leading-6 text-gray-900" for="category"
+					>{$t('category')}</label
 				>
-					<AddIcon classList = "h-4 w-4 text-gray-400 hover:text-cyan-600" />
+				<a href="/admin/category/new" target="_blank">
+					<AddIcon classList="h-4 w-4 text-gray-400 hover:text-cyan-600" />
 				</a>
 			</header>
 			<select
 				value={articleContent.category ?? ''}
-				on:change = {(event: Event) => {
+				on:change={(event: Event) => {
 					isChanged = true;
 					const value = Number((event.currentTarget as HTMLSelectElement).value);
 					articleContent.category = Number.isNaN(value) ? null : value;
-					}}
+				}}
 				id="category"
 				name="category"
-				class="mt-2 block w-full rounded-md border-0 py-1.5 pl-3 pr-10 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-cyan-600 sm:text-sm sm:leading-6">
+				class="mt-2 block w-full rounded-md border-0 py-1.5 pl-3 pr-10 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-cyan-600 sm:text-sm sm:leading-6"
+			>
 				{#each data.categories as category}
-					<option value = {category.id}>{category.title}</option>
+					<option value={category.id}>{category.title}</option>
 				{/each}
 			</select>
 		</div>
 
 		<!--话题-->
 		<div>
-			<div class = "flex justify-between">
-				<label
-					for = "abstract"
-					class = "block text-sm font-medium leading-6 text-gray-900"
-				>{$t('topic')}</label>
+			<div class="flex justify-between">
+				<label for="abstract" class="block text-sm font-medium leading-6 text-gray-900"
+					>{$t('topic')}</label
+				>
 				<button
 					type="button"
-					on:click = {generateTags}
-					disabled = {isGeneratingTags}
-					class = "rounded bg-cyan-600 px-2 py-1 text-sm font-semibold text-white shadow-sm hover:bg-cyan-500 cursor-pointer disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
-				>{isGeneratingTags ? $t('generating') : $t('generate')}</button>
+					on:click={generateTags}
+					disabled={isGeneratingTags}
+					class="rounded bg-cyan-600 px-2 py-1 text-sm font-semibold text-white shadow-sm hover:bg-cyan-500 cursor-pointer disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
+					>{isGeneratingTags ? $t('generating') : $t('generate')}</button
+				>
 			</div>
 			<div class="relative mt-2">
 				<div
-					class="flex flex-wrap gap-1 w-full rounded-md border-0 p-1.5 text-gray-900 ring-1 ring-inset ring-gray-300 sm:text-sm sm:leading-6">
+					class="flex flex-wrap gap-1 w-full rounded-md border-0 p-1.5 text-gray-900 ring-1 ring-inset ring-gray-300 sm:text-sm sm:leading-6"
+				>
 					{#each topics as topic, index}
-					<span class="inline-flex items-center gap-x-0.5 rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">
-						{topic}
-						<button type="button" on:click={() => removeTopic(index)}
-										class="group relative -mr-1 h-3.5 w-3.5 rounded-sm hover:bg-gray-500/20">
-							<span class="sr-only">Remove</span>
-							<svg viewBox="0 0 14 14" class="h-3.5 w-3.5 stroke-gray-600/50 group-hover:stroke-gray-600/75">
-								<path d="M4 4l6 6m0-6l-6 6" />
-							</svg>
-							<span class="absolute -inset-1"></span>
-						</button>
-					</span>
+						<span
+							class="inline-flex items-center gap-x-0.5 rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10"
+						>
+							{topic}
+							<button
+								type="button"
+								on:click={() => removeTopic(index)}
+								class="group relative -mr-1 h-3.5 w-3.5 rounded-sm hover:bg-gray-500/20"
+							>
+								<span class="sr-only">Remove</span>
+								<svg
+									viewBox="0 0 14 14"
+									class="h-3.5 w-3.5 stroke-gray-600/50 group-hover:stroke-gray-600/75"
+								>
+									<path d="M4 4l6 6m0-6l-6 6" />
+								</svg>
+								<span class="absolute -inset-1"></span>
+							</button>
+						</span>
 					{/each}
 					<input
 						type="text"
 						bind:value={topicInput}
-						on:input = {(event: Event) => {
-							topicInput = (event.currentTarget as HTMLInputElement).value
-							}}
+						on:input={(event: Event) => {
+							topicInput = (event.currentTarget as HTMLInputElement).value;
+						}}
 						on:keydown={handleKeydown}
 						class="peer border-none text-sm focus:ring-0 focus:outline-none bg-transparent"
 					/>
@@ -739,145 +741,136 @@ let isTranslatingContent = false;
 
 		<!--封面-->
 		<div>
-			<header class = "flex justify-end gap-4">
-				<h2
-					class = "text-sm font-medium leading-6 text-gray-900 grow"
-				>{$t('cover')}</h2>
+			<header class="flex justify-end gap-4">
+				<h2 class="text-sm font-medium leading-6 text-gray-900 grow">{$t('cover')}</h2>
 				<button
-					on:click = {resetCoverImage}
-					disabled = {!coverImage}
-					class =
-						"rounded bg-red-600 px-2 py-1 text-sm font-semibold text-white shadow-sm hover:bg-red-500 disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed cursor-pointer"
+					on:click={resetCoverImage}
+					disabled={!coverImage}
+					class="rounded bg-red-600 px-2 py-1 text-sm font-semibold text-white shadow-sm hover:bg-red-500 disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed cursor-pointer"
 				>
 					{$t('reset')}
 				</button>
 				<button
-					on:click = {()=>{isModalOpen =true}}
-					class =
-						"rounded bg-cyan-600 px-2 py-1 text-sm font-semibold text-white shadow-sm hover:bg-cyan-500 cursor-pointer"
+					on:click={() => {
+						isModalOpen = true;
+					}}
+					class="rounded bg-cyan-600 px-2 py-1 text-sm font-semibold text-white shadow-sm hover:bg-cyan-500 cursor-pointer"
 				>
 					{$t('select')}
 				</button>
 			</header>
-			<div
-				class =
-					"mt-2 aspect-[4/3] bg-gray-100 w-full rounded-md flex justify-center items-center"
-			>
+			<div class="mt-2 aspect-[4/3] bg-gray-100 w-full rounded-md flex justify-center items-center">
 				{#if coverImage}
 					<img
-						src =
-							{`${data.prefix}/cdn-cgi/image/format=auto,width=480/${coverImage.storage_key}`}
-						alt = {coverImage.alt ?? ''}
-						class = "img-bg h-full w-full object-contain"
+						src={`${data.prefix}/cdn-cgi/image/format=auto,width=480/${coverImage.storage_key}`}
+						alt={coverImage.alt ?? ''}
+						class="img-bg h-full w-full object-contain"
 					/>
 				{:else}
-					<PhotoIcon classList = "h-16 w-16 text-gray-400 m-auto" />
+					<PhotoIcon classList="h-16 w-16 text-gray-400 m-auto" />
 				{/if}
 			</div>
 		</div>
 
 		<!--摘要-->
 		<div>
-			<div class = "flex justify-between">
-				<label
-					for = "abstract"
-					class = "block text-sm font-medium leading-6 text-gray-900"
-				>{$t('abstract')}</label>
+			<div class="flex justify-between">
+				<label for="abstract" class="block text-sm font-medium leading-6 text-gray-900"
+					>{$t('abstract')}</label
+				>
 				<button
 					type="button"
-					on:click = {generateAbstract}
-					disabled = {isGeneratingAbstract}
-					class = "rounded bg-cyan-600 px-2 py-1 text-sm font-semibold text-white shadow-sm hover:bg-cyan-500 cursor-pointer disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
-				>{isGeneratingAbstract ? $t('generating') : $t('generate')}</button>
+					on:click={generateAbstract}
+					disabled={isGeneratingAbstract}
+					class="rounded bg-cyan-600 px-2 py-1 text-sm font-semibold text-white shadow-sm hover:bg-cyan-500 cursor-pointer disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
+					>{isGeneratingAbstract ? $t('generating') : $t('generate')}</button
+				>
 			</div>
-			<div class = "mt-2">
+			<div class="mt-2">
 				<textarea
-					name = "abstract" id = "abstract" rows = "5"
-					value = {articleContent.abstract}
-					on:input = {(event: Event) => {
+					name="abstract"
+					id="abstract"
+					rows="5"
+					value={articleContent.abstract}
+					on:input={(event: Event) => {
 						isChanged = true;
-						articleContent.abstract = (event.currentTarget as HTMLTextAreaElement).value
-						}}
-					placeholder = "使用AI为文章生成摘要"
-					class =
-						"block w-full rounded-md border-0 p-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-cyan-600 sm:text-sm sm:leading-6"
+						articleContent.abstract = (event.currentTarget as HTMLTextAreaElement).value;
+					}}
+					placeholder="使用AI为文章生成摘要"
+					class="block w-full rounded-md border-0 p-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-cyan-600 sm:text-sm sm:leading-6"
 				></textarea>
 			</div>
 		</div>
 
 		<!--属性-->
-		<div class = "flex gap-4 flex-wrap my-4">
-			<div class = "flex h-6 items-center gap-2">
+		<div class="flex gap-4 flex-wrap my-4">
+			<div class="flex h-6 items-center gap-2">
 				<input
-					checked = {articleContent.is_top}
-					on:change = {(event: Event) => {
+					checked={articleContent.is_top}
+					on:change={(event: Event) => {
 						isChanged = true;
 						articleContent.is_top = (event.currentTarget as HTMLInputElement).checked;
 					}}
-					id = "is_top" aria-describedby = "是否置顶文章"
-					name = "is_top" type = "checkbox"
-					class =
-						"h-4 w-4 rounded border-gray-300 text-cyan-600 focus:ring-cyan-600"
-				>
-				<label
-					for = "is_top"
-					class = "font-medium text-gray-900 text-sm"
-				>{$t('top')}</label>
+					id="is_top"
+					aria-describedby="是否置顶文章"
+					name="is_top"
+					type="checkbox"
+					class="h-4 w-4 rounded border-gray-300 text-cyan-600 focus:ring-cyan-600"
+				/>
+				<label for="is_top" class="font-medium text-gray-900 text-sm">{$t('top')}</label>
 			</div>
-			<div class = "flex h-6 items-center gap-2">
+			<div class="flex h-6 items-center gap-2">
 				<input
-					checked = {articleContent.is_featured}
-					on:change = {(event: Event) => {
+					checked={articleContent.is_featured}
+					on:change={(event: Event) => {
 						isChanged = true;
-						articleContent.is_featured = (event.currentTarget as HTMLInputElement).checked
+						articleContent.is_featured = (event.currentTarget as HTMLInputElement).checked;
 					}}
-					id = "is_featured" aria-describedby = "是否设置为推荐文章"
-					name = "is_featured" type = "checkbox"
-					class =
-						"h-4 w-4 rounded border-gray-300 text-cyan-600 focus:ring-cyan-600"
-				>
-				<label
-					for = "is_featured"
-					class = "font-medium text-gray-900 text-sm"
-				>{$t('feature')}</label>
+					id="is_featured"
+					aria-describedby="是否设置为推荐文章"
+					name="is_featured"
+					type="checkbox"
+					class="h-4 w-4 rounded border-gray-300 text-cyan-600 focus:ring-cyan-600"
+				/>
+				<label for="is_featured" class="font-medium text-gray-900 text-sm">{$t('feature')}</label>
 			</div>
-			<div class = "flex h-6 items-center gap-2">
+			<div class="flex h-6 items-center gap-2">
 				<input
-					checked = {articleContent.is_premium}
-					on:change = {(event: Event) => {
+					checked={articleContent.is_premium}
+					on:change={(event: Event) => {
 						isChanged = true;
-						articleContent.is_premium = (event.currentTarget as HTMLInputElement).checked
-						}}
-					id = "is_premium" aria-describedby = "是否登录后可见"
-					name = "is_premium" type = "checkbox"
-					class =
-						"h-4 w-4 rounded border-gray-300 text-cyan-600 focus:ring-cyan-600"
+						articleContent.is_premium = (event.currentTarget as HTMLInputElement).checked;
+					}}
+					id="is_premium"
+					aria-describedby="是否登录后可见"
+					name="is_premium"
+					type="checkbox"
+					class="h-4 w-4 rounded border-gray-300 text-cyan-600 focus:ring-cyan-600"
+				/>
+				<label for="is_premium" class="font-medium text-gray-900 text-sm"
+					>{$t('logged-in-only')}</label
 				>
-				<label
-					for = "is_premium"
-					class = "font-medium text-gray-900 text-sm"
-				>{$t('logged-in-only')}</label>
 			</div>
 		</div>
 
 		<!--按钮-->
-		<div class = "flex justify-end gap-4">
+		<div class="flex justify-end gap-4">
 			<button
-				on:click = {deleteArticle}
-				class =
-					"rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 cursor-pointer mr-auto"
-			>{$t('delete')}</button>
+				on:click={deleteArticle}
+				class="rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 cursor-pointer mr-auto"
+				>{$t('delete')}</button
+			>
 			<button
-				on:click = {saveArticle}
-				disabled = {!isChanged}
-				class =
-					"rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed cursor-pointer"
-			>{$t('save')}</button>
+				on:click={saveArticle}
+				disabled={!isChanged}
+				class="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed cursor-pointer"
+				>{$t('save')}</button
+			>
 			<button
-				on:click = {publishArticle}
-				class =
-					"rounded-md bg-cyan-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-cyan-500 cursor-pointer"
-			>{articleContent.is_draft ? $t('publish') : $t('unpublish')}</button>
+				on:click={publishArticle}
+				class="rounded-md bg-cyan-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-cyan-500 cursor-pointer"
+				>{articleContent.is_draft ? $t('publish') : $t('unpublish')}</button
+			>
 		</div>
 	</aside>
 </div>

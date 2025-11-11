@@ -6,8 +6,9 @@ export const load: PageServerLoad = async ({ params, locals: { supabase } }) => 
 	const bookId = params.id;
 
 	const { data: bookData, error: bookError } = await supabase
-	.from('book')
-	.select(`
+		.from('book')
+		.select(
+			`
 	  id,
 	  title,
 	  rate,
@@ -15,9 +16,10 @@ export const load: PageServerLoad = async ({ params, locals: { supabase } }) => 
 	  comment,
 	  link,
 	  cover (id, alt, storage_key)
-  `)
-	.eq('id', bookId)
-	.single();
+  `
+		)
+		.eq('id', bookId)
+		.single();
 
 	if (bookError) {
 		console.error('Error fetching book data:', bookError);
@@ -27,5 +29,5 @@ export const load: PageServerLoad = async ({ params, locals: { supabase } }) => 
 	return {
 		prefix: URL_PREFIX,
 		book: bookData
-	}
-}
+	};
+};

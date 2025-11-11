@@ -8,7 +8,7 @@ export function localTime(time: string): string {
 		day: 'numeric',
 		weekday: 'short',
 		hour: 'numeric',
-		minute: 'numeric',
+		minute: 'numeric'
 	};
 
 	const formatter = new Intl.DateTimeFormat('zh-Hans-CN-u-ca-gregory', options);

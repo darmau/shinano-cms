@@ -1,11 +1,7 @@
 <script lang="ts">
 	import { getToastStore, ProgressRadial } from '$lib/toast';
 	import type { SupabaseClient } from '@supabase/supabase-js';
-	import {
-		uploadImageFile,
-		updateImageMetadata,
-		type MediaImageRecord
-	} from '$lib/api/media';
+	import { uploadImageFile, updateImageMetadata, type MediaImageRecord } from '$lib/api/media';
 
 	type ImageSize = 'auto' | '1024x1024' | '1536x1024' | '1024x1536';
 	type ImageQuality = 'auto' | 'low' | 'medium' | 'high';
@@ -289,7 +285,9 @@
 	</div>
 
 	{#if isGenerating}
-		<div class="flex min-h-48 flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-gray-200 bg-white py-10">
+		<div
+			class="flex min-h-48 flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-gray-200 bg-white py-10"
+		>
 			<ProgressRadial value={undefined} width="w-12" />
 			<p class="text-sm text-gray-600">AI 正在创作图片，这可能需要几秒钟…</p>
 		</div>
@@ -312,10 +310,9 @@
 			</div>
 			<div class="space-y-3">
 				<div>
-					<label 
-					class="block text-xs font-semibold uppercase tracking-wide text-gray-500"
-					for="alt-text"
-						>Alt 文本</label
+					<label
+						class="block text-xs font-semibold uppercase tracking-wide text-gray-500"
+						for="alt-text">Alt 文本</label
 					>
 					<textarea
 						id="alt-text"
@@ -327,10 +324,9 @@
 					></textarea>
 				</div>
 				<div>
-					<label 
-					class="block text-xs font-semibold uppercase tracking-wide text-gray-500"
-					for="caption-text"
-						>图片说明（可选）</label
+					<label
+						class="block text-xs font-semibold uppercase tracking-wide text-gray-500"
+						for="caption-text">图片说明（可选）</label
 					>
 					<input
 						type="text"
@@ -363,4 +359,3 @@
 		</div>
 	{/if}
 </div>
-

@@ -16,10 +16,10 @@ const config = {
 			remoteFunctions: true
 		},
 		alias: {
-			'$assets': './src/assets',
-			'$components': './src/lib/components',
+			$assets: './src/assets',
+			$components: './src/lib/components',
 			'$svelte-kit': './.svelte-kit',
-			'$types': './src/types',
+			$types: './src/types'
 		},
 		adapter: adapter({
 			config: 'wrangler.jsonc'

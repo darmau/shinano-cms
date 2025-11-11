@@ -5,7 +5,7 @@ import { DEFAULT_AI_CONFIG } from '$lib/types/prompts';
 
 export const POST: RequestHandler = async ({ request, locals }) => {
 	const { title } = await request.json();
-  
+
 	const supabase = locals.supabase;
 	const { data, error: supabaseError } = await supabase
 		.from('config')
@@ -49,4 +49,4 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	return new Response(slug, {
 		headers: { 'Content-Type': 'text/plain' }
 	});
-}
+};
