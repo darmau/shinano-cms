@@ -28,8 +28,7 @@
 	import DividerIcon from '$assets/icons/editor/divider.svelte';
 	import ImageIcon from '$assets/icons/editor/image.svelte';
 	import InsertTable from '$assets/icons/editor/insertTable.svelte';
-	import InsertColumnBefore
-		from '$assets/icons/editor/tableColumnBefore.svelte';
+	import InsertColumnBefore from '$assets/icons/editor/tableColumnBefore.svelte';
 	import InsertColumnAfter from '$assets/icons/editor/tableColumnAfter.svelte';
 	import DeleteColumn from '$assets/icons/editor/tableColumnDelete.svelte';
 	import InsertRowBefore from '$assets/icons/editor/tableRowBefore.svelte';
@@ -46,10 +45,10 @@
 	import { Typography } from '@tiptap/extension-typography';
 	import UniqueId from 'tiptap-unique-id';
 	import Heading from '@tiptap/extension-heading';
-import ImagesModel from '$components/editor/ImagesModel.svelte';
-import Image from '$components/editor/Image';
-import Gapcursor from '@tiptap/extension-gapcursor';
-import type { ImagesModelData, MenuItem, SelectedImage } from '$lib/types/editor';
+	import ImagesModel from '$components/editor/ImagesModel.svelte';
+	import Image from '$components/editor/Image';
+	import Gapcursor from '@tiptap/extension-gapcursor';
+	import type { ImagesModelData, MenuItem, SelectedImage } from '$lib/types/editor';
 
 	const dispatch = createEventDispatcher();
 	export let data: ImagesModelData;
@@ -93,51 +92,56 @@ import type { ImagesModelData, MenuItem, SelectedImage } from '$lib/types/editor
 	// 将语言代码转换为显示名称
 	function getLanguageDisplayName(languageCode: string): string {
 		if (!languageCode) return 'Plain Text';
-		
+
 		// 将小写代码转换为显示名称
 		const codeToName: Record<string, string> = {
-			'c': 'C',
-			'css': 'CSS',
-			'dockerfile': 'Dockerfile',
-			'go': 'Go',
-			'graphql': 'GraphQL',
-			'html': 'HTML',
-			'xml': 'XML',
-			'http': 'HTTP',
-			'json': 'JSON',
-			'javascript': 'JavaScript',
-			'js': 'JavaScript',
-			'markdown': 'Markdown',
-			'md': 'Markdown',
-			'nginx': 'Nginx',
-			'plaintext': 'Plain Text',
-			'text': 'Plain Text',
-			'postgresql': 'PostgreSQL',
-			'plpgsql': 'PL/pgSQL',
-			'python': 'Python',
-			'py': 'Python',
-			'ruby': 'Ruby',
-			'rb': 'Ruby',
-			'rust': 'Rust',
-			'rs': 'Rust',
-			'scss': 'SCSS',
-			'sql': 'SQL',
-			'shell': 'Shell',
-			'sh': 'Shell',
-			'bash': 'Shell',
-			'swift': 'Swift',
-			'typescript': 'TypeScript',
-			'ts': 'TypeScript',
-			'yaml': 'YAML',
-			'yml': 'YAML'
+			c: 'C',
+			css: 'CSS',
+			dockerfile: 'Dockerfile',
+			go: 'Go',
+			graphql: 'GraphQL',
+			html: 'HTML',
+			xml: 'XML',
+			http: 'HTTP',
+			json: 'JSON',
+			javascript: 'JavaScript',
+			js: 'JavaScript',
+			markdown: 'Markdown',
+			md: 'Markdown',
+			nginx: 'Nginx',
+			plaintext: 'Plain Text',
+			text: 'Plain Text',
+			postgresql: 'PostgreSQL',
+			plpgsql: 'PL/pgSQL',
+			python: 'Python',
+			py: 'Python',
+			ruby: 'Ruby',
+			rb: 'Ruby',
+			rust: 'Rust',
+			rs: 'Rust',
+			scss: 'SCSS',
+			sql: 'SQL',
+			shell: 'Shell',
+			sh: 'Shell',
+			bash: 'Shell',
+			swift: 'Swift',
+			typescript: 'TypeScript',
+			ts: 'TypeScript',
+			yaml: 'YAML',
+			yml: 'YAML'
 		};
-		
-		return codeToName[languageCode.toLowerCase()] || languageCode.charAt(0).toUpperCase() + languageCode.slice(1);
+
+		return (
+			codeToName[languageCode.toLowerCase()] ||
+			languageCode.charAt(0).toUpperCase() + languageCode.slice(1)
+		);
 	}
 
 	// 将 menuItems 和 tableItems 移到响应式语句外，避免每次 editor 更新都重新创建
 
-	const createMenuItems = (editorInstance: Editor): Array<MenuItem & { content: typeof BoldIcon }> => [
+	const createMenuItems = (
+		editorInstance: Editor
+	): Array<MenuItem & { content: typeof BoldIcon }> => [
 		{
 			name: 'image',
 			command: () => openImageModal(),
@@ -263,11 +267,16 @@ import type { ImagesModelData, MenuItem, SelectedImage } from '$lib/types/editor
 	const createTableItems = (editorInstance: Editor): MenuItem[] => [
 		{
 			name: 'insert-table',
-			command: () => editorInstance.chain().focus().insertTable({
-				rows: 3,
-				cols: 3,
-				withHeaderRow: true
-			}).run(),
+			command: () =>
+				editorInstance
+					.chain()
+					.focus()
+					.insertTable({
+						rows: 3,
+						cols: 3,
+						withHeaderRow: true
+					})
+					.run(),
 			content: InsertTable,
 			active: () => editorInstance.isActive('table')
 		},
@@ -316,15 +325,15 @@ import type { ImagesModelData, MenuItem, SelectedImage } from '$lib/types/editor
 		const editorStore = createEditor({
 			extensions: [
 				StarterKit.configure({
-					codeBlock: false, // 禁用 StarterKit 的默认 CodeBlock，使用我们的 CustomCodeBlock
+					codeBlock: false // 禁用 StarterKit 的默认 CodeBlock，使用我们的 CustomCodeBlock
 				}),
 				Heading.configure({
-					levels: [2, 3, 4],
+					levels: [2, 3, 4]
 				}),
 				UniqueId.configure({
-					attributeName: "id",
-					types: ["heading"],
-					createId: () => window.crypto.randomUUID(),
+					attributeName: 'id',
+					types: ['heading'],
+					createId: () => window.crypto.randomUUID()
 				}),
 				Highlight,
 				Link.configure({
@@ -339,8 +348,7 @@ import type { ImagesModelData, MenuItem, SelectedImage } from '$lib/types/editor
 				TableRow,
 				TableCell.configure({
 					HTMLAttributes: {
-						class:
-							'border whitespace-nowrap py-4 pl-4 pr-3 text-sm text-black sm:pl-6'
+						class: 'border whitespace-nowrap py-4 pl-4 pr-3 text-sm text-black sm:pl-6'
 					}
 				}),
 				TableHeader.configure({
@@ -378,17 +386,17 @@ import type { ImagesModelData, MenuItem, SelectedImage } from '$lib/types/editor
 		});
 
 		editor = editorStore;
-		
+
 		// 初始化 menuItems 和 tableItems
 		unsubscribe = editorStore.subscribe((editorInstance) => {
 			menuItems = createMenuItems(editorInstance);
 			tableItems = createTableItems(editorInstance);
-			
+
 			// 初始化调试数据
 			if (editorInstance) {
 				debugData = editorInstance.getJSON();
 			}
-			
+
 			// 初始化代码块标签
 			setTimeout(() => {
 				updateCodeBlockLabels(editorInstance);
@@ -410,11 +418,11 @@ import type { ImagesModelData, MenuItem, SelectedImage } from '$lib/types/editor
 			// 检查 content 是否真的改变了
 			const newContentStr = JSON.stringify(content);
 			const previousContentStr = JSON.stringify(previousContent);
-			
+
 			if (newContentStr !== previousContentStr) {
 				const currentContent = editorInstance.getJSON();
 				const currentContentStr = JSON.stringify(currentContent);
-				
+
 				// 只有当新内容和当前编辑器内容不同时才更新
 				if (newContentStr !== currentContentStr) {
 					editorInstance.chain().setContent(content, { emitUpdate: false }).run();
@@ -454,25 +462,25 @@ import type { ImagesModelData, MenuItem, SelectedImage } from '$lib/types/editor
 	// 更新代码块的语言标签
 	function updateCodeBlockLabels(editorInstance: CoreEditor) {
 		if (!editorInstance?.view?.dom) return;
-		
+
 		const editorElement = editorInstance.view.dom;
 		// 查找所有 pre 元素（代码块），不仅仅是那些已经有 data-language 的
 		const codeBlocks = editorElement.querySelectorAll('pre');
-		
+
 		codeBlocks.forEach((preElement) => {
 			if (!(preElement instanceof HTMLElement)) return;
-			
+
 			// 检查是否是代码块（包含 code 子元素）
 			const codeElement = preElement.querySelector('code');
 			if (!codeElement) return;
-			
+
 			// 确保 pre 元素有相对定位
 			if (!preElement.classList.contains('relative')) {
 				preElement.classList.add('relative');
 			}
-			
+
 			const language = preElement.getAttribute('data-language') || '';
-			
+
 			// 添加或更新语言标签
 			let languageLabel = preElement.querySelector('.code-language-label') as HTMLElement;
 			if (!languageLabel) {
@@ -480,7 +488,7 @@ import type { ImagesModelData, MenuItem, SelectedImage } from '$lib/types/editor
 				languageLabel.className = 'code-language-label';
 				preElement.insertBefore(languageLabel, preElement.firstChild);
 			}
-			
+
 			// 如果有指定语言，显示语言标签
 			if (language) {
 				languageLabel.textContent = getLanguageDisplayName(language);
@@ -493,10 +501,10 @@ import type { ImagesModelData, MenuItem, SelectedImage } from '$lib/types/editor
 
 	function handleSelect(images: SelectedImage[]) {
 		if (!editor) return;
-		
+
 		const editorInstance = $editor;
 		if (!editorInstance) return;
-		
+
 		const nodeLists = images.map((image) => ({
 			type: 'image',
 			attrs: image
@@ -506,10 +514,10 @@ import type { ImagesModelData, MenuItem, SelectedImage } from '$lib/types/editor
 
 	const setCodeLanguage = () => {
 		if (!editor) return;
-		
+
 		const editorInstance = $editor;
 		if (!editorInstance) return;
-		
+
 		const language = codeLanguage.trim().toLowerCase();
 		if (!language) {
 			return;
@@ -523,7 +531,7 @@ import type { ImagesModelData, MenuItem, SelectedImage } from '$lib/types/editor
 				language: language
 			})
 			.run();
-		
+
 		// 更新后更新语言标签
 		setTimeout(() => {
 			updateCodeBlockLabels(editorInstance);
@@ -532,10 +540,10 @@ import type { ImagesModelData, MenuItem, SelectedImage } from '$lib/types/editor
 
 	export function updateContent(newContent: Content) {
 		if (!editor) return;
-		
+
 		const editorInstance = $editor;
 		if (!editorInstance) return;
-		
+
 		editorInstance.chain().setContent(newContent, { emitUpdate: false }).run();
 	}
 </script>
@@ -552,7 +560,8 @@ import type { ImagesModelData, MenuItem, SelectedImage } from '$lib/types/editor
 						type="button"
 						title={item.name}
 						class="hover:bg-black hover:text-white w-auto h-7 px-1 rounded {item.active()
-							? 'bg-black text-white' : ''}"
+							? 'bg-black text-white'
+							: ''}"
 						on:click={item.command}
 					>
 						<svelte:component this={item.content} classList="w-6 h-6" />
@@ -565,7 +574,8 @@ import type { ImagesModelData, MenuItem, SelectedImage } from '$lib/types/editor
 						type="button"
 						title={item.name}
 						class="hover:bg-black hover:text-white w-auto h-7 px-1 rounded {item.active()
-							? 'bg-black text-white' : ''}"
+							? 'bg-black text-white'
+							: ''}"
 						on:click={item.command}
 					>
 						<svelte:component this={item.content} classList="w-6 h-6" />
@@ -592,17 +602,17 @@ import type { ImagesModelData, MenuItem, SelectedImage } from '$lib/types/editor
 			<EditorContent editor={$editor} />
 		{/if}
 	{/if}
-	
+
 	<!-- 调试模块 -->
 	<div class="mt-4">
 		<button
 			type="button"
-			on:click={() => showDebug = !showDebug}
+			on:click={() => (showDebug = !showDebug)}
 			class="mb-2 text-sm text-gray-600 hover:text-gray-900 underline font-medium"
 		>
 			{showDebug ? '▼ 隐藏' : '▶ 显示'}调试数据
 		</button>
-		
+
 		{#if showDebug && debugData}
 			<div class="bg-gray-50 rounded-md p-4 border border-gray-200">
 				<div class="flex items-center justify-between mb-2">
@@ -619,7 +629,10 @@ import type { ImagesModelData, MenuItem, SelectedImage } from '$lib/types/editor
 						复制
 					</button>
 				</div>
-				<pre class="text-xs overflow-x-auto bg-white p-4 rounded border border-gray-200 max-h-96 overflow-y-auto font-mono"><code class="text-gray-800 whitespace-pre">{JSON.stringify(debugData, null, 2)}</code></pre>
+				<pre
+					class="text-xs overflow-x-auto bg-white p-4 rounded border border-gray-200 max-h-96 overflow-y-auto font-mono"><code
+						class="text-gray-800 whitespace-pre">{JSON.stringify(debugData, null, 2)}</code
+					></pre>
 			</div>
 		{/if}
 	</div>

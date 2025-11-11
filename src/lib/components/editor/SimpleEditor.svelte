@@ -23,7 +23,7 @@
 	import HardBreakIcon from '$assets/icons/editor/break.svelte';
 	import { Typography } from '@tiptap/extension-typography';
 	import { createEventDispatcher } from 'svelte';
-	import Gapcursor from '@tiptap/extension-gapcursor'
+	import Gapcursor from '@tiptap/extension-gapcursor';
 	import Heading, { type Level } from '@tiptap/extension-heading';
 	import type { MenuItem } from '$lib/types/editor';
 
@@ -37,7 +37,7 @@
 			extensions: [
 				StarterKit,
 				Heading.configure({
-					levels: [2],
+					levels: [2]
 				}),
 				Highlight,
 				Link.configure({
@@ -106,15 +106,13 @@
 
 		// empty
 		if (url === '') {
-			$editor.chain().focus().extendMarkRange('link').unsetLink()
-			.run();
+			$editor.chain().focus().extendMarkRange('link').unsetLink().run();
 
 			return;
 		}
 
 		// update link
-		$editor.chain().focus().extendMarkRange('link').setLink({ href: url })
-		.run();
+		$editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
 	};
 
 	const setParagraph = () => {
@@ -140,87 +138,87 @@
 	$: isActive = (name: string, attrs = {}) => $editor.isActive(name, attrs);
 
 	let menuItems: Array<MenuItem & { content: typeof H2Icon }> = [];
-	
+
 	$: if ($editor) {
 		menuItems = [
-		{
-			name: 'heading-2',
-			command: toggleHeading(2),
-			content: H2Icon,
-			active: () => isActive('heading', { level: 2 })
-		},
-		{
-			name: 'bold',
-			command: toggleBold,
-			content: BoldIcon,
-			active: () => isActive('bold')
-		},
-		{
-			name: 'italic',
-			command: toggleItalic,
-			content: ItalicIcon,
-			active: () => isActive('italic')
-		},
-		{
-			name: 'strike',
-			command: toggleStrike,
-			content: StrikeIcon,
-			active: () => isActive('strike')
-		},
-		{
-			name: 'inline-code',
-			command: toggleInlineCode,
-			content: CodeIcon,
-			active: () => isActive('code')
-		},
-		{
-			name: 'highlight',
-			command: toggleHighlight,
-			content: HighlightIcon,
-			active: () => isActive('highlight')
-		},
-		{
-			name: 'link',
-			command: setLink,
-			content: LinkIcon,
-			active: () => isActive('link')
-		},
-		{
-			name: 'unlink',
-			command: () => $editor.chain().focus().unsetLink().run(),
-			content: UnlinkIcon,
-			active: () => isActive('link')
-		},
-		{
-			name: 'paragraph',
-			command: setParagraph,
-			content: ParagraphIcon,
-			active: () => isActive('paragraph')
-		},
-		{
-			name: 'blockquote',
-			command: toggleBlockquote,
-			content: BlockquoteIcon,
-			active: () => isActive('blockquote')
-		},
-		{
-			name: 'bullet-list',
-			command: toggleBulletList,
-			content: BulletListIcon,
-			active: () => isActive('bulletList')
-		},
-		{
-			name: 'ordered-list',
-			command: toggleOrderedList,
-			content: OrderedListIcon,
-			active: () => isActive('orderedList')
-		},
-		{
-			name: 'hard-break',
-			command: setHardBreak,
-			content: HardBreakIcon,
-			active: () => isActive('hardBreak')
-		}
+			{
+				name: 'heading-2',
+				command: toggleHeading(2),
+				content: H2Icon,
+				active: () => isActive('heading', { level: 2 })
+			},
+			{
+				name: 'bold',
+				command: toggleBold,
+				content: BoldIcon,
+				active: () => isActive('bold')
+			},
+			{
+				name: 'italic',
+				command: toggleItalic,
+				content: ItalicIcon,
+				active: () => isActive('italic')
+			},
+			{
+				name: 'strike',
+				command: toggleStrike,
+				content: StrikeIcon,
+				active: () => isActive('strike')
+			},
+			{
+				name: 'inline-code',
+				command: toggleInlineCode,
+				content: CodeIcon,
+				active: () => isActive('code')
+			},
+			{
+				name: 'highlight',
+				command: toggleHighlight,
+				content: HighlightIcon,
+				active: () => isActive('highlight')
+			},
+			{
+				name: 'link',
+				command: setLink,
+				content: LinkIcon,
+				active: () => isActive('link')
+			},
+			{
+				name: 'unlink',
+				command: () => $editor.chain().focus().unsetLink().run(),
+				content: UnlinkIcon,
+				active: () => isActive('link')
+			},
+			{
+				name: 'paragraph',
+				command: setParagraph,
+				content: ParagraphIcon,
+				active: () => isActive('paragraph')
+			},
+			{
+				name: 'blockquote',
+				command: toggleBlockquote,
+				content: BlockquoteIcon,
+				active: () => isActive('blockquote')
+			},
+			{
+				name: 'bullet-list',
+				command: toggleBulletList,
+				content: BulletListIcon,
+				active: () => isActive('bulletList')
+			},
+			{
+				name: 'ordered-list',
+				command: toggleOrderedList,
+				content: OrderedListIcon,
+				active: () => isActive('orderedList')
+			},
+			{
+				name: 'hard-break',
+				command: setHardBreak,
+				content: HardBreakIcon,
+				active: () => isActive('hardBreak')
+			}
 		];
 	}
 
@@ -231,25 +229,23 @@
 
 <div class="relative">
 	{#if editor}
-		<div class =
-					 "sticky top-0 bg-white z-20 ring-1 ring-inset ring-gray-300 rounded-t-md">
-			<div
-				class = "p-2 flex gap-1 flex-wrap"
-			>
+		<div class="sticky top-0 bg-white z-20 ring-1 ring-inset ring-gray-300 rounded-t-md">
+			<div class="p-2 flex gap-1 flex-wrap">
 				{#each menuItems as item (item.name)}
 					<button
-						type = "button"
-						title = {item.name}
-						class = "hover:bg-black hover:text-white w-auto h-7 px-1 rounded {item.active()
-				? 'bg-black text-white' : ''}"
-						on:click = {item.command}
+						type="button"
+						title={item.name}
+						class="hover:bg-black hover:text-white w-auto h-7 px-1 rounded {item.active()
+							? 'bg-black text-white'
+							: ''}"
+						on:click={item.command}
 					>
-						<svelte:component this = {item.content} classList = "w-6 h-6" />
+						<svelte:component this={item.content} classList="w-6 h-6" />
 					</button>
 				{/each}
 			</div>
 		</div>
 	{/if}
 
-	<EditorContent editor = {$editor} />
+	<EditorContent editor={$editor} />
 </div>
