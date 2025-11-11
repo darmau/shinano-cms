@@ -417,7 +417,7 @@
 				</button>
 			</div>
 			<div class="max-h-[80vh] overflow-y-auto px-6 py-6">
-				<UnsplashBrowser supabase={supabase} onImport={handleUnsplashImported} />
+				<UnsplashBrowser {supabase} onImport={handleUnsplashImported} />
 			</div>
 		</div>
 	</div>
@@ -436,7 +436,7 @@
 				</button>
 			</div>
 			<div class="max-h-[80vh] overflow-y-auto px-6 py-6">
-				<AIImageGenerator supabase={supabase} onImport={handleAIImported} />
+				<AIImageGenerator {supabase} onImport={handleAIImported} />
 			</div>
 		</div>
 	</div>

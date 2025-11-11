@@ -309,9 +309,9 @@
 								{/each}
 							</div>
 						{:else if viewMode === 'unsplash'}
-							<UnsplashBrowser supabase={supabase} onImport={handleUnsplashImported} />
+							<UnsplashBrowser {supabase} onImport={handleUnsplashImported} />
 						{:else}
-							<AIImageGenerator supabase={supabase} onImport={handleAIImported} />
+							<AIImageGenerator {supabase} onImport={handleAIImported} />
 						{/if}
 					</div>
 					<div class="sticky bottom-0 p-4 bg-white border-t border-gray-200 flex justify-between">
