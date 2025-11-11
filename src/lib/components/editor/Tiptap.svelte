@@ -41,7 +41,6 @@
 	import TableHeader from '@tiptap/extension-table-header';
 	import TableRow from '@tiptap/extension-table-row';
 	import { CustomCodeBlock } from '$components/editor/CustomCodeBlock';
-	import Check from '$assets/icons/check.svelte';
 	import { Typography } from '@tiptap/extension-typography';
 	import UniqueId from 'tiptap-unique-id';
 	import Heading from '@tiptap/extension-heading';
