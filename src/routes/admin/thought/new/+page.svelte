@@ -261,7 +261,10 @@
 
 	<div class="space-y-6">
 		<!--内容-->
-		<SimpleEditor onContentUpdate={handleContentUpdate} content={thoughtContent.content_json} />
+		<SimpleEditor
+			onContentUpdate={handleContentUpdate}
+			content={thoughtContent.content_json}
+		/>
 
 		<!--图片-->
 		<div>
