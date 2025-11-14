@@ -9,8 +9,13 @@
 	import { getSupabaseBrowserClient } from '$lib/supabaseClient';
 	import type { SupabaseClient } from '@supabase/supabase-js';
 	import type { ArticleListPageData } from '$lib/types/article';
+	import { goto } from '$app/navigation';
+	import { page } from '$app/stores';
 
-	export let data: ArticleListPageData;
+	export let data: ArticleListPageData & {
+		allLanguages: Array<{ id: number; lang: string; locale: string }>;
+		currentLanguage: { id: number; lang: string; locale: string } | null;
+	};
 	const supabase: SupabaseClient | null = browser ? getSupabaseBrowserClient() : null;
 
 	const toastStore = getToastStore();
@@ -100,6 +105,13 @@
 		}
 		deletable = selectedArticleList.length === 0;
 	}
+
+	// 切换语言
+	function switchLanguage(targetLang: string): void {
+		const currentPath = $page.url.pathname;
+		const newPath = currentPath.replace(/\/article\/[^/]+/, `/article/${targetLang}`);
+		goto(newPath);
+	}
 </script>
 
 <svelte:head>
@@ -116,6 +128,21 @@
 			class="inline-flex justify-center rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 sm:w-auto disabled:bg-gray-300"
 			>{$t('delete')}
 		</button>
+		<div class="inline-flex rounded-md border border-gray-200 p-0.5">
+			{#each data.allLanguages as language}
+				<button
+					type="button"
+					on:click={() => switchLanguage(language.lang)}
+					class={`rounded-md px-3 py-1.5 text-sm font-medium transition ${
+						data.currentLanguage?.lang === language.lang
+							? 'bg-cyan-600 text-white shadow-sm'
+							: 'text-gray-600 hover:bg-gray-100'
+					}`}
+				>
+					{language.locale}
+				</button>
+			{/each}
+		</div>
 		<a
 			href="/admin/article/new"
 			class="inline-flex justify-between gap-2 rounded-md bg-cyan-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-cyan-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-600"
@@ -142,11 +169,6 @@
 										scope="col"
 										class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6"
 										>{$t('title')}
-									</th>
-									<th
-										scope="col"
-										class="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 lg:table-cell"
-										>{$t('language')}
 									</th>
 									<th
 										scope="col"
@@ -182,20 +204,12 @@
 											class="break-words py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6"
 										>
 											{article.title}
-											<p class="font-normal break-words text-gray-600">{article.subtitle}</p>
 											<dl class="font-normal lg:hidden">
 												<dt class="sr-only sm:hidden">Slug</dt>
 												<dd class="font-mono mt-1 text-gray-500 sm:hidden">
 													{article.slug}
 												</dd>
-												<dt class="sr-only">Language</dt>
-												<dd class="mt-1 truncate text-gray-500">
-													{article.lang.locale}
-												</dd>
 											</dl>
-										</td>
-										<td class="hidden px-3 py-4 text-sm text-gray-500 lg:table-cell"
-											>{article.lang.locale}
 										</td>
 										<td
 											class="hidden break-words font-mono px-3 py-4 text-sm text-gray-500 sm:table-cell"

@@ -1,15 +1,4 @@
 <script>
-	import Home from '$assets/icons/home.svelte';
-	import Message from '$assets/icons/inbox.svelte';
-	import Media from '$assets/icons/photo.svelte';
-	import Article from '$assets/icons/document-text.svelte';
-	import Photo from '$assets/icons/camera.svelte';
-	import Book from '$assets/icons/book.svelte';
-	import Memo from '$assets/icons/light-bulb.svelte';
-	import Comment from '$assets/icons/chat-bubble-left.svelte';
-	import User from '$assets/icons/users.svelte';
-	import Setting from '$assets/icons/cog.svelte';
-	import Category from '$assets/icons/rectangle-stack.svelte';
 	import { locale, locales } from '$lib/functions/i18n';
 	import NavItems from '$components/NavItems.svelte';
 
