@@ -14,6 +14,7 @@
 	import { getSupabaseBrowserClient } from '$lib/supabaseClient';
 	import type { SupabaseClient } from '@supabase/supabase-js';
 	import type { Content } from '@tiptap/core';
+import { splitHtmlByTopLevelNodes } from '$lib/functions/htmlChunk';
 	import type {
 		AlbumPicture,
 		SelectedImage,
@@ -380,6 +381,8 @@
 	let isGeneratingAbstract = false;
 	let isGeneratingTags = false;
 	let isTranslatingContent = false;
+let translationChunksTotal = 0;
+let translationChunksCompleted = 0;
 
 	async function checkSlug(slug: string): Promise<boolean> {
 		isCheckingSlug = true;
@@ -577,8 +580,8 @@
 			return;
 		}
 
-		const content = photoContent.content_text;
-		if (!content?.trim()) {
+	const originalHtml = photoContent.content_html;
+	if (!originalHtml?.trim()) {
 			toastStore.trigger({
 				message: '正文内容为空，无法翻译。',
 				background: 'variant-filled-error'
@@ -587,28 +590,73 @@
 		}
 
 		isTranslatingContent = true;
+	const chunks = splitHtmlByTopLevelNodes(originalHtml);
+	if (chunks.length === 0) {
+		isTranslatingContent = false;
+		return;
+	}
+
+	translationChunksTotal = chunks.length;
+	translationChunksCompleted = 0;
+
+	const translatedChunks = new Array<string>(chunks.length).fill('');
+
+	const translateChunk = async (chunk: string) => {
+		const response = await fetch('/api/translation', {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json'
+			},
+			body: JSON.stringify({
+				lang: data.currentLanguage.locale,
+				content: chunk
+			})
+		});
+
+		if (!response.ok) {
+			throw new Error(`Translation API responded with status ${response.status}`);
+		}
+
+		return response.text();
+	};
+
 		try {
-			const translatedHTML = await fetch('/api/translation', {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json'
-				},
-				body: JSON.stringify({
-					lang: data.currentLanguage.locale,
-					content
-				})
-			}).then((res) => res.text());
-			photoContent.content_html = translatedHTML;
-			generateContent(translatedHTML);
+		for (let index = 0; index < chunks.length; index += 1) {
+			const translation = await translateChunk(chunks[index]);
+			translatedChunks[index] = translation.trim().length > 0 ? translation : chunks[index];
+			translationChunksCompleted = index + 1;
+
+			const partialHtml = translatedChunks
+				.map((value, chunkIndex) => value || chunks[chunkIndex])
+				.join('');
+
+			photoContent.content_html = partialHtml;
+			contentHTML = partialHtml;
+			generateContent(partialHtml);
+		}
+
+		if (typeof document !== 'undefined') {
+			const parser = document.createElement('div');
+			parser.innerHTML = photoContent.content_html;
+			const plainText = parser.textContent ?? '';
+			contentText = plainText;
+			photoContent.content_text = plainText;
+		}
+
 			isChanged = true;
 		} catch (err) {
 			console.error('Failed to translate content', err);
+		photoContent.content_html = originalHtml;
+		contentHTML = originalHtml;
+		generateContent(originalHtml);
 			toastStore.trigger({
 				message: '翻译失败，请稍后重试。',
 				background: 'variant-filled-error'
 			});
 		} finally {
 			isTranslatingContent = false;
+		translationChunksTotal = 0;
+		translationChunksCompleted = 0;
 		}
 	}
 
@@ -699,7 +747,9 @@
 			on:click={getTranslation}
 			disabled={isTranslatingContent}
 			class="rounded-md bg-cyan-50 px-3 py-2 text-sm font-semibold text-cyan-600 shadow-sm hover:bg-cyan-100 cursor-pointer disabled:cursor-not-allowed disabled:opacity-70"
-			>{isTranslatingContent ? $t('generating') : $t('translate')}</button
+			>{isTranslatingContent
+				? `${$t('generating')}${translationChunksTotal > 0 ? ` (${translationChunksCompleted}/${translationChunksTotal})` : ''}`
+				: $t('translate')}</button
 		>
 
 		<!--图片-->

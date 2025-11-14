@@ -39,7 +39,6 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 			model,
 			instructions: prompt + lang,
 			input: content,
-			reasoning: { effort: 'medium' }
 		});
 		translatedHtml = response.output_text?.trim() ?? '';
 	} catch (err) {
