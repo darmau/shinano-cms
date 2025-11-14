@@ -120,12 +120,19 @@ const toPhotoListItem = (photo: unknown): PhotoListItem | null => {
 	};
 };
 
-export const load: PageServerLoad = async ({ url, params: { page }, locals: { supabase } }) => {
+export const load: PageServerLoad = async ({ url, params: { lang, page }, locals: { supabase } }) => {
 	const pageNumber = Number(page);
 	const limit = url.searchParams.get('limit') ? Number(url.searchParams.get('limit')) : 12;
 
-	// 获取photo表中数据的条目数
-	const { count } = await supabase.from('photo').select('id', { count: 'exact' });
+	// 获取photo表中当前语言的数据条目数
+	const { count, error: countError } = await supabase
+		.from('photo')
+		.select('id, language!inner (lang)', { count: 'exact', head: true })
+		.eq('language.lang', lang);
+
+	if (countError) {
+		throw error(500, { message: countError.message });
+	}
 
 	// 同时获取photo_image表中photo_id为photo表中id的数据数量
 	const { data: photos, error: fetchError } = await supabase
@@ -141,15 +148,16 @@ export const load: PageServerLoad = async ({ url, params: { page }, locals: { su
 	  is_featured, 
 	  is_top,
 	  cover (id, alt, storage_key, caption),
-	  photo_image (count)
+	  photo_image (count),
+	  language!inner (lang)
 	  `
 		)
+		.eq('language.lang', lang)
 		.range((pageNumber - 1) * limit, pageNumber * limit - 1)
 		.order('updated_at', { ascending: false });
 
 	if (fetchError) {
-		console.error(error);
-		error(Number(fetchError.code), { message: fetchError.message });
+		throw error(500, { message: fetchError.message });
 	}
 
 	const path = url.pathname.substring(0, url.pathname.indexOf(page) - 1);
@@ -158,13 +166,31 @@ export const load: PageServerLoad = async ({ url, params: { page }, locals: { su
 		.map((photo) => toPhotoListItem(photo))
 		.filter((photo): photo is PhotoListItem => photo !== null);
 
-	const response: PhotoListPageData = {
+	// 获取所有语言列表
+	const { data: allLanguages, error: languagesError } = await supabase
+		.from('language')
+		.select('id, lang, locale')
+		.order('id', { ascending: true });
+
+	if (languagesError) {
+		console.error('Error fetching languages:', languagesError);
+	}
+
+	// 获取当前语言信息
+	const currentLanguage = allLanguages?.find((l) => l.lang === lang);
+
+	const response: PhotoListPageData & {
+		allLanguages: Array<{ id: number; lang: string; locale: string }>;
+		currentLanguage: { id: number; lang: string; locale: string } | null;
+	} = {
 		page: pageNumber,
 		prefix: URL_PREFIX,
 		count: count ?? 0,
 		photos: photosList,
 		limit,
-		path
+		path,
+		allLanguages: allLanguages ?? [],
+		currentLanguage: currentLanguage ?? null
 	};
 
 	return response;

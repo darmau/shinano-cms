@@ -9,8 +9,13 @@
 	import { getSupabaseBrowserClient } from '$lib/supabaseClient';
 	import type { SupabaseClient } from '@supabase/supabase-js';
 	import type { PhotoListPageData } from '$lib/types/photo';
+	import { goto } from '$app/navigation';
+	import { page } from '$app/stores';
 
-	export let data: PhotoListPageData;
+	export let data: PhotoListPageData & {
+		allLanguages: Array<{ id: number; lang: string; locale: string }>;
+		currentLanguage: { id: number; lang: string; locale: string } | null;
+	};
 	const supabase: SupabaseClient | null = browser ? getSupabaseBrowserClient() : null;
 
 	const toastStore = getToastStore();
@@ -96,6 +101,13 @@
 		}
 		deletable = selectedPhotosList.length === 0;
 	}
+
+	// 切换语言
+	function switchLanguage(targetLang: string): void {
+		const currentPath = $page.url.pathname;
+		const newPath = currentPath.replace(/\/photo\/[^/]+/, `/photo/${targetLang}`);
+		goto(newPath);
+	}
 </script>
 
 <svelte:head>
@@ -113,6 +125,21 @@
 			class="inline-flex justify-center rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 sm:w-auto disabled:bg-gray-300"
 			>{$t('delete')}
 		</button>
+		<div class="inline-flex rounded-md border border-gray-200 p-0.5">
+			{#each data.allLanguages as language}
+				<button
+					type="button"
+					on:click={() => switchLanguage(language.lang)}
+					class={`rounded-md px-3 py-1.5 text-sm font-medium transition ${
+						data.currentLanguage?.lang === language.lang
+							? 'bg-cyan-600 text-white shadow-sm'
+							: 'text-gray-600 hover:bg-gray-100'
+					}`}
+				>
+					{language.locale}
+				</button>
+			{/each}
+		</div>
 		<a
 			href="/admin/photo/new"
 			class="inline-flex justify-between gap-2 rounded-md bg-cyan-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-cyan-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-600"
@@ -148,11 +175,6 @@
 									</th>
 									<th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
 										>{$t('photos-count')}
-									</th>
-									<th
-										scope="col"
-										class="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 lg:table-cell"
-										>{$t('language')}
 									</th>
 									<th
 										scope="col"
@@ -206,17 +228,10 @@
 												<dd class="font-mono mt-1 truncate text-gray-500 sm:hidden">
 													{photo.slug}
 												</dd>
-												<dt class="sr-only">Language</dt>
-												<dd class="mt-1 truncate text-gray-500">
-													{photo.lang.locale}
-												</dd>
 											</dl>
 										</td>
 										<td class="px-3 py-4 text-sm text-gray-500 lg:table-cell"
 											>{photo.imageCount}
-										</td>
-										<td class="hidden px-3 py-4 text-sm text-gray-500 lg:table-cell"
-											>{photo.lang.locale}
 										</td>
 										<td
 											class="hidden font-mono px-3 py-4 text-sm text-gray-500 sm:table-cell sm:break-words"
