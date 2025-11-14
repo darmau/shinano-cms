@@ -75,7 +75,7 @@ const toArticleListItem = (article: unknown): ArticleListItem | null => {
 	};
 };
 
-export const load: PageServerLoad = async ({ url, params: { page }, locals }) => {
+export const load: PageServerLoad = async ({ url, params: { lang, page }, locals }) => {
 	const { session } = await locals.safeGetSession();
 	if (!session) {
 		throw error(303, 'Unauthorized');
@@ -88,7 +88,8 @@ export const load: PageServerLoad = async ({ url, params: { page }, locals }) =>
 
 	const { count, error: countError } = await supabase
 		.from('article')
-		.select('id', { count: 'exact', head: true });
+		.select('id, language!inner (lang)', { count: 'exact', head: true })
+		.eq('language.lang', lang);
 
 	if (countError) {
 		throw error(500, { message: countError.message });
@@ -97,8 +98,9 @@ export const load: PageServerLoad = async ({ url, params: { page }, locals }) =>
 	const { data: articles, error: fetchError } = await supabase
 		.from('article')
 		.select(
-			`id, title, subtitle, lang (id, locale), slug, category (id, title), is_draft, is_featured, is_top, is_premium`
+			`id, title, subtitle, lang (id, locale), slug, category (id, title), is_draft, is_featured, is_top, is_premium, language!inner (lang)`
 		)
+		.eq('language.lang', lang)
 		.range((pageNumber - 1) * limit, pageNumber * limit - 1)
 		.order('updated_at', { ascending: false });
 
@@ -112,12 +114,27 @@ export const load: PageServerLoad = async ({ url, params: { page }, locals }) =>
 		.map((article) => toArticleListItem(article))
 		.filter((item): item is ArticleListItem => item !== null);
 
+	// 获取所有语言列表
+	const { data: allLanguages, error: languagesError } = await supabase
+		.from('language')
+		.select('id, lang, locale')
+		.order('id', { ascending: true });
+
+	if (languagesError) {
+		console.error('Error fetching languages:', languagesError);
+	}
+
+	// 获取当前语言信息
+	const currentLanguage = allLanguages?.find((l) => l.lang === lang);
+
 	return {
 		page: pageNumber,
 		prefix: URL_PREFIX,
 		count: count ?? 0,
 		articles: articleList,
 		limit,
-		path
-	} satisfies ArticleListPageData;
+		path,
+		allLanguages: allLanguages ?? [],
+		currentLanguage: currentLanguage ?? null
+	} satisfies ArticleListPageData & { allLanguages: Array<{ id: number; lang: string; locale: string }>; currentLanguage: { id: number; lang: string; locale: string } | null };
 };

@@ -8,37 +8,45 @@
 	import { browser } from '$app/environment';
 	import { getSupabaseBrowserClient } from '$lib/supabaseClient';
 	import type { SupabaseClient } from '@supabase/supabase-js';
-	import type { PhotoListPageData } from '$lib/types/photo';
+	import type { ArticleListPageData } from '$lib/types/article';
+	import { goto } from '$app/navigation';
+	import { page } from '$app/stores';
 
-	export let data: PhotoListPageData;
+	export let data: ArticleListPageData & {
+		allLanguages: Array<{ id: number; lang: string; locale: string }>;
+		currentLanguage: { id: number; lang: string; locale: string } | null;
+	};
 	const supabase: SupabaseClient | null = browser ? getSupabaseBrowserClient() : null;
 
 	const toastStore = getToastStore();
 
-	let selectedPhotosList: number[] = [];
+	let selectedArticleList: number[] = [];
 	let deletable = true;
 
-	async function deletePhotos(): Promise<void> {
-		if (!supabase || !selectedPhotosList.length) {
+	// 删除选中文章
+	async function deleteArticles(): Promise<void> {
+		if (!supabase || !selectedArticleList.length) {
 			return;
 		}
 
 		try {
-			const { error } = await supabase.from('photo').delete().in('id', selectedPhotosList);
+			const { error } = await supabase.from('article').delete().in('id', selectedArticleList);
 			if (error) {
 				throw error;
 			}
-			selectedPhotosList = [];
+
+			selectedArticleList = [];
 			deletable = true;
-			await invalidateAll();
+
 			toastStore.trigger({
-				message: '成功删除摄影。',
+				message: `成功删除文章。`,
 				hideDismiss: true,
 				background: 'variant-filled-success'
 			});
+
+			await invalidateAll();
 		} catch (err) {
-			console.error('删除摄影时出错:', err);
-			const message = err instanceof Error ? err.message : '删除摄影失败。';
+			const message = err instanceof Error ? err.message : '删除文章失败。';
 			toastStore.trigger({
 				message,
 				hideDismiss: true,
@@ -47,12 +55,13 @@
 		}
 	}
 
-	async function deletePhoto(id: number): Promise<void> {
+	// 直接删除文章
+	async function deleteArticle(id: number): Promise<void> {
 		if (!supabase) {
 			return;
 		}
 
-		const { error: deleteError } = await supabase.from('photo').delete().eq('id', id);
+		const { error: deleteError } = await supabase.from('article').delete().eq('id', id);
 		if (deleteError) {
 			toastStore.trigger({
 				message: deleteError.message,
@@ -61,7 +70,7 @@
 			});
 		} else {
 			toastStore.trigger({
-				message: `成功删除摄影`,
+				message: `成功删除文章`,
 				hideDismiss: true,
 				background: 'variant-filled-success'
 			});
@@ -69,60 +78,80 @@
 		await invalidateAll();
 	}
 
+	// 选中所有文章并添加到selectedArticleList
 	function switchSelectAll(): void {
-		const checkboxes = document.querySelectorAll<HTMLInputElement>('.photo-checkbox');
-		if (selectedPhotosList.length === data.photos.length) {
+		const checkboxes = document.querySelectorAll<HTMLInputElement>('.article-checkbox');
+		if (selectedArticleList.length === data.articles.length) {
 			checkboxes.forEach((checkbox) => {
 				checkbox.checked = false;
 			});
-			selectedPhotosList = [];
-			deletable = true;
+			selectedArticleList = [];
 		} else {
 			checkboxes.forEach((checkbox) => {
 				checkbox.checked = true;
 			});
-			selectedPhotosList = data.photos.map((photo) => photo.id);
-			deletable = false;
+			selectedArticleList = data.articles.map((article) => article.id);
 		}
+		deletable = selectedArticleList.length === 0;
 	}
 
-	function togglePhotoSelection(photoId: number, isChecked: boolean): void {
+	function toggleArticleSelection(articleId: number, isChecked: boolean): void {
 		if (isChecked) {
-			if (!selectedPhotosList.includes(photoId)) {
-				selectedPhotosList = [...selectedPhotosList, photoId];
+			if (!selectedArticleList.includes(articleId)) {
+				selectedArticleList = [...selectedArticleList, articleId];
 			}
 		} else {
-			selectedPhotosList = selectedPhotosList.filter((id) => id !== photoId);
+			selectedArticleList = selectedArticleList.filter((id) => id !== articleId);
 		}
-		deletable = selectedPhotosList.length === 0;
+		deletable = selectedArticleList.length === 0;
+	}
+
+	// 切换语言
+	function switchLanguage(targetLang: string): void {
+		const currentPath = $page.url.pathname;
+		const newPath = currentPath.replace(/\/article\/[^/]+/, `/article/${targetLang}`);
+		goto(newPath);
 	}
 </script>
 
 <svelte:head>
-	<title>{$t('photo')}</title>
+	<title>{$t('article')}</title>
 </svelte:head>
 
 <div>
-	<PageTitle title={$t('photo')} />
-
+	<PageTitle title={$t('article')} />
 	<div class="flex gap-4 items-center justify-between">
 		<button
 			type="button"
 			disabled={deletable}
-			on:click={deletePhotos}
+			on:click={deleteArticles}
 			class="inline-flex justify-center rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 sm:w-auto disabled:bg-gray-300"
 			>{$t('delete')}
 		</button>
+		<div class="inline-flex rounded-md border border-gray-200 p-0.5">
+			{#each data.allLanguages as language}
+				<button
+					type="button"
+					on:click={() => switchLanguage(language.lang)}
+					class={`rounded-md px-3 py-1.5 text-sm font-medium transition ${
+						data.currentLanguage?.lang === language.lang
+							? 'bg-cyan-600 text-white shadow-sm'
+							: 'text-gray-600 hover:bg-gray-100'
+					}`}
+				>
+					{language.locale}
+				</button>
+			{/each}
+		</div>
 		<a
-			href="/admin/photo/new"
+			href="/admin/article/new"
 			class="inline-flex justify-between gap-2 rounded-md bg-cyan-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-cyan-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-600"
 		>
 			{$t('add-new')}
 		</a>
 	</div>
-
 	<div class="mt-8 flow-root">
-		{#if data.photos.length > 0}
+		{#if data.articles.length > 0}
 			<div class="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
 				<div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
 					<div class="overflow-hidden shadow ring-1 ring-gray-200 sm:rounded-lg">
@@ -139,29 +168,14 @@
 									<th
 										scope="col"
 										class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6"
-										>{$t('cover')}
-									</th>
-									<th
-										scope="col"
-										class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6"
 										>{$t('title')}
-									</th>
-									<th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
-										>{$t('photos-count')}
-									</th>
-									<th
-										scope="col"
-										class="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 lg:table-cell"
-										>{$t('language')}
 									</th>
 									<th
 										scope="col"
 										class="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 sm:table-cell"
 										>Slug
 									</th>
-									<th
-										scope="col"
-										class="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 lg:table-cell"
+									<th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
 										>{$t('category')}
 									</th>
 									<th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
@@ -174,61 +188,40 @@
 							</thead>
 							<tbody class="divide-y divide-gray-200 bg-white">
 								<!--文章数据-->
-								{#each data.photos as photo (photo.id)}
+								{#each data.articles as article (article.id)}
 									<tr class="even:bg-gray-50 hover:bg-gray-100 cursor-cell">
 										<td class="px-3 py-4 text-sm text-gray-500">
 											<input
 												on:change={(event) => {
 													const input = event.currentTarget as HTMLInputElement;
-													togglePhotoSelection(photo.id, input.checked);
+													toggleArticleSelection(article.id, input.checked);
 												}}
 												type="checkbox"
-												class="photo-checkbox h-4 w-4 rounded border-gray-300 text-cyan-600 focus:ring-cyan-600"
+												class="article-checkbox h-4 w-4 rounded border-gray-300 text-cyan-600 focus:ring-cyan-600"
 											/>
 										</td>
-										<td class="px-3 py-4 text-sm text-gray-500 lg:table-cell">
-											<div
-												class="w-12 object-cover rounded-full shadow-sm bg-gray-100 aspect-square"
-											>
-												{#if photo.cover}
-													<img
-														class="rounded-full w-12 h-12 object-cover"
-														src={`${data.prefix}/cdn-cgi/image/format=auto,width=240/${photo.cover.storage_key}`}
-														alt={photo.cover.alt ?? ''}
-													/>
-												{/if}
-											</div>
-										</td>
-										<td class="break-all py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
-											{photo.title}
-											<dl class="font-normal break-words lg:hidden">
+										<td
+											class="break-words py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6"
+										>
+											{article.title}
+											<dl class="font-normal lg:hidden">
 												<dt class="sr-only sm:hidden">Slug</dt>
-												<dd class="font-mono mt-1 truncate text-gray-500 sm:hidden">
-													{photo.slug}
-												</dd>
-												<dt class="sr-only">Language</dt>
-												<dd class="mt-1 truncate text-gray-500">
-													{photo.lang.locale}
+												<dd class="font-mono mt-1 text-gray-500 sm:hidden">
+													{article.slug}
 												</dd>
 											</dl>
 										</td>
-										<td class="px-3 py-4 text-sm text-gray-500 lg:table-cell"
-											>{photo.imageCount}
-										</td>
-										<td class="hidden px-3 py-4 text-sm text-gray-500 lg:table-cell"
-											>{photo.lang.locale}
-										</td>
 										<td
-											class="hidden font-mono px-3 py-4 text-sm text-gray-500 sm:table-cell sm:break-words"
-											>{photo.slug}
+											class="hidden break-words font-mono px-3 py-4 text-sm text-gray-500 sm:table-cell"
+											>{article.slug}
 										</td>
-										<td class="hidden px-3 py-4 text-sm text-gray-500 lg:table-cell"
-											>{photo.category ? photo.category.title : '-'}
-										</td>
+										<td class="hidden sm:table-cell px-3 py-4 text-sm text-gray-500"
+											>{article.category?.title ?? '-'}</td
+										>
 
 										<!--文章状态-->
-										<td class="px-3 py-4 text-sm text-gray-500">
-											{#if photo.is_draft}
+										<td class="px-3 py-4 space-y-2 text-sm text-gray-500">
+											{#if article.is_draft}
 												<span
 													class="inline-flex items-center gap-x-1.5 rounded-full bg-gray-100 px-2 py-1 text-xs font-medium text-gray-600 break-keep"
 												>
@@ -256,7 +249,7 @@
 												</span>
 											{/if}
 
-											{#if photo.is_featured}
+											{#if article.is_featured}
 												<span
 													class="inline-flex items-center gap-x-1.5 rounded-full bg-sky-100 px-2 py-1 text-xs font-medium text-sky-700 break-keep"
 												>
@@ -264,11 +257,19 @@
 												</span>
 											{/if}
 
-											{#if photo.is_top}
+											{#if article.is_top}
 												<span
 													class="inline-flex items-center gap-x-1.5 rounded-full bg-violet-100 px-2 py-1 text-xs font-medium text-violet-700 break-keep"
 												>
 													{$t('topped')}
+												</span>
+											{/if}
+
+											{#if article.is_premium}
+												<span
+													class="inline-flex items-center gap-x-1.5 rounded-full bg-amber-100 px-2 py-1 text-xs font-medium text-amber-700"
+												>
+													{$t('premium-only')}
 												</span>
 											{/if}
 										</td>
@@ -277,13 +278,13 @@
 											class="relative flex flex-wrap gap-4 py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6"
 										>
 											<a
-												href={`/admin/photo/edit/${photo.id}`}
+												href={`/admin/article/edit/${article.id}`}
 												data-sveltekit-preload-data
-												class="text-cyan-600 hover:text-cyan-900">{$t('edit')}</a
+												class="break-keep text-cyan-600 hover:text-cyan-900">{$t('edit')}</a
 											>
 											<button
-												on:click={() => deletePhoto(photo.id)}
-												class="text-red-600 hover:text-red-900"
+												on:click={() => deleteArticle(article.id)}
+												class="break-keep text-red-600 hover:text-red-900"
 											>
 												{$t('delete')}
 											</button>
@@ -298,10 +299,10 @@
 		{:else}
 			<div class="flex flex-col items-center justify-center text-center min-h-80">
 				<ArticleIcon classList="mx-auto h-12 w-12 text-gray-400" />
-				<h3 class="mt-2 text-sm font-semibold text-gray-900">No photos</h3>
+				<h3 class="mt-2 text-sm font-semibold text-gray-900">No articles</h3>
 				<div class="mt-6">
 					<a
-						href="/admin/photo/new"
+						href="/admin/article/new"
 						class="inline-flex items-center rounded-md bg-cyan-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-cyan-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-600"
 					>
 						{$t('add-new')}
