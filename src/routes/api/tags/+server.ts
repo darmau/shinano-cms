@@ -1,7 +1,6 @@
 import { error, type RequestHandler } from '@sveltejs/kit';
 import OpenAI from 'openai';
 import type { ConfigRow } from '$lib/types/config';
-import { DEFAULT_AI_CONFIG } from '$lib/types/prompts';
 
 export const POST: RequestHandler = async ({ request, locals }) => {
 	const { content } = await request.json();
