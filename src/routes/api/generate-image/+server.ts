@@ -59,7 +59,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	const { data, error: supabaseError } = await supabase
 		.from('config')
 		.select('key, value')
-		.eq('key', 'config_OPENAI');
+		.in('key', ['config_OPENAI', 'ai_GATEWAY_ENDPOINT', 'cf_AIG_TOKEN']);
 
 	if (supabaseError) {
 		console.error(supabaseError);
@@ -67,13 +67,22 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	}
 
 	const rows = (data ?? []) as ConfigRow[];
-	const apiKey = rows[0]?.value ?? '';
+	const configMap = new Map(rows.map(({ key, value }) => [key, value ?? '']));
+	const apiKey = configMap.get('config_OPENAI');
+	const aiGatewayEndpoint = configMap.get('ai_GATEWAY_ENDPOINT');
+	const cfAIGToken = configMap.get('cf_AIG_TOKEN');
 
-	if (!apiKey) {
-		error(500, 'OpenAI API key not configured');
+	if (!aiGatewayEndpoint || !cfAIGToken || !openaiApiKey) {
+		error(500, 'AI gateway or OpenAI API key configuration not configured');
 	}
 
-	const openai = new OpenAI({ apiKey });
+	const openai = new OpenAI({
+		apiKey: apiKey,
+		baseURL: aiGatewayEndpoint,
+		defaultHeaders: {
+			"cf-aig-authorization": `Bearer ${cfAIGToken}`,
+		},
+	});
 
 	try {
 		const requestPayload: Record<string, unknown> = {
