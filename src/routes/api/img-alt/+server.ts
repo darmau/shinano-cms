@@ -1,7 +1,7 @@
 import { error, type RequestHandler } from '@sveltejs/kit';
 import { URL_PREFIX } from '$env/static/private';
 
-type WorkersAI = { run: (model: string, input: unknown) => Promise<unknown> };
+type WorkersAI = { run: (model: string, input: unknown, options?: { gateway?: { id: string } }) => Promise<unknown> };
 type CfEnv = { AI?: WorkersAI } & Record<string, unknown>;
 type CfPlatformWithAI = { env?: CfEnv } | undefined;
 
@@ -68,9 +68,11 @@ export const POST: RequestHandler = async ({ request, locals, platform }) => {
 				image: byteArray,
 				prompt,
 				max_tokens: 512,
+			},
+			{
 				gateway: {
 					id: "shinano"
-				}
+				},
 			}
 		);
 	} catch (err) {
