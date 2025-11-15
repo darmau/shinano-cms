@@ -5,18 +5,16 @@
 	import { t } from '$lib/functions/i18n';
 	import { browser } from '$app/environment';
 	import { getSupabaseBrowserClient } from '$lib/supabaseClient';
-	import type { ConfigRow } from '$lib/types/config';
+	import { invalidateAll } from '$app/navigation';
+
+	export let data: { aiConfig: Record<string, string> };
 
 	const toastStore = getToastStore();
-
-	export let data;
-	void data;
 	const supabase = browser ? getSupabaseBrowserClient() : null;
 
 	const ai = new AI();
 	const DEFAULTS = ai.emptyObject();
 	let AIObj: AIMutableConfig = ai.emptyObject();
-	const KEYS = ai.array();
 	const MODEL_KEYS: AIModelKey[] = [
 		'model_ABSTRACT',
 		'model_SLUG',
@@ -28,32 +26,15 @@
 	let isLoadingModels = false;
 	let modelOptionsError = '';
 
-	// 从config表中获取AI配置
-	const getAIConfig = async () => {
-		if (!supabase) return;
-
-		const { data: rowsResult, error: fetchError } = await supabase
-			.from('config')
-			.select('key, value')
-			.in('key', KEYS);
-
-		if (fetchError) {
-			console.error(fetchError);
-			toastStore.trigger({
-				message: '获取 AI 配置失败',
-				background: 'variant-filled-error'
-			});
-			return;
-		}
-
-		const rows = (rowsResult ?? []) as ConfigRow[];
-		const mapped = new Map(rows.map(({ key, value }) => [key, value ?? '']));
+	// 从 data 初始化 AIObj
+	$: {
+		const KEYS = ai.array();
 		KEYS.forEach((key) => {
 			const defaultValue = DEFAULTS[key as AIConfigKey];
-			AIObj[key] = mapped.get(key) ?? defaultValue;
+			AIObj[key] = data.aiConfig[key] ?? defaultValue;
 		});
 		ensureSelectedModelsAreAvailable();
-	};
+	}
 
 	function ensureSelectedModelsAreAvailable() {
 		const selectedModels = MODEL_KEYS.map((key) => AIObj[key]).filter(Boolean);
@@ -90,7 +71,6 @@
 	};
 
 	onMount(async () => {
-		await getAIConfig();
 		await fetchModelOptions();
 		ensureSelectedModelsAreAvailable();
 	});
@@ -137,7 +117,7 @@
 		});
 
 		isFormChanged = false;
-		await getAIConfig();
+		await invalidateAll();
 	}
 </script>
 

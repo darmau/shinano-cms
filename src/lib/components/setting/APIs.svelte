@@ -1,50 +1,26 @@
 <script lang="ts">
 	import { t } from '$lib/functions/i18n';
-	import { onMount } from 'svelte';
 	import { getToastStore } from '$lib/toast';
 	import { ThirdPartyAPIs } from '$lib/types/thirdPartyApi';
 	import { browser } from '$app/environment';
 	import { getSupabaseBrowserClient } from '$lib/supabaseClient';
-	import type { ConfigRow } from '$lib/types/config';
+	import { invalidateAll } from '$app/navigation';
+
+	export let data: { apiConfig: Record<string, string> };
 
 	const toastStore = getToastStore();
-
-	export let data: unknown;
-	void data;
 	const supabase = browser ? getSupabaseBrowserClient() : null;
 
 	const apis = new ThirdPartyAPIs();
 	let API = apis.emptyObject();
 	const KEYS = apis.array();
 
-	// 从config表中获取API配置
-	const getAPIConfig = async () => {
-		if (!supabase) return;
-
-		const { data: rowsResult, error: fetchError } = await supabase
-			.from('config')
-			.select('key, value')
-			.in('key', KEYS);
-
-		if (fetchError) {
-			console.error(fetchError);
-			toastStore.trigger({
-				message: '获取 API 配置失败',
-				background: 'variant-filled-error'
-			});
-			return;
-		}
-
-		const rows = (rowsResult ?? []) as ConfigRow[];
-		const mapped = new Map(rows.map(({ key, value }) => [key, value ?? '']));
+	// 从 data 初始化 API
+	$: {
 		KEYS.forEach((key) => {
-			API[key] = mapped.get(key) ?? '';
+			API[key] = data.apiConfig[key] ?? '';
 		});
-	};
-
-	onMount(async () => {
-		await getAPIConfig();
-	});
+	}
 
 	// 该变量负责记录表单是否被修改，如果修改，则为true
 	let isFormChanged = false;
@@ -88,7 +64,7 @@
 		});
 
 		isFormChanged = false;
-		await getAPIConfig();
+		await invalidateAll();
 	}
 </script>
 
