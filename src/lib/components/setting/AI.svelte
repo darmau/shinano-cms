@@ -157,7 +157,7 @@
 					type="text"
 					id="ai_gateway_host"
 					name="ai_gateway_host"
-					bind:value={AIObj.ai_gateway_host}
+					bind:value={AIObj.ai_GATEWAY_HOST}
 					class="font-mono text-gray-900 ring-gray-300 placeholder:text-gray-400 focus:ring-indigo-600 block w-full rounded-md border-0 py-1.5 px-2 shadow-sm ring-1 ring-inset focus:ring-2 focus:ring-inset sm:text-sm sm:leading-6"
 				/>
 			</div>
@@ -169,7 +169,7 @@
 					type="text"
 					id="ai_gateway_endpoint"
 					name="ai_gateway_endpoint"
-					bind:value={AIObj.ai_gateway_endpoint}
+					bind:value={AIObj.ai_GATEWAY_ENDPOINT}
 					class="font-mono text-gray-900 ring-gray-300 placeholder:text-gray-400 focus:ring-indigo-600 block w-full rounded-md border-0 py-1.5 px-2 shadow-sm ring-1 ring-inset focus:ring-2 focus:ring-inset sm:text-sm sm:leading-6"
 				/>
 			</div>
@@ -181,7 +181,7 @@
 					type="text"
 					id="cf_aig_token"
 					name="cf_aig_token"
-					bind:value={AIObj.cf_aig_token}
+					bind:value={AIObj.cf_AIG_TOKEN}
 					class="font-mono text-gray-900 ring-gray-300 placeholder:text-gray-400 focus:ring-indigo-600 block w-full rounded-md border-0 py-1.5 px-2 shadow-sm ring-1 ring-inset focus:ring-2 focus:ring-inset sm:text-sm sm:leading-6"
 				/>
 			</div>
