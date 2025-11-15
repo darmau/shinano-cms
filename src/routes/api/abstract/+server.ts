@@ -1,7 +1,6 @@
 import { error, type RequestHandler } from '@sveltejs/kit';
 import OpenAI from 'openai';
 import type { ConfigRow } from '$lib/types/config';
-import { DEFAULT_AI_CONFIG } from '$lib/types/prompts';
 
 export const POST: RequestHandler = async ({ request, locals }) => {
 	const { content } = await request.json();
@@ -14,7 +13,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	const { data, error: supabaseError } = await supabase
 		.from('config')
 		.select('key, value')
-		.in('key', ['config_OPENAI', 'prompt_SEO', 'model_ABSTRACT', 'ai_GATEWAY_ENDPOINT', 'ai_GATEWAY_HOST', 'cf_AIG_TOKEN']);
+		.in('key', ['config_OPENAI', 'prompt_SEO', 'model_ABSTRACT', 'ai_GATEWAY_ENDPOINT', 'cf_AIG_TOKEN']);
 
 	if (supabaseError) {
 		console.error(supabaseError);
