@@ -14,7 +14,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	const { data, error: supabaseError } = await supabase
 		.from('config')
 		.select('key, value')
-		.in('key', ['config_OPENAI', 'prompt_SEO', 'model_ABSTRACT']);
+		.in('key', ['ai_GATEWAY_HOST', 'ai_GATEWAY_ENDPOINT', 'cf_AIG_TOKEN', 'prompt_SEO', 'model_ABSTRACT']);
 
 	if (supabaseError) {
 		console.error(supabaseError);
@@ -24,18 +24,28 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	const rows = (data ?? []) as ConfigRow[];
 	const configMap = new Map(rows.map(({ key, value }) => [key, value ?? '']));
 	const openaiApiKey = configMap.get('config_OPENAI');
+	const host = configMap.get('ai_GATEWAY_HOST');
+	const endpoint = configMap.get('ai_GATEWAY_ENDPOINT');
+	const token = configMap.get('cf_AIG_TOKEN');
 	const prompt = configMap.get('prompt_SEO');
-	const model = configMap.get('model_ABSTRACT') ?? DEFAULT_AI_CONFIG.model_ABSTRACT;
 
-	if (!openaiApiKey) {
-		error(500, 'OpenAI API key not configured');
+	// 检查配置是否完整
+	if (!host || !endpoint || !token) {
+		error(500, 'AI configuration is incomplete');
 	}
+
+	const model = configMap.get('model_ABSTRACT') ?? DEFAULT_AI_CONFIG.model_ABSTRACT;
 
 	if (!prompt) {
 		error(500, 'SEO prompt not configured');
 	}
 
-	const openai = new OpenAI({ apiKey: openaiApiKey });
+	const openai = new OpenAI({
+		baseURL: host + endpoint,
+		defaultHeaders: {
+			"cf-aig-authorization": `Barear {token}`
+		}
+	});
 
 	let generatedAbstract = '';
 	try {
