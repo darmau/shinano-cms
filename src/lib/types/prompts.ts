@@ -1,5 +1,4 @@
 export const DEFAULT_AI_CONFIG = {
-	ai_GATEWAY_HOST: '',
 	ai_GATEWAY_ENDPOINT: '',
 	cf_AIG_TOKEN: '',
 	config_OPENAI: '',
