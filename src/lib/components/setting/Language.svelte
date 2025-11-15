@@ -2,41 +2,32 @@
 	import PlusIcon from '$assets/icons/plus.svelte';
 	import { t } from '$lib/functions/i18n';
 	import AddLanguage from '$components/setting/AddLanguage.svelte';
-	import { onMount } from 'svelte';
 	import { getToastStore } from '$lib/toast';
 	import { ProgressRadial } from '$lib/toast';
 	import { browser } from '$app/environment';
 	import { getSupabaseBrowserClient } from '$lib/supabaseClient';
+	import { invalidateAll } from '$app/navigation';
+
+	export let data: { languages: Array<{ lang: string; locale: string; is_default: boolean }> };
 
 	const toastStore = getToastStore();
-
 	const supabase = browser ? getSupabaseBrowserClient() : null;
-	$: languages = [];
-
-	// 获取所有语言
-	const getLanguages = async () => {
-		const { data, error: fetchError } = await supabase
-			.from('language')
-			.select('lang, locale, is_default')
-			.order('is_default', { ascending: false });
-		if (fetchError) {
-			console.error(fetchError);
-			toastStore.trigger({
-				message: 'Failed to fetch languages.',
-				background: 'variant-filled-error'
-			});
-		}
-		languages = data;
-	};
-
-	onMount(async () => {
-		await getLanguages();
-	});
 
 	// 更换默认语言
 	const setDefaultLanguage = async (lang: string) => {
-		await supabase.from('language').update({ is_default: true }).eq('lang', lang);
-		await getLanguages();
+		if (!supabase) return;
+		
+		const { error } = await supabase.from('language').update({ is_default: true }).eq('lang', lang);
+		if (error) {
+			console.error(error);
+			toastStore.trigger({
+				message: 'Failed to set default language.',
+				background: 'variant-filled-error'
+			});
+			return;
+		}
+		
+		await invalidateAll();
 		toastStore.trigger({
 			message: $t('language-set-default'),
 			hideDismiss: true,
@@ -45,7 +36,9 @@
 	};
 
 	// 添加语言
-	const addLanguage = async (lang, locale) => {
+	const addLanguage = async (lang: string, locale: string) => {
+		if (!supabase) return;
+		
 		const { error: dataError } = await supabase.from('language').insert({ lang, locale }).select();
 		if (dataError) {
 			console.error(dataError);
@@ -54,8 +47,10 @@
 				hideDismiss: true,
 				background: 'variant-filled-error'
 			});
+			return;
 		}
-		await getLanguages();
+		
+		await invalidateAll();
 		toastStore.trigger({
 			message: $t('language-added'),
 			hideDismiss: true,
@@ -65,6 +60,8 @@
 
 	// 删除语言
 	const deleteLanguage = async (lang: string) => {
+		if (!supabase) return;
+		
 		const { error: deleteError } = await supabase.from('language').delete().eq('lang', lang);
 		if (deleteError) {
 			console.error(deleteError);
@@ -73,8 +70,10 @@
 				hideDismiss: true,
 				background: 'variant-filled-error'
 			});
+			return;
 		}
-		await getLanguages();
+		
+		await invalidateAll();
 		toastStore.trigger({
 			message: $t('language-deleted'),
 			hideDismiss: true,
@@ -82,7 +81,7 @@
 		});
 	};
 
-	// 关闭添加语言窗口并刷新数据
+	// 关闭添加语言窗口
 	let isAdding: boolean = false;
 
 	function closeAddLanguage() {
@@ -103,12 +102,12 @@
 		<AddLanguage {addLanguage} {closeAddLanguage} />
 	{/if}
 	<div>
-		{#if languages.length === 0}
+		{#if data.languages.length === 0}
 			<div class="flex justify-center items-center min-h-32">
 				<ProgressRadial value={undefined} width="w-12" />
 			</div>
 		{:else}
-			{#each languages as language}
+			{#each data.languages as language}
 				<div class="border-b border-gray-200 flex justify-between py-4">
 					<div>
 						<h3 class="font-medium flex items-center gap-2">

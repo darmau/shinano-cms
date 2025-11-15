@@ -5,18 +5,16 @@
 	import { t } from '$lib/functions/i18n';
 	import { browser } from '$app/environment';
 	import { getSupabaseBrowserClient } from '$lib/supabaseClient';
-	import type { ConfigRow } from '$lib/types/config';
+	import { invalidateAll } from '$app/navigation';
+
+	export let data: { aiConfig: Record<string, string> };
 
 	const toastStore = getToastStore();
-
-	export let data;
-	void data;
 	const supabase = browser ? getSupabaseBrowserClient() : null;
 
 	const ai = new AI();
 	const DEFAULTS = ai.emptyObject();
 	let AIObj: AIMutableConfig = ai.emptyObject();
-	const KEYS = ai.array();
 	const MODEL_KEYS: AIModelKey[] = [
 		'model_ABSTRACT',
 		'model_SLUG',
@@ -28,32 +26,15 @@
 	let isLoadingModels = false;
 	let modelOptionsError = '';
 
-	// 从config表中获取AI配置
-	const getAIConfig = async () => {
-		if (!supabase) return;
-
-		const { data: rowsResult, error: fetchError } = await supabase
-			.from('config')
-			.select('key, value')
-			.in('key', KEYS);
-
-		if (fetchError) {
-			console.error(fetchError);
-			toastStore.trigger({
-				message: '获取 AI 配置失败',
-				background: 'variant-filled-error'
-			});
-			return;
-		}
-
-		const rows = (rowsResult ?? []) as ConfigRow[];
-		const mapped = new Map(rows.map(({ key, value }) => [key, value ?? '']));
+	// 从 data 初始化 AIObj
+	$: {
+		const KEYS = ai.array();
 		KEYS.forEach((key) => {
 			const defaultValue = DEFAULTS[key as AIConfigKey];
-			AIObj[key] = mapped.get(key) ?? defaultValue;
+			AIObj[key] = data.aiConfig[key] ?? defaultValue;
 		});
 		ensureSelectedModelsAreAvailable();
-	};
+	}
 
 	function ensureSelectedModelsAreAvailable() {
 		const selectedModels = MODEL_KEYS.map((key) => AIObj[key]).filter(Boolean);
@@ -90,7 +71,6 @@
 	};
 
 	onMount(async () => {
-		await getAIConfig();
 		await fetchModelOptions();
 		ensureSelectedModelsAreAvailable();
 	});
@@ -137,7 +117,7 @@
 		});
 
 		isFormChanged = false;
-		await getAIConfig();
+		await invalidateAll();
 	}
 </script>
 
@@ -150,25 +130,13 @@
 	>
 		<div class="border-b border-gray-900/10 pb-12 space-y-4">
 			<div>
-				<label for="ai_gateway_host" class="block text-sm font-medium leading-6 text-gray-900">
-					AI Gateway Host
-				</label>
-				<input
-					type="text"
-					id="ai_gateway_host"
-					name="ai_gateway_host"
-					bind:value={AIObj.ai_GATEWAY_HOST}
-					class="font-mono text-gray-900 ring-gray-300 placeholder:text-gray-400 focus:ring-indigo-600 block w-full rounded-md border-0 py-1.5 px-2 shadow-sm ring-1 ring-inset focus:ring-2 focus:ring-inset sm:text-sm sm:leading-6"
-				/>
-			</div>
-			<div>
 				<label for="ai_gateway_endpoint" class="block text-sm font-medium leading-6 text-gray-900">
 					AI Gateway Endpoint
 				</label>
 				<input
 					type="text"
 					id="ai_gateway_endpoint"
-					name="ai_gateway_endpoint"
+					name="ai_GATEWAY_ENDPOINT"
 					bind:value={AIObj.ai_GATEWAY_ENDPOINT}
 					class="font-mono text-gray-900 ring-gray-300 placeholder:text-gray-400 focus:ring-indigo-600 block w-full rounded-md border-0 py-1.5 px-2 shadow-sm ring-1 ring-inset focus:ring-2 focus:ring-inset sm:text-sm sm:leading-6"
 				/>
@@ -180,7 +148,7 @@
 				<input
 					type="text"
 					id="cf_aig_token"
-					name="cf_aig_token"
+					name="cf_AIG_TOKEN"
 					bind:value={AIObj.cf_AIG_TOKEN}
 					class="font-mono text-gray-900 ring-gray-300 placeholder:text-gray-400 focus:ring-indigo-600 block w-full rounded-md border-0 py-1.5 px-2 shadow-sm ring-1 ring-inset focus:ring-2 focus:ring-inset sm:text-sm sm:leading-6"
 				/>

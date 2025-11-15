@@ -59,11 +59,20 @@ export const POST: RequestHandler = async ({ request, locals, platform }) => {
 	// 将压缩后的图片转换为字节数组
 	const imageBuffer = await imageResponse.arrayBuffer();
 	const byteArray = Array.from(new Uint8Array(imageBuffer));
-	const input = { image: byteArray, prompt, max_tokens: 512 };
 
 	let aiResult: unknown;
 	try {
-		aiResult = await aiBinding.run('@cf/unum/uform-gen2-qwen-500m', input);
+		aiResult = await aiBinding.run(
+			"@cf/unum/uform-gen2-qwen-500m",
+			{
+				image: byteArray,
+				prompt,
+				max_tokens: 512,
+				gateway: {
+					id: "shinano"
+				}
+			}
+		);
 	} catch (err) {
 		console.error(err);
 		error(502, 'Error generating image alt');

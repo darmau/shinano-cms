@@ -1,7 +1,6 @@
 import { error, type RequestHandler } from '@sveltejs/kit';
 import OpenAI from 'openai';
 import type { ConfigRow } from '$lib/types/config';
-import { DEFAULT_AI_CONFIG } from '$lib/types/prompts';
 
 export const POST: RequestHandler = async ({ request, locals }) => {
 	const { content } = await request.json();
@@ -14,7 +13,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	const { data, error: supabaseError } = await supabase
 		.from('config')
 		.select('key, value')
-		.in('key', ['config_OPENAI', 'prompt_SEO', 'model_ABSTRACT']);
+		.in('key', ['config_OPENAI', 'prompt_SEO', 'model_ABSTRACT', 'ai_GATEWAY_ENDPOINT', 'cf_AIG_TOKEN']);
 
 	if (supabaseError) {
 		console.error(supabaseError);
@@ -24,18 +23,27 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	const rows = (data ?? []) as ConfigRow[];
 	const configMap = new Map(rows.map(({ key, value }) => [key, value ?? '']));
   const openaiApiKey = configMap.get('config_OPENAI');
-  if (!openaiApiKey) {
-    error(500, 'OpenAI API key not configured');
+	const aiGatewayEndpoint = configMap.get('ai_GATEWAY_ENDPOINT');
+	const cfAIGToken = configMap.get('cf_AIG_TOKEN');
+	
+  if (!aiGatewayEndpoint || !cfAIGToken || !openaiApiKey) {
+    error(500, 'AI gateway or OpenAI API key configuration not configured');
   }
 	const prompt = configMap.get('prompt_SEO');
 
-	const model = configMap.get('model_ABSTRACT') ?? DEFAULT_AI_CONFIG.model_ABSTRACT;
+	const model = configMap.get('model_ABSTRACT') ?? 'gpt-5.1';
 
 	if (!prompt) {
 		error(500, 'SEO prompt not configured');
 	}
 
-	const openai = new OpenAI({ apiKey: openaiApiKey });
+	const openai = new OpenAI({ 
+		apiKey: openaiApiKey,
+		baseURL: aiGatewayEndpoint,
+		defaultHeaders: {
+			"cf-aig-authorization": `Bearer ${cfAIGToken}`,
+		},
+	 });
 
 	let generatedAbstract = '';
 	try {

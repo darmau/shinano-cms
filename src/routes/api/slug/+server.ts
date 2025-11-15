@@ -1,7 +1,6 @@
 import { error, type RequestHandler } from '@sveltejs/kit';
 import type { ConfigRow } from '$lib/types/config';
 import OpenAI from 'openai';
-import { DEFAULT_AI_CONFIG } from '$lib/types/prompts';
 
 export const POST: RequestHandler = async ({ request, locals }) => {
 	const { title } = await request.json();
@@ -10,7 +9,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	const { data, error: supabaseError } = await supabase
 		.from('config')
 		.select('key, value')
-		.in('key', ['config_OPENAI', 'prompt_SLUG', 'model_SLUG']);
+		.in('key', ['config_OPENAI', 'prompt_SLUG', 'model_SLUG', 'ai_GATEWAY_ENDPOINT', 'cf_AIG_TOKEN']);
 
 	if (supabaseError) {
 		console.error(supabaseError);
@@ -20,18 +19,27 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	const rows = (data ?? []) as ConfigRow[];
 	const configMap = new Map(rows.map(({ key, value }) => [key, value ?? '']));
 	const openaiApiKey = configMap.get('config_OPENAI');
+	const aiGatewayEndpoint = configMap.get('ai_GATEWAY_ENDPOINT');
+	const cfAIGToken = configMap.get('cf_AIG_TOKEN');
 	const prompt = configMap.get('prompt_SLUG');
-	const model = configMap.get('model_SLUG') ?? DEFAULT_AI_CONFIG.model_SLUG;
 
-	if (!openaiApiKey) {
-		error(500, 'OpenAI API key not configured');
+	if (!aiGatewayEndpoint || !cfAIGToken || !openaiApiKey) {
+		error(500, 'AI gateway or OpenAI API key configuration not configured');
 	}
+
+	const model = configMap.get('model_SLUG') ?? 'gpt-5.1';
 
 	if (!prompt) {
 		error(500, 'Slug prompt not configured');
 	}
 
-	const openai = new OpenAI({ apiKey: openaiApiKey });
+	const openai = new OpenAI({
+		apiKey: openaiApiKey,
+		baseURL: aiGatewayEndpoint,
+		defaultHeaders: {
+			"cf-aig-authorization": `Bearer ${cfAIGToken}`,
+		},
+	});
 
 	let slug = '';
 	try {
