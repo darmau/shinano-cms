@@ -25,9 +25,8 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	const configMap = new Map(rows.map(({ key, value }) => [key, value ?? '']));
   const openaiApiKey = configMap.get('config_OPENAI');
 	const aiGatewayEndpoint = configMap.get('ai_GATEWAY_ENDPOINT');
-	const aiGatewayHost = configMap.get('ai_GATEWAY_HOST');
 	const cfAIGToken = configMap.get('cf_AIG_TOKEN');
-  if (!aiGatewayEndpoint || !aiGatewayHost || !cfAIGToken || !openaiApiKey) {
+  if (!aiGatewayEndpoint || !cfAIGToken || !openaiApiKey) {
     error(500, 'AI gateway or OpenAI API key configuration not configured');
   }
 	const prompt = configMap.get('prompt_SEO');
@@ -40,7 +39,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 
 	const openai = new OpenAI({ 
 		apiKey: openaiApiKey,
-		baseURL: `${aiGatewayHost}${aiGatewayEndpoint}`,
+		baseURL: aiGatewayEndpoint,
 		defaultHeaders: {
 			"cf-aig-authorization": `Bearer ${cfAIGToken}`,
 		},
