@@ -40,7 +40,7 @@
 					</svg>
 					<a
 						data-sveltekit-preload-data
-						href="/admin/article/1"
+						href={`/admin/article/${data.currentLanguage.lang}/1`}
 						class="ml-4 text-sm font-medium text-gray-500 hover:text-gray-700">{$t('article')}</a
 					>
 				</div>
