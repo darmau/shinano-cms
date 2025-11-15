@@ -25,9 +25,9 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	if (!aiGatewayEndpoint || !cfAIGToken || !openaiApiKey) {
 		error(500, 'AI gateway or OpenAI API key configuration not configured');
 	}
-	const prompt = configMap.get('prompt_SEO');
+	const prompt = configMap.get('prompt_TAGS');
 
-	const model = configMap.get('model_TAGS') ?? 'gpt-5.1';
+	const model = configMap.get('model_TAGS') ?? 'gpt-5-nano';
 
 	if (!prompt) {
 		error(500, 'Tags prompt not configured');
