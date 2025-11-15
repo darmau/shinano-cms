@@ -23,7 +23,6 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 
 	const rows = (data ?? []) as ConfigRow[];
 	const configMap = new Map(rows.map(({ key, value }) => [key, value ?? '']));
-	const openaiApiKey = configMap.get('config_OPENAI');
 	const host = configMap.get('ai_GATEWAY_HOST');
 	const endpoint = configMap.get('ai_GATEWAY_ENDPOINT');
 	const token = configMap.get('cf_AIG_TOKEN');
@@ -41,9 +40,10 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	}
 
 	const openai = new OpenAI({
+		apiKey: '', // 占位符，实际认证通过 cf-aig-authorization header
 		baseURL: host + endpoint,
 		defaultHeaders: {
-			"cf-aig-authorization": `Barear {token}`
+			"cf-aig-authorization": `Bearer ${token}`
 		}
 	});
 
