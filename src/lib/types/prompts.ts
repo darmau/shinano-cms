@@ -1,4 +1,7 @@
 export const DEFAULT_AI_CONFIG = {
+	ai_gateway_host: '',
+	ai_gateway_endpoint: '',
+	cf_aig_token: '',
 	config_OPENAI: '',
 	prompt_SEO: '',
 	model_ABSTRACT: 'gpt-5-nano',
