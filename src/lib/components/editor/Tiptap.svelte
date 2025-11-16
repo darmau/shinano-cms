@@ -27,6 +27,7 @@
 	import HardBreakIcon from '$assets/icons/editor/break.svelte';
 	import DividerIcon from '$assets/icons/editor/divider.svelte';
 	import ImageIcon from '$assets/icons/editor/image.svelte';
+	import EmbedIcon from '$assets/icons/editor/embed.svelte';
 	import InsertTable from '$assets/icons/editor/insertTable.svelte';
 	import InsertColumnBefore from '$assets/icons/editor/tableColumnBefore.svelte';
 	import InsertColumnAfter from '$assets/icons/editor/tableColumnAfter.svelte';
@@ -46,7 +47,10 @@
 	import Heading from '@tiptap/extension-heading';
 	import ImagesModel from '$components/editor/ImagesModel.svelte';
 	import Image from '$components/editor/Image';
+	import { Embed } from '$components/editor/Embed';
 	import Gapcursor from '@tiptap/extension-gapcursor';
+	import SuperscriptIcon from '$assets/icons/editor/superscript.svelte';
+	import { Superscript } from '$components/editor/Superscript';
 	import type {
 		EditorContentUpdateDetail,
 		ImagesModelData,
@@ -59,7 +63,7 @@
 
 	let editor: Readable<Editor> | undefined;
 	let unsubscribe: (() => void) | undefined;
-	let codeLanguage = 'javascript';
+	let codeLanguage = '';
 	let isModalOpen = false;
 	let debugData: Content | null = null;
 	let showDebug = false;
@@ -152,6 +156,12 @@
 			active: () => editorInstance.isActive('image')
 		},
 		{
+			name: 'embed',
+			command: () => openEmbedDialog(editorInstance),
+			content: EmbedIcon,
+			active: () => editorInstance.isActive('embed')
+		},
+		{
 			name: 'heading-2',
 			command: () => editorInstance.chain().focus().toggleHeading({ level: 2 }).run(),
 			content: H2Icon,
@@ -186,6 +196,12 @@
 			command: () => editorInstance.chain().focus().toggleStrike().run(),
 			content: StrikeIcon,
 			active: () => editorInstance.isActive('strike')
+		},
+		{
+			name: 'superscript',
+			command: () => editorInstance.chain().focus().toggleSuperscript().run(),
+			content: SuperscriptIcon,
+			active: () => editorInstance.isActive('superscript')
 		},
 		{
 			name: 'inline-code',
@@ -361,8 +377,10 @@
 					}
 				}),
 				Typography,
+				Superscript,
 				CustomCodeBlock,
 				Image,
+				Embed,
 				Gapcursor
 			],
 			content: content,
@@ -453,6 +471,64 @@
 		// update link
 		editorInstance.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
 	};
+
+	const isValidEmbedHtml = (code: string): boolean => {
+		const trimmed = code.trim();
+		if (!trimmed) {
+			return false;
+		}
+
+		if (typeof window === 'undefined' || typeof DOMParser === 'undefined') {
+			return true;
+		}
+
+		try {
+			const parser = new DOMParser();
+			const doc = parser.parseFromString(trimmed, 'text/html');
+			if (doc.querySelector('parsererror')) {
+				return false;
+			}
+
+			if (typeof Node !== 'undefined') {
+				return Array.from(doc.body.childNodes).some((node) => node.nodeType === Node.ELEMENT_NODE);
+			}
+
+			return doc.body.childNodes.length > 0;
+		} catch (error) {
+			console.warn('Failed to validate embed HTML', error);
+			return false;
+		}
+	};
+
+	function openEmbedDialog(editorInstance: Editor) {
+		const previousCode = editorInstance.isActive('embed')
+			? ((editorInstance.getAttributes('embed').code as string | undefined) ?? '')
+			: '';
+		const input = window.prompt('输入要嵌入的 HTML 代码', previousCode);
+
+		if (input === null) {
+			return;
+		}
+
+		const trimmed = input.trim();
+		if (!isValidEmbedHtml(trimmed)) {
+			window.alert('请输入合法的 HTML 代码。');
+			return;
+		}
+
+		const chain = editorInstance.chain().focus();
+		if (editorInstance.isActive('embed')) {
+			chain.updateAttributes('embed', { code: trimmed }).run();
+			return;
+		}
+
+		chain
+			.insertContent({
+				type: 'embed',
+				attrs: { code: trimmed }
+			})
+			.run();
+	}
 
 	function openImageModal() {
 		isModalOpen = true;
