@@ -1,4 +1,5 @@
 import { Node, mergeAttributes } from '@tiptap/core';
+import type { CommandProps } from '@tiptap/core';
 
 type EmbedAttributes = {
 	code: string;
@@ -101,28 +102,26 @@ export const Embed = Node.create({
 		return {
 			insertEmbed:
 				(attrs: EmbedAttributes) =>
-				({ chain }) => {
+				({ commands }: CommandProps) => {
 					const code = sanitizeCode(attrs.code);
 					if (!code) {
 						return false;
 					}
 
-					return chain()
-						.insertContent({
-							type: this.name,
-							attrs: { code }
-						})
-						.run();
+					return commands.insertContent({
+						type: this.name,
+						attrs: { code }
+					});
 				},
 			updateEmbed:
 				(attrs: EmbedAttributes) =>
-				({ chain }) => {
+				({ commands }: CommandProps) => {
 					const code = sanitizeCode(attrs.code);
 					if (!code) {
 						return false;
 					}
 
-					return chain().updateAttributes(this.name, { code }).run();
+					return commands.updateAttributes(this.name, { code });
 				}
 		};
 	},
@@ -174,3 +173,12 @@ export const Embed = Node.create({
 		};
 	}
 });
+
+declare module '@tiptap/core' {
+	interface Commands<ReturnType> {
+		embed: {
+			insertEmbed: (attrs: EmbedAttributes) => ReturnType;
+			updateEmbed: (attrs: EmbedAttributes) => ReturnType;
+		};
+	}
+}
