@@ -49,6 +49,8 @@
 	import Image from '$components/editor/Image';
 	import { Embed } from '$components/editor/Embed';
 	import Gapcursor from '@tiptap/extension-gapcursor';
+	import SuperscriptIcon from '$assets/icons/editor/superscript.svelte';
+	import { Superscript } from '$components/editor/Superscript';
 	import type {
 		EditorContentUpdateDetail,
 		ImagesModelData,
@@ -61,7 +63,7 @@
 
 	let editor: Readable<Editor> | undefined;
 	let unsubscribe: (() => void) | undefined;
-let codeLanguage = '';
+	let codeLanguage = '';
 	let isModalOpen = false;
 	let debugData: Content | null = null;
 	let showDebug = false;
@@ -194,6 +196,12 @@ let codeLanguage = '';
 			command: () => editorInstance.chain().focus().toggleStrike().run(),
 			content: StrikeIcon,
 			active: () => editorInstance.isActive('strike')
+		},
+		{
+			name: 'superscript',
+			command: () => editorInstance.chain().focus().toggleSuperscript().run(),
+			content: SuperscriptIcon,
+			active: () => editorInstance.isActive('superscript')
 		},
 		{
 			name: 'inline-code',
@@ -369,6 +377,7 @@ let codeLanguage = '';
 					}
 				}),
 				Typography,
+				Superscript,
 				CustomCodeBlock,
 				Image,
 				Embed,
