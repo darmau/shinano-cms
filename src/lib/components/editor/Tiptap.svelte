@@ -61,7 +61,7 @@
 
 	let editor: Readable<Editor> | undefined;
 	let unsubscribe: (() => void) | undefined;
-	let codeLanguage = 'javascript';
+let codeLanguage = '';
 	let isModalOpen = false;
 	let debugData: Content | null = null;
 	let showDebug = false;
