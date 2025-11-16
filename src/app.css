@@ -22,6 +22,51 @@
 	user-select: none;
 }
 
+.tiptap-embed-block {
+	position: relative;
+	border: 1px dashed rgb(14 116 144);
+	border-radius: 0.75rem;
+	padding: 1.25rem;
+	background-color: rgba(236, 253, 245, 0.6);
+	margin: 1.5rem 0;
+}
+
+.tiptap-embed-block:focus-visible {
+	outline: 2px solid rgb(14 116 144);
+	outline-offset: 2px;
+}
+
+.tiptap-embed-label {
+	position: absolute;
+	top: -0.65rem;
+	left: 1.25rem;
+	font-size: 0.75rem;
+	font-weight: 600;
+	text-transform: uppercase;
+	background-color: rgb(14 116 144);
+	color: #fff;
+	padding: 0.1rem 0.4rem;
+	border-radius: 999px;
+	letter-spacing: 0.05em;
+	pointer-events: none;
+}
+
+.tiptap-embed-content {
+	display: block;
+	width: 100%;
+	overflow: hidden;
+}
+
+.tiptap-embed-content iframe {
+	width: 100%;
+}
+
+.tiptap-embed-placeholder {
+	text-align: center;
+	color: #475467;
+	font-size: 0.875rem;
+}
+
 /* 编辑器内预览样式 */
 .ProseMirror {
 	min-height: 320px;
