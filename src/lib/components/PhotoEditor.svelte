@@ -14,7 +14,7 @@
 	import { getSupabaseBrowserClient } from '$lib/supabaseClient';
 	import type { SupabaseClient } from '@supabase/supabase-js';
 	import type { Content } from '@tiptap/core';
-import { splitHtmlByTopLevelNodes } from '$lib/functions/htmlChunk';
+	import { splitHtmlByTopLevelNodes } from '$lib/functions/htmlChunk';
 	import type {
 		AlbumPicture,
 		SelectedImage,
@@ -251,29 +251,12 @@ import { splitHtmlByTopLevelNodes } from '$lib/functions/htmlChunk';
 		isChanged = true;
 	}
 
-	// 设置封面
-	function setCoverId(id: number): void {
-		// 取消所有图片的checked状态
-		const checkboxes = document.querySelectorAll<HTMLInputElement>('.album-photo');
-		checkboxes.forEach((checkbox) => {
-			checkbox.checked = false;
-		});
-		const newCover = document.getElementById(`photo-${id}`);
-		if (newCover instanceof HTMLInputElement) {
-			newCover.checked = true;
-		}
-		photoContent.cover = id;
-		isChanged = true;
-	}
+	// 自动设置第一张图为封面
+	$: photoContent.cover = pictures.length > 0 ? pictures[0].image.id : null;
 
 	// 删除图片
 	function deleteImage(index: number): void {
-		const removedPicture = pictures[index];
 		pictures = pictures.filter((_, i) => i !== index);
-		// 如果删除的是封面图片，清空封面
-		if (removedPicture && photoContent.cover === removedPicture.image.id) {
-			photoContent.cover = null;
-		}
 		// 更新order值
 		pictures = pictures.map((pic, indexValue) => ({
 			...pic,
@@ -381,8 +364,8 @@ import { splitHtmlByTopLevelNodes } from '$lib/functions/htmlChunk';
 	let isGeneratingAbstract = false;
 	let isGeneratingTags = false;
 	let isTranslatingContent = false;
-let translationChunksTotal = 0;
-let translationChunksCompleted = 0;
+	let translationChunksTotal = 0;
+	let translationChunksCompleted = 0;
 
 	async function checkSlug(slug: string): Promise<boolean> {
 		isCheckingSlug = true;
@@ -580,8 +563,8 @@ let translationChunksCompleted = 0;
 			return;
 		}
 
-	const originalHtml = photoContent.content_html;
-	if (!originalHtml?.trim()) {
+		const originalHtml = photoContent.content_html;
+		if (!originalHtml?.trim()) {
 			toastStore.trigger({
 				message: '正文内容为空，无法翻译。',
 				background: 'variant-filled-error'
@@ -590,73 +573,73 @@ let translationChunksCompleted = 0;
 		}
 
 		isTranslatingContent = true;
-	const chunks = splitHtmlByTopLevelNodes(originalHtml);
-	if (chunks.length === 0) {
-		isTranslatingContent = false;
-		return;
-	}
-
-	translationChunksTotal = chunks.length;
-	translationChunksCompleted = 0;
-
-	const translatedChunks = new Array<string>(chunks.length).fill('');
-
-	const translateChunk = async (chunk: string) => {
-		const response = await fetch('/api/translation', {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json'
-			},
-			body: JSON.stringify({
-				lang: data.currentLanguage.locale,
-				content: chunk
-			})
-		});
-
-		if (!response.ok) {
-			throw new Error(`Translation API responded with status ${response.status}`);
+		const chunks = splitHtmlByTopLevelNodes(originalHtml);
+		if (chunks.length === 0) {
+			isTranslatingContent = false;
+			return;
 		}
 
-		return response.text();
-	};
+		translationChunksTotal = chunks.length;
+		translationChunksCompleted = 0;
+
+		const translatedChunks = new Array<string>(chunks.length).fill('');
+
+		const translateChunk = async (chunk: string) => {
+			const response = await fetch('/api/translation', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({
+					lang: data.currentLanguage.locale,
+					content: chunk
+				})
+			});
+
+			if (!response.ok) {
+				throw new Error(`Translation API responded with status ${response.status}`);
+			}
+
+			return response.text();
+		};
 
 		try {
-		for (let index = 0; index < chunks.length; index += 1) {
-			const translation = await translateChunk(chunks[index]);
-			translatedChunks[index] = translation.trim().length > 0 ? translation : chunks[index];
-			translationChunksCompleted = index + 1;
+			for (let index = 0; index < chunks.length; index += 1) {
+				const translation = await translateChunk(chunks[index]);
+				translatedChunks[index] = translation.trim().length > 0 ? translation : chunks[index];
+				translationChunksCompleted = index + 1;
 
-			const partialHtml = translatedChunks
-				.map((value, chunkIndex) => value || chunks[chunkIndex])
-				.join('');
+				const partialHtml = translatedChunks
+					.map((value, chunkIndex) => value || chunks[chunkIndex])
+					.join('');
 
-			photoContent.content_html = partialHtml;
-			contentHTML = partialHtml;
-			generateContent(partialHtml);
-		}
+				photoContent.content_html = partialHtml;
+				contentHTML = partialHtml;
+				generateContent(partialHtml);
+			}
 
-		if (typeof document !== 'undefined') {
-			const parser = document.createElement('div');
-			parser.innerHTML = photoContent.content_html;
-			const plainText = parser.textContent ?? '';
-			contentText = plainText;
-			photoContent.content_text = plainText;
-		}
+			if (typeof document !== 'undefined') {
+				const parser = document.createElement('div');
+				parser.innerHTML = photoContent.content_html;
+				const plainText = parser.textContent ?? '';
+				contentText = plainText;
+				photoContent.content_text = plainText;
+			}
 
 			isChanged = true;
 		} catch (err) {
 			console.error('Failed to translate content', err);
-		photoContent.content_html = originalHtml;
-		contentHTML = originalHtml;
-		generateContent(originalHtml);
+			photoContent.content_html = originalHtml;
+			contentHTML = originalHtml;
+			generateContent(originalHtml);
 			toastStore.trigger({
 				message: '翻译失败，请稍后重试。',
 				background: 'variant-filled-error'
 			});
 		} finally {
 			isTranslatingContent = false;
-		translationChunksTotal = 0;
-		translationChunksCompleted = 0;
+			translationChunksTotal = 0;
+			translationChunksCompleted = 0;
 		}
 	}
 
@@ -782,21 +765,18 @@ let translationChunksCompleted = 0;
 							<figure
 								class="relative object-contain aspect-square flex flex-col justify-center items-center rounded-md border border-gray-100"
 							>
-								<input
-									type="checkbox"
-									class="album-photo absolute top-4 left-4"
-									id={`photo-${photo.image.id}`}
-									name={`photo-${photo.order}`}
-									checked={photoContent.cover !== null && photoContent.cover === photo.image.id}
-									on:click={() => {
-										setCoverId(photo.image.id);
-									}}
-								/>
 								<img
 									src={`${data.prefix}/cdn-cgi/image/format=auto,width=480/${photo.image.storage_key}`}
 									alt={photo.image.alt}
 									class="img-bg h-full w-full object-contain"
 								/>
+								{#if index === 0}
+									<div
+										class="absolute top-2 left-2 bg-cyan-600 text-white text-xs px-2 py-1 rounded shadow-sm"
+									>
+										{$t('cover')}
+									</div>
+								{/if}
 								<button on:click={() => deleteImage(index)} class="absolute top-4 right-4">
 									<DeleteIcon classList="h-6 w-6 text-gray-400 hover:text-red-600" />
 								</button>
