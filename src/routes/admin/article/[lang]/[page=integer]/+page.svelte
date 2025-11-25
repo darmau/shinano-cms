@@ -144,7 +144,7 @@
 		</div>
 		<a
 			href="/admin/article/new"
-			class="inline-flex justify-between gap-2 rounded-md bg-cyan-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-cyan-500 focus-visible:outline focus-visible-outline-2 focus-visible-outline-offset-2 focus-visible-outline-cyan-600"
+			class="inline-flex justify-between gap-2 rounded-md bg-cyan-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-cyan-500 focus-visible:outline focus-visible:outline-2 focus-visible-outline-offset-2 focus-visible-outline-cyan-600"
 		>
 			创建
 		</a>
