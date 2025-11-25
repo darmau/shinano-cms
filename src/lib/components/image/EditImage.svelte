@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { t } from '$lib/functions/i18n';
 	import { getToastStore } from '$lib/toast';
 	import { invalidateAll } from '$app/navigation';
 	import { browser } from '$app/environment';
@@ -106,7 +105,7 @@
 			>
 				<div class="">
 					<h3 class="text-base font-semibold leading-6 text-gray-900" id="modal-title">
-						{$t('edit-image')}
+						编辑图片信息
 					</h3>
 					<div class="mt-4 flex flex-col gap-4 md:grid md:grid-cols-3">
 						<div>
@@ -124,7 +123,7 @@
 						>
 							<div class="space-y-2">
 								<label for="file_name" class="block text-sm font-medium leading-6 text-gray-900">
-									{$t('file-name')}
+									文件名
 								</label>
 								<input
 									type="text"
@@ -137,7 +136,7 @@
 							<div class="space-y-2">
 								<div class="flex justify-between items-center">
 									<label for="alt" class="block text-sm font-medium leading-6 text-gray-900">
-										{$t('alt-text')}
+										替代文本
 									</label>
 									<button
 										type="button"
@@ -145,7 +144,7 @@
 										disabled={isGeneratingAlt}
 										class="text-cyan-600 text-sm disabled:text-gray-400 disabled:cursor-not-allowed"
 									>
-										{isGeneratingAlt ? $t('generating') : $t('generate-alt')}
+										{isGeneratingAlt ? '生成中...' : '生成替代文本'}
 									</button>
 								</div>
 								<textarea
@@ -155,11 +154,11 @@
 									bind:value={imageData.alt}
 									class="text-gray-900 ring-gray-300 placeholder:text-gray-400 focus:ring-indigo-600 block w-full rounded-md border-0 py-1.5 px-2 shadow-sm ring-1 ring-inset focus:ring-2 focus:ring-inset sm:text-sm sm:leading-6"
 								></textarea>
-								<small>{$t('alt-text-description')}</small>
+								<small>出于无障碍考虑，建议填写替代文本</small>
 							</div>
 							<div class="space-y-2">
 								<label for="folder" class="block text-sm font-medium leading-6 text-gray-900">
-									{$t('folder')}
+									文件夹
 								</label>
 								<input
 									type="text"
@@ -171,7 +170,7 @@
 							</div>
 							<div class="space-y-2">
 								<label for="caption" class="block text-sm font-medium leading-6 text-gray-900">
-									{$t('image-caption')}
+									图片描述
 								</label>
 								<input
 									type="text"
@@ -183,7 +182,7 @@
 							</div>
 							<div class="space-y-2">
 								<label for="taken_at" class="block text-sm font-medium leading-6 text-gray-900">
-									{$t('shooting-time')}
+									拍摄时间
 								</label>
 								<input
 									type="datetime-local"
@@ -196,7 +195,7 @@
 							</div>
 							<div class="space-y-2">
 								<label for="location" class="block text-sm font-medium leading-6 text-gray-900">
-									{$t('shooting-location')}
+									拍摄地点
 								</label>
 								<input
 									type="text"
@@ -212,13 +211,13 @@
 									disabled={!isFormChanged}
 									class="inline-flex w-full justify-center rounded-md bg-cyan-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-cyan-500 sm:ml-3 sm:w-auto disabled:bg-gray-200"
 								>
-									{$t('submit')}
+									提交
 								</button>
 								<button
 									type="button"
 									on:click={closeEdit}
 									class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto"
-									>{$t('cancel')}</button
+									>取消</button
 								>
 							</div>
 						</form>

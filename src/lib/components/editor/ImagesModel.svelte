@@ -6,7 +6,6 @@
 	import UploadFile from '$components/image/UploadFile.svelte';
 	import UnsplashBrowser from '$components/image/UnsplashBrowser.svelte';
 	import AIImageGenerator from '$components/image/AIImageGenerator.svelte';
-	import { t } from '$lib/functions/i18n';
 	import { browser } from '$app/environment';
 	import { getSupabaseBrowserClient } from '$lib/supabaseClient';
 	import type { ImagesModelData, SelectedImage } from '$lib/types/editor';
@@ -251,7 +250,7 @@
 									disabled={selectedCount <= 0 || viewMode !== 'library'}
 									class="inline-flex justify-center rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 disabled:cursor-not-allowed disabled:bg-gray-300"
 								>
-									{$t('delete')}
+									删除
 								</button>
 							</div>
 							<div class="text-sm text-gray-600">
@@ -268,7 +267,7 @@
 								disabled={selectedCount <= 0 || viewMode !== 'library'}
 								class="relative inline-flex items-center rounded-md bg-cyan-600 px-3 py-2 text-sm font-semibold text-white hover:bg-cyan-700 focus-visible:outline-offset-0 disabled:cursor-not-allowed disabled:bg-gray-300"
 							>
-								{$t('submit')}
+								提交
 							</button>
 						</div>
 					</div>
@@ -319,7 +318,7 @@
 							on:click={closeModel}
 							class="relative inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus-visible:outline-offset-0"
 						>
-							{$t('close')}
+							关闭
 						</button>
 						<div class="space-x-4">
 							<button
@@ -327,13 +326,13 @@
 								disabled={page === 1}
 								class="relative inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus-visible:outline-offset-0 disabled:opacity-50 disabled:cursor-not-allowed"
 							>
-								{$t('previous-page')}
+								上一页
 							</button>
 							<button
 								on:click={nextPage}
 								class="relative inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus-visible:outline-offset-0"
 							>
-								{$t('next-page')}
+								下一页
 							</button>
 						</div>
 					</div>

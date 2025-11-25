@@ -1,7 +1,6 @@
 <!--本组件是一个toast，用于添加语言-->
 <script lang="ts">
 	import InputField from '$components/InputField.svelte';
-	import { t } from '$lib/functions/i18n';
 
 	export let closeAddLanguage: () => void;
 	export let addLanguage: (lang: string, locale: string) => void;
@@ -44,13 +43,13 @@
 						<button
 							type="submit"
 							class="inline-flex w-full justify-center rounded-md bg-cyan-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-cyan-500 sm:ml-3 sm:w-auto"
-							>{$t('submit')}
+							>提交
 						</button>
 						<button
 							type="button"
 							on:click={closeAddLanguage}
 							class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto"
-							>{$t('cancel')}
+							>取消
 						</button>
 					</div>
 				</form>

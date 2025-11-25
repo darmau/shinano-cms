@@ -10,7 +10,6 @@
 	import User from '$assets/icons/users.svelte';
 	import Setting from '$assets/icons/cog.svelte';
 	import { page } from '$app/stores';
-	import { t } from '$lib/functions/i18n';
 	import UnreadBadge from '$components/UnreadBadge.svelte';
 	import Book from '$assets/icons/book.svelte';
 
@@ -19,17 +18,17 @@
 	export let comment;
 
 	const navItems = [
-		{ name: 'home', href: '/admin', icon: Home },
-		{ name: 'message', href: '/admin/message/1', icon: Message },
-		{ name: 'media', href: '/admin/media/1', icon: Media },
-		{ name: 'article', href: '/admin/article/zh/1', icon: Article },
-		{ name: 'photo', href: '/admin/photo/zh/1', icon: Photo },
-		{ name: 'thought', href: '/admin/thought/1', icon: Memo },
-		{ name: 'book', href: '/admin/book/1', icon: Book },
-		{ name: 'category', href: '/admin/category', icon: Category },
-		{ name: 'comment', href: '/admin/comment/1', icon: Comment },
-		{ name: 'user', href: '/admin/users/1', icon: User },
-		{ name: 'setting', href: '/admin/setting', icon: Setting }
+		{ name: 'home', label: '首页', href: '/admin', icon: Home },
+		{ name: 'message', label: '消息', href: '/admin/message/1', icon: Message },
+		{ name: 'media', label: '媒体', href: '/admin/media/1', icon: Media },
+		{ name: 'article', label: '文章', href: '/admin/article/zh/1', icon: Article },
+		{ name: 'photo', label: '照片', href: '/admin/photo/zh/1', icon: Photo },
+		{ name: 'thought', label: '想法', href: '/admin/thought/1', icon: Memo },
+		{ name: 'book', label: '书籍', href: '/admin/book/1', icon: Book },
+		{ name: 'category', label: '分类', href: '/admin/category', icon: Category },
+		{ name: 'comment', label: '评论', href: '/admin/comment/1', icon: Comment },
+		{ name: 'user', label: '用户', href: '/admin/users/1', icon: User },
+		{ name: 'setting', label: '设置', href: '/admin/setting', icon: Setting }
 	];
 </script>
 
@@ -51,7 +50,7 @@
 							? 'h-6 w-6 shrink-0 text-cyan-600'
 							: 'h-6 w-6 shrink-0 text-gray-400 group-hover:text-cyan-600'}
 					/>
-					{$t(item.name)}
+					{item.label}
 				</a>
 				{#if item.name === 'message' && message > 0}
 					<UnreadBadge count={message} />

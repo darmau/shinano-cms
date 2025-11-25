@@ -1,6 +1,5 @@
 <script lang="ts">
 	import Tiptap from '$components/editor/Tiptap.svelte';
-	import { t } from '$lib/functions/i18n';
 	import ImagesModel from '$components/editor/ImagesModel.svelte';
 	import PhotoIcon from '$assets/icons/photo.svelte';
 	import AddIcon from '$assets/icons/plus.svelte';
@@ -539,7 +538,7 @@ let translationChunksCompleted = 0;
 
 	beforeNavigate((navigation) => {
 		if (!isSaved && isChanged) {
-			if (!confirm($t('leave-confirm'))) {
+			if (!confirm('你还有未保存的修改，确定要离开吗？')) {
 				navigation.cancel();
 			}
 		}
@@ -561,9 +560,9 @@ let translationChunksCompleted = 0;
 	<div class="space-y-8 xl:col-span-3">
 		<!--title-->
 		<div>
-			<label for="title" class="block text-sm font-medium leading-6 text-gray-900"
-				>{$t('title')}</label
-			>
+				<label for="title" class="block text-sm font-medium leading-6 text-gray-900"
+					>标题</label
+				>
 			<div class="mt-2">
 				<input
 					type="text"
@@ -604,22 +603,22 @@ let translationChunksCompleted = 0;
 					on:click={generateSlug}
 					disabled={isGeneratingSlug}
 					class="w-fit break-keep rounded bg-cyan-50 px-3 py-1 text-sm font-semibold text-cyan-600 shadow-sm hover:bg-cyan-100 cursor-pointer disabled:cursor-not-allowed disabled:opacity-70"
-					>{isGeneratingSlug ? $t('generating') : $t('generate')}</button
+					>{isGeneratingSlug ? '生成中...' : '生成'}</button
 				>
 			</div>
 			{#if isCheckingSlug}
 				<p class="mt-2 text-sm text-gray-600">Checking...</p>
 			{:else if slugExists}
-				<p class="mt-2 text-sm text-red-600">{$t('slug-has-been-used')}</p>
+				<p class="mt-2 text-sm text-red-600">这个 slug 不能使用</p>
 			{:else}
-				<p class="mt-2 text-sm text-green-600">{$t('slug-is-available')}</p>
+				<p class="mt-2 text-sm text-green-600">你可以使用这个 slug</p>
 			{/if}
 		</div>
 
 		<!--subtitle-->
 		<div>
 			<label for="subtitle" class="block text-sm font-medium leading-6 text-gray-900"
-				>{$t('subtitle')}</label
+				>副标题</label
 			>
 			<div class="mt-2">
 				<input
@@ -650,8 +649,8 @@ let translationChunksCompleted = 0;
 			disabled={isTranslatingContent}
 			class="rounded-md bg-cyan-50 p-2 text-sm font-semibold text-cyan-600 shadow-sm hover:bg-cyan-100 cursor-pointer disabled:cursor-not-allowed disabled:opacity-70"
 			>{isTranslatingContent
-				? `${$t('generating')}${translationChunksTotal > 0 ? ` (${translationChunksCompleted}/${translationChunksTotal})` : ''}`
-				: $t('translate')}</button
+				? `生成中...${translationChunksTotal > 0 ? ` (${translationChunksCompleted}/${translationChunksTotal})` : ''}`
+				: '翻译'}</button
 		>
 	</div>
 
@@ -659,7 +658,7 @@ let translationChunksCompleted = 0;
 		<!--发布时间-->
 		<div>
 			<label for="publish-time" class="text-sm font-medium leading-6 text-gray-900"
-				>{$t('publish-time')}</label
+				>发布时间</label
 			>
 			<input
 				type="datetime-local"
@@ -675,7 +674,7 @@ let translationChunksCompleted = 0;
 
 		<!--语言-->
 		<div>
-			<h2 class="text-sm font-medium leading-6 text-gray-900">{$t('language')}</h2>
+			<h2 class="text-sm font-medium leading-6 text-gray-900">语言</h2>
 			<ul class="mt-2 flex gap-2">
 				<li
 					class="inline-flex items-center gap-x-1.5 rounded-md bg-green-100 px-2 py-1 text-xs font-medium text-green-700"
@@ -715,7 +714,7 @@ let translationChunksCompleted = 0;
 		<div>
 			<header class="flex justify-between">
 				<label class="text-sm font-medium leading-6 text-gray-900" for="category"
-					>{$t('category')}</label
+					>分类</label
 				>
 				<a href="/admin/category/new" target="_blank">
 					<AddIcon classList="h-4 w-4 text-gray-400 hover:text-cyan-600" />
@@ -742,14 +741,14 @@ let translationChunksCompleted = 0;
 		<div>
 			<div class="flex justify-between">
 				<label for="abstract" class="block text-sm font-medium leading-6 text-gray-900"
-					>{$t('topic')}</label
+					>话题</label
 				>
 				<button
 					type="button"
 					on:click={generateTags}
 					disabled={isGeneratingTags}
 					class="rounded bg-cyan-600 px-2 py-1 text-sm font-semibold text-white shadow-sm hover:bg-cyan-500 cursor-pointer disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
-					>{isGeneratingTags ? $t('generating') : $t('generate')}</button
+					>{isGeneratingTags ? '生成中...' : '生成'}</button
 				>
 			</div>
 			<div class="relative mt-2">
@@ -793,13 +792,13 @@ let translationChunksCompleted = 0;
 		<!--封面-->
 		<div>
 			<header class="flex justify-end gap-4">
-				<h2 class="text-sm font-medium leading-6 text-gray-900 grow">{$t('cover')}</h2>
+				<h2 class="text-sm font-medium leading-6 text-gray-900 grow">封面</h2>
 				<button
 					on:click={resetCoverImage}
 					disabled={!coverImage}
 					class="rounded bg-red-600 px-2 py-1 text-sm font-semibold text-white shadow-sm hover:bg-red-500 disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed cursor-pointer"
 				>
-					{$t('reset')}
+					重置
 				</button>
 				<button
 					on:click={() => {
@@ -807,7 +806,7 @@ let translationChunksCompleted = 0;
 					}}
 					class="rounded bg-cyan-600 px-2 py-1 text-sm font-semibold text-white shadow-sm hover:bg-cyan-500 cursor-pointer"
 				>
-					{$t('select')}
+					选择
 				</button>
 			</header>
 			<div class="mt-2 aspect-[4/3] bg-gray-100 w-full rounded-md flex justify-center items-center">
@@ -827,14 +826,14 @@ let translationChunksCompleted = 0;
 		<div>
 			<div class="flex justify-between">
 				<label for="abstract" class="block text-sm font-medium leading-6 text-gray-900"
-					>{$t('abstract')}</label
+					>摘要</label
 				>
 				<button
 					type="button"
 					on:click={generateAbstract}
 					disabled={isGeneratingAbstract}
 					class="rounded bg-cyan-600 px-2 py-1 text-sm font-semibold text-white shadow-sm hover:bg-cyan-500 cursor-pointer disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
-					>{isGeneratingAbstract ? $t('generating') : $t('generate')}</button
+					>{isGeneratingAbstract ? '生成中...' : '生成'}</button
 				>
 			</div>
 			<div class="mt-2">
@@ -868,7 +867,7 @@ let translationChunksCompleted = 0;
 					type="checkbox"
 					class="h-4 w-4 rounded border-gray-300 text-cyan-600 focus:ring-cyan-600"
 				/>
-				<label for="is_top" class="font-medium text-gray-900 text-sm">{$t('top')}</label>
+				<label for="is_top" class="font-medium text-gray-900 text-sm">置顶</label>
 			</div>
 			<div class="flex h-6 items-center gap-2">
 				<input
@@ -883,7 +882,7 @@ let translationChunksCompleted = 0;
 					type="checkbox"
 					class="h-4 w-4 rounded border-gray-300 text-cyan-600 focus:ring-cyan-600"
 				/>
-				<label for="is_featured" class="font-medium text-gray-900 text-sm">{$t('feature')}</label>
+				<label for="is_featured" class="font-medium text-gray-900 text-sm">精选</label>
 			</div>
 			<div class="flex h-6 items-center gap-2">
 				<input
@@ -899,7 +898,7 @@ let translationChunksCompleted = 0;
 					class="h-4 w-4 rounded border-gray-300 text-cyan-600 focus:ring-cyan-600"
 				/>
 				<label for="is_premium" class="font-medium text-gray-900 text-sm"
-					>{$t('logged-in-only')}</label
+					>登录后可见</label
 				>
 			</div>
 		</div>
@@ -909,18 +908,18 @@ let translationChunksCompleted = 0;
 			<button
 				on:click={deleteArticle}
 				class="rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 cursor-pointer mr-auto"
-				>{$t('delete')}</button
+				>删除</button
 			>
 			<button
 				on:click={saveArticle}
 				disabled={!isChanged}
 				class="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed cursor-pointer"
-				>{$t('save')}</button
+				>保存</button
 			>
 			<button
 				on:click={publishArticle}
 				class="rounded-md bg-cyan-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-cyan-500 cursor-pointer"
-				>{articleContent.is_draft ? $t('publish') : $t('unpublish')}</button
+				>{articleContent.is_draft ? '发布' : '取消发布'}</button
 			>
 		</div>
 	</aside>

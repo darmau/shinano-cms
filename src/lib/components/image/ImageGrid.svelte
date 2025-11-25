@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { fileSize } from '$lib/functions/fileSize';
-	import { t } from '$lib/functions/i18n';
 	import shutterSpeed from '$lib/functions/shutterSpeed';
 	import { getToastStore } from '$lib/toast';
 	import { invalidateAll } from '$app/navigation';
@@ -51,14 +50,14 @@
 	const toastStore = getToastStore();
 
 	let deleteImageList: number[] = []; // ids of images to be deleted
-	let selectedImages = `${deleteImageList.length} ${$t('selected')}`;
+	let selectedImages = `${deleteImageList.length} 已选择`;
 	let deletable = true;
 	let isGeneratingAlt = false; // 是否正在生成 alt
 	let showUnsplashModal = false;
 	let showAIModal = false;
 
 	function updateSelectedImages() {
-		selectedImages = `${deleteImageList.length} ${$t('selected')}`;
+		selectedImages = `${deleteImageList.length} 已选择`;
 		deletable = deleteImageList.length <= 0;
 	}
 
@@ -272,14 +271,14 @@
 			type="button"
 			class="inline-flex w-full justify-center rounded-md bg-cyan-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-cyan-500 sm:ml-3 sm:w-auto disabled:bg-gray-300"
 		>
-			{isGeneratingAlt ? $t('generating') : $t('generate-alt')}
+			{isGeneratingAlt ? '生成中...' : '生成替代文本'}
 		</button>
 		<button
 			on:click={deleteImages}
 			disabled={deletable || isGeneratingAlt}
 			type="button"
 			class="inline-flex w-full justify-center rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 sm:ml-3 sm:w-auto disabled:bg-gray-300"
-			>{$t('delete')}
+			>删除
 		</button>
 	</div>
 </div>
@@ -338,7 +337,7 @@
 					{/if}
 				</div>
 				<div class="space-y-1">
-					<h4 class="font-medium text-sm mb-1">{$t('image-caption')}</h4>
+					<h4 class="font-medium text-sm mb-1">图片描述</h4>
 					{#if image.caption}
 						<p class="text-gray-700 text-sm">{image.caption}</p>
 					{:else}
@@ -347,7 +346,7 @@
 				</div>
 				{#if image.taken_at}
 					<div>
-						<h4 class="font-medium text-sm mb-1">{$t('shooting-time')}</h4>
+						<h4 class="font-medium text-sm mb-1">拍摄时间</h4>
 						<p class="text-sm text-gray-700">{image.taken_at}</p>
 					</div>
 				{/if}
@@ -361,31 +360,31 @@
 					<ul class="space-y-1">
 						{#if image.exif.Make}
 							<li class="flex justify-between gap-4">
-								<h4 class="font-medium text-sm mb-1 shrink-0">{$t('brand')}</h4>
+								<h4 class="font-medium text-sm mb-1 shrink-0">品牌</h4>
 								<p class="text-sm text-gray-700 text-right">{image.exif.Make}</p>
 							</li>
 						{/if}
 						{#if image.exif.Model}
 							<li class="flex justify-between gap-4">
-								<h4 class="font-medium text-sm mb-1 shrink-0">{$t('model')}</h4>
+								<h4 class="font-medium text-sm mb-1 shrink-0">型号</h4>
 								<p class="text-sm text-gray-700 text-right">{image.exif.Model}</p>
 							</li>
 						{/if}
 						{#if image.exif.LensModel}
 							<li class="flex justify-between gap-4">
-								<h4 class="font-medium text-sm mb-1 shrink-0">{$t('lens')}</h4>
+								<h4 class="font-medium text-sm mb-1 shrink-0">镜头</h4>
 								<p class="text-sm text-gray-700 text-right">{image.exif.LensModel}</p>
 							</li>
 						{/if}
 						{#if image.exif.FNumber}
 							<li class="flex justify-between gap-4">
-								<h4 class="font-medium text-sm mb-1 shrink-0">{$t('aperture')}</h4>
+								<h4 class="font-medium text-sm mb-1 shrink-0">光圈</h4>
 								<p class="text-sm text-gray-700 text-right">{image.exif.FNumber}</p>
 							</li>
 						{/if}
 						{#if image.exif.ExposureTime}
 							<li class="flex justify-between gap-4">
-								<h4 class="font-medium text-sm mb-1 shrink-0">{$t('shutter-speed')}</h4>
+								<h4 class="font-medium text-sm mb-1 shrink-0">快门速度</h4>
 								<p class="text-sm text-gray-700 text-right">
 									{shutterSpeed(String(image.exif.ExposureTime))}
 								</p>
@@ -393,7 +392,7 @@
 						{/if}
 						{#if image.exif.ISO}
 							<li class="flex justify-between gap-4">
-								<h4 class="font-medium text-sm mb-1 shrink-0">{$t('iso')}</h4>
+								<h4 class="font-medium text-sm mb-1 shrink-0">ISO</h4>
 								<p class="text-sm text-gray-700 text-right">{image.exif.ISO}</p>
 							</li>
 						{/if}
