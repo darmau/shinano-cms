@@ -1,6 +1,5 @@
 <script lang="ts">
 	import Pagination from '$components/Pagination.svelte';
-	import { t } from '$lib/functions/i18n';
 	import PageTitle from '$components/PageTitle.svelte';
 	import { invalidateAll } from '$app/navigation';
 	import { getToastStore } from '$lib/toast';
@@ -98,11 +97,11 @@
 </script>
 
 <svelte:head>
-	<title>{$t('thought')}</title>
+	<title>想法</title>
 </svelte:head>
 
 <div>
-	<PageTitle title={$t('thought')} />
+	<PageTitle title="想法" />
 
 	<div class="flex gap-4 items-center justify-between">
 		<button
@@ -110,13 +109,14 @@
 			disabled={deletable}
 			on:click={deleteThoughts}
 			class="inline-flex justify-center rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 sm:w-auto disabled:bg-gray-300"
-			>{$t('delete')}
+		>
+			删除
 		</button>
 		<a
 			href="/admin/thought/new"
-			class="inline-flex justify-between gap-2 rounded-md bg-cyan-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-cyan-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-600"
+			class="inline-flex justify-between gap-2 rounded-md bg-cyan-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-cyan-500 focus-visible:outline focus-visible-outline-2 focus-visible-outline-offset-2 focus-visible-outline-cyan-600"
 		>
-			{$t('add-new')}
+			创建
 		</a>
 	</div>
 
@@ -135,17 +135,17 @@
 											class="h-4 w-4 rounded border-gray-300 text-cyan-600 focus:ring-cyan-600"
 										/>
 									</th>
-									<th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
-										>{$t('content')}
+									<th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+										正文
 									</th>
-									<th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
-										>{$t('photos-count')}
+									<th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+										照片数量
 									</th>
-									<th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
-										>{$t('publish-time')}
+									<th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+										发布时间
 									</th>
 									<th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-6">
-										<span class="sr-only">{$t('edit')}</span>
+										<span class="sr-only">编辑</span>
 									</th>
 								</tr>
 							</thead>
@@ -178,13 +178,13 @@
 										>
 											<a
 												href={`/admin/thought/edit/${thought.id}`}
-												class="text-cyan-600 hover:text-cyan-900">{$t('edit')}</a
+												class="text-cyan-600 hover:text-cyan-900">编辑</a
 											>
 											<button
 												on:click={() => deleteThought(thought.id)}
 												class="text-red-600 hover:text-red-900"
 											>
-												{$t('delete')}
+												删除
 											</button>
 										</td>
 									</tr>
@@ -201,9 +201,9 @@
 				<div class="mt-6">
 					<a
 						href="/admin/thought/new"
-						class="inline-flex items-center rounded-md bg-cyan-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-cyan-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-600"
+						class="inline-flex items-center rounded-md bg-cyan-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-cyan-500 focus-visible:outline focus-visible-outline-2 focus-visible-outline-offset-2 focus-visible-outline-cyan-600"
 					>
-						{$t('add-new')}
+						创建
 					</a>
 				</div>
 			</div>

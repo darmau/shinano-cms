@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { t } from '$lib/functions/i18n';
 	import PhotoEditor from '$components/PhotoEditor.svelte';
 	import type { PageData as RoutePageData } from './$types';
 	import type { PageData as PhotoEditorData } from '$lib/types/photo';
@@ -51,7 +50,7 @@
 					<a
 						data-sveltekit-preload-data
 						href={`/admin/photo/${data.currentLanguage.lang}/1`}
-						class="ml-4 text-sm font-medium text-gray-500 hover:text-gray-700">{$t('photo')}</a
+						class="ml-4 text-sm font-medium text-gray-500 hover:text-gray-700">照片</a
 					>
 				</div>
 			</li>

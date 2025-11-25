@@ -1,6 +1,5 @@
 <script lang="ts">
 	import InputField from '$components/InputField.svelte';
-	import { locale, locales, t } from '$lib/functions/i18n';
 
 	// check if two passwords are the same
 	function checkPassword() {
@@ -22,14 +21,6 @@
 				Create admin account
 			</h2>
 		</div>
-		<select
-			bind:value={$locale}
-			class="rounded-md w-full border bg-white p-2 py-2 text-sm text-gray-900 shadow-sm hover:bg-gray-50"
-		>
-			{#each locales as language}
-				<option value={language.lang}>{language.locale}</option>
-			{/each}
-		</select>
 		<form class="space-y-6" method="POST" action="?/signup">
 			<InputField
 				status="normal"
@@ -38,7 +29,7 @@
 				name="email"
 				placeholder="Email address"
 				autocomplete="email"
-				label={$t('email')}
+				label="邮箱"
 				required
 			/>
 			<InputField
@@ -46,9 +37,9 @@
 				type="text"
 				id="name"
 				name="name"
-				helpText={$t('username-description')}
+				helpText="将作为对外显示的用户名"
 				autocomplete="username"
-				label={$t('username')}
+				label="用户名"
 				required
 			/>
 			<InputField
@@ -56,10 +47,10 @@
 				type="password"
 				id="password"
 				name="password"
-				helpText={$t('password-requirement')}
+				helpText="密码需要包含大小写字母和数字，最少8位"
 				autocomplete="new-password"
-				error={$t('password-too-short')}
-				label={$t('password')}
+				error="密码长度不足8位"
+				label="密码"
 				required
 			/>
 

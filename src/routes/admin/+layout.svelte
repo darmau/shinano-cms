@@ -16,7 +16,7 @@
 	<main class="main bg-white">
 		<slot />
 	</main>
-	<footer class="footer border-t">
+	<footer class="footer border-t border-gray-200">
 		<Footer />
 	</footer>
 </div>

@@ -1,6 +1,5 @@
 <script lang="ts">
 	import SimpleEditor from '$components/editor/SimpleEditor.svelte';
-	import { t } from '$lib/functions/i18n';
 	import ImagesModel from '$components/editor/ImagesModel.svelte';
 	import AddIcon from '$assets/icons/plus.svelte';
 	import DeleteIcon from '$assets/icons/delete.svelte';
@@ -252,7 +251,7 @@
 					<a
 						data-sveltekit-preload-data
 						href="/admin/thought/1"
-						class="ml-4 text-sm font-medium text-gray-500 hover:text-gray-700">{$t('thought')}</a
+						class="ml-4 text-sm font-medium text-gray-500 hover:text-gray-700">想法</a
 					>
 				</div>
 			</li>
@@ -266,7 +265,7 @@
 		<!--图片-->
 		<div>
 			<label for="add-image" class="text-sm font-medium leading-6 text-gray-900"
-				>{$t('image')}</label
+				>图片</label
 			>
 			<div class="relative mt-2 grid grid-cols-2 md:grid-cols-3 gap-4">
 				{#if thoughtContent.images.length < 12}
@@ -308,7 +307,7 @@
 		<!--话题-->
 		<div>
 			<label for="topic-input" class="text-sm font-medium leading-6 text-gray-900"
-				>{$t('topic')}</label
+				>话题</label
 			>
 			<div class="relative mt-2">
 				<div

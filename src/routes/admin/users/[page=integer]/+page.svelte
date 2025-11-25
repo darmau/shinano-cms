@@ -1,6 +1,5 @@
 <script lang="ts">
 	import Pagination from '$components/Pagination.svelte';
-	import { t } from '$lib/functions/i18n';
 	import PageTitle from '$components/PageTitle.svelte';
 	import getDateFormat from '$lib/functions/dateFormat';
 	import { getToastStore } from '$lib/toast';
@@ -59,11 +58,11 @@
 </script>
 
 <svelte:head>
-	<title>{$t('user')}</title>
+	<title>用户</title>
 </svelte:head>
 
 <div>
-	<PageTitle title={$t('user')} />
+	<PageTitle title="用户" />
 
 	<div class="mt-8 flow-root">
 		<div class="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
@@ -113,13 +112,13 @@
 											<button
 												class="text-green-600 hover:text-green-900"
 												on:click={() => unBlockUser(user.id)}
-												>{$t('unblock_user')}
+												>解封用户
 											</button>
 										{:else if user.role === 'reader'}
 											<button
 												class="text-red-600 hover:text-red-900"
 												on:click={() => blockUser(user.id)}
-												>{$t('block_user')}
+												>封禁用户
 											</button>
 										{/if}
 									</td>

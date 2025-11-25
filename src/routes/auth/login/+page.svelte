@@ -1,6 +1,5 @@
 <script lang="ts">
 	import InputField from '$components/InputField.svelte';
-	import { locale, locales, t } from '$lib/functions/i18n';
 </script>
 
 <div class="flex min-h-full items-center justify-center px-4 py-12 sm:px-6 lg:px-8">
@@ -11,14 +10,6 @@
 				Sign in to your account
 			</h2>
 		</div>
-		<select
-			bind:value={$locale}
-			class="rounded-md w-full bg-white border p-2 text-sm text-gray-900 shadow-sm hover:bg-gray-50"
-		>
-			{#each locales as language}
-				<option value={language.lang}>{language.locale}</option>
-			{/each}
-		</select>
 		<form class="space-y-6" method="POST">
 			<InputField
 				status="normal"
@@ -27,7 +18,7 @@
 				name="email"
 				placeholder="Email address"
 				autocomplete="email"
-				label={$t('email')}
+				label="邮箱"
 				required
 			/>
 			<InputField
@@ -36,7 +27,7 @@
 				id="password"
 				name="password"
 				autocomplete="current-password"
-				label={$t('password')}
+				label="密码"
 				required
 			/>
 

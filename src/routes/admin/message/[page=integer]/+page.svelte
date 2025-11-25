@@ -1,7 +1,6 @@
 <script lang="ts">
 	import PageTitle from '$components/PageTitle.svelte';
 	import Pagination from '$components/Pagination.svelte';
-	import { t } from '$lib/functions/i18n';
 	import getDateFormat from '$lib/functions/dateFormat';
 	import { getToastStore } from '$lib/toast';
 	import { invalidateAll } from '$app/navigation';
@@ -78,18 +77,18 @@
 </script>
 
 <svelte:head>
-	<title>{$t('message')}</title>
+	<title>消息</title>
 </svelte:head>
 
 <div class="">
-	<PageTitle title={$t('message')} />
+	<PageTitle title="消息" />
 	<div class="flex gap-4 items-center justify-between">
 		<button
 			type="button"
 			disabled={deletable}
 			on:click={deleteMessages}
 			class="inline-flex justify-center rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 sm:w-auto disabled:bg-gray-300"
-			>{$t('delete')}
+			>删除
 		</button>
 	</div>
 
@@ -109,28 +108,28 @@
 										/>
 									</th>
 									<th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
-										>{$t('sender')}
+										>发送人
 									</th>
 									<th
 										scope="col"
 										class="hidden lg:table-cell px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
-										>{$t('message')}
+										>消息
 									</th>
 									<th
 										scope="col"
 										class="hidden lg:table-cell px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
-										>{$t('contact_type')}
+										>联系渠道
 									</th>
 									<th
 										scope="col"
 										class="hidden lg:table-cell px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
-										>{$t('contact')}
+										>联系方式
 									</th>
 									<th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
-										>{$t('send_time')}
+										>发送时间
 									</th>
 									<th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-6">
-										<span class="sr-only">{$t('edit')}</span>
+										<span class="sr-only">编辑</span>
 									</th>
 								</tr>
 							</thead>
@@ -189,13 +188,13 @@
 										>
 											<a
 												href={`/admin/message/detail/${message.id}`}
-												class="text-cyan-600 hover:text-cyan-900">{$t('view')}</a
+												class="text-cyan-600 hover:text-cyan-900">查看</a
 											>
 											<button
 												on:click={() => deleteMessage(message.id)}
 												class="text-red-600 hover:text-red-900"
 											>
-												{$t('delete')}
+												删除
 											</button>
 										</td>
 									</tr>

@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { getToastStore } from '$lib/toast';
 	import PageTitle from '$components/PageTitle.svelte';
-	import { t } from '$lib/functions/i18n';
 	import Pagination from '$components/Pagination.svelte';
 	import getDateFormat from '$lib/functions/dateFormat';
 	import ArticleIcon from '$assets/icons/document-text.svelte';
@@ -78,11 +77,11 @@
 </script>
 
 <svelte:head>
-	<title>{$t('book')}</title>
+	<title>书籍</title>
 </svelte:head>
 
 <div>
-	<PageTitle title={$t('book')} />
+	<PageTitle title="书籍" />
 
 	<div class="flex gap-4 items-center justify-between">
 		<button
@@ -90,13 +89,13 @@
 			disabled={deletable}
 			on:click={deleteBooks}
 			class="inline-flex justify-center rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 sm:w-auto disabled:bg-gray-300"
-			>{$t('delete')}
+			>删除
 		</button>
 		<a
 			href="/admin/book/new"
 			class="inline-flex justify-between gap-2 rounded-md bg-cyan-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-cyan-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-600"
 		>
-			{$t('add-new')}
+			创建
 		</a>
 	</div>
 
@@ -118,19 +117,20 @@
 									<th
 										scope="col"
 										class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6"
-										>{$t('cover')}
+									>
+										封面
 									</th>
-									<th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
-										>{$t('book_title')}
+									<th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+										书名
 									</th>
-									<th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
-										>{$t('rate')}
+									<th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+										评分
 									</th>
-									<th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
-										>{$t('read_time')}
+									<th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+										阅读时间
 									</th>
 									<th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-6">
-										<span class="sr-only">{$t('edit')}</span>
+										<span class="sr-only">编辑</span>
 									</th>
 								</tr>
 							</thead>
@@ -176,13 +176,13 @@
 										>
 											<a
 												href={`/admin/book/edit/${book.id}`}
-												class="text-cyan-600 hover:text-cyan-900">{$t('edit')}</a
+												class="text-cyan-600 hover:text-cyan-900">编辑</a
 											>
 											<button
 												on:click={() => deleteBook(book.id)}
 												class="text-red-600 hover:text-red-900"
 											>
-												{$t('delete')}
+												删除
 											</button>
 										</td>
 									</tr>
@@ -199,9 +199,9 @@
 				<div class="mt-6">
 					<a
 						href="/admin/book/new"
-						class="inline-flex items-center rounded-md bg-cyan-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-cyan-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-600"
+						class="inline-flex items-center rounded-md bg-cyan-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-cyan-500 focus-visible:outline focus-visible-outline-2 focus-visible-outline-offset-2 focus-visible-outline-cyan-600"
 					>
-						{$t('add-new')}
+						创建
 					</a>
 				</div>
 			</div>

@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { t } from '$lib/functions/i18n';
 	import ImagesModel from '$components/editor/ImagesModel.svelte';
 	import { getToastStore } from '$lib/toast';
 	import PhotoIcon from '$assets/icons/photo.svelte';
@@ -111,7 +110,7 @@
 					<a
 						data-sveltekit-preload-data
 						href="/admin/book/1"
-						class="ml-4 text-sm font-medium text-gray-500 hover:text-gray-700">{$t('book')}</a
+						class="ml-4 text-sm font-medium text-gray-500 hover:text-gray-700">书籍</a
 					>
 				</div>
 			</li>
@@ -155,13 +154,13 @@
 		<!--封面-->
 		<div>
 			<header class="flex justify-end gap-4">
-				<h2 class="text-sm font-medium leading-6 text-gray-900 grow">{$t('cover')}</h2>
+				<h2 class="text-sm font-medium leading-6 text-gray-900 grow">封面</h2>
 				<button
 					on:click={resetCoverImage}
 					disabled={Object.keys(coverImage).length === 0}
 					class="rounded bg-red-600 px-2 py-1 text-sm font-semibold text-white shadow-sm hover:bg-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600 disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed"
 				>
-					{$t('reset')}
+					重置
 				</button>
 				<button
 					on:click={() => {
@@ -169,7 +168,7 @@
 					}}
 					class="rounded bg-cyan-600 px-2 py-1 text-sm font-semibold text-white shadow-sm hover:bg-cyan-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-600"
 				>
-					{$t('select')}
+					选择
 				</button>
 			</header>
 			<div class="mt-2 aspect-[4/3] bg-gray-100 w-full rounded-md flex justify-center items-center">
