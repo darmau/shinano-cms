@@ -6,7 +6,7 @@
 	<p class="text-center text-xs leading-5 text-gray-500">
 		&copy; 2023 ~ {currentYear} Developed by
 		<a
-			href="https://darmau.design"
+			href="https://darmau.co"
 			target="_blank"
 			class="underline decoration-solid decoration-sky-500/30 underline-offset-4"
 		>
