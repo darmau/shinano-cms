@@ -4,7 +4,6 @@
 	import ImageGrid from '$components/image/ImageGrid.svelte';
 	import Pagination from '$components/Pagination.svelte';
 	import { invalidateAll } from '$app/navigation';
-	import { t } from '$lib/functions/i18n';
 
 	export let data;
 
@@ -14,11 +13,11 @@
 </script>
 
 <svelte:head>
-	<title>{$t('media')}</title>
+	<title>媒体</title>
 </svelte:head>
 
 <div class="">
-	<PageTitle title={$t('media')} />
+	<PageTitle title="媒体" />
 	<UploadFile {refresh} />
 	<ImageGrid {data} />
 	<Pagination count={data.count} page={data.page} limit={data.limit} path={data.path} />

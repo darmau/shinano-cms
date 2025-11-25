@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { t } from '$lib/functions/i18n';
 	import PhotoIcon from '$assets/icons/photo.svelte';
 	import ImagesModel from '$components/editor/ImagesModel.svelte';
 	import { getToastStore } from '$lib/toast';
@@ -98,7 +97,7 @@
 					<a
 						data-sveltekit-preload-data
 						href="/admin/category"
-						class="ml-4 text-sm font-medium text-gray-500 hover:text-gray-700">{$t('category')}</a
+						class="ml-4 text-sm font-medium text-gray-500 hover:text-gray-700">分类</a
 					>
 				</div>
 			</li>
@@ -108,7 +107,7 @@
 	<div class="space-y-6">
 		<div>
 			<label for="title" class="block text-sm font-medium leading-6 text-gray-900"
-				>{$t('title')}</label
+				>标题</label
 			>
 			<div class="mt-2">
 				<input
@@ -126,7 +125,7 @@
 		</div>
 		<div>
 			<label for="type" class="block text-sm font-medium leading-6 text-gray-900"
-				>{$t('type')}</label
+				>类型</label
 			>
 			<select
 				value={categoryData.type}
@@ -162,7 +161,7 @@
 		</div>
 		<div>
 			<label for="description" class="block text-sm font-medium leading-6 text-gray-900"
-				>{$t('description')}</label
+				>描述</label
 			>
 			<div class="mt-2">
 				<textarea
@@ -180,7 +179,7 @@
 		</div>
 		<div>
 			<label for="language" class="block text-sm font-medium leading-6 text-gray-900"
-				>{$t('language')}</label
+				>语言</label
 			>
 			<select
 				value={categoryData.lang}
@@ -199,14 +198,14 @@
 		</div>
 		<div>
 			<header class="flex justify-end gap-4">
-				<h2 class="text-sm font-medium leading-6 text-gray-900 grow">{$t('cover')}</h2>
+				<h2 class="text-sm font-medium leading-6 text-gray-900 grow">封面</h2>
 				<button
 					on:click={resetCoverImage}
 					type="button"
 					disabled={!coverImage || Object.keys(coverImage).length === 0}
 					class="rounded bg-red-600 px-2 py-1 text-sm font-semibold text-white shadow-sm hover:bg-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600 disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed"
 				>
-					{$t('reset')}
+					重置
 				</button>
 				<button
 					type="button"
@@ -215,7 +214,7 @@
 					}}
 					class="rounded bg-cyan-600 px-2 py-1 text-sm font-semibold text-white shadow-sm hover:bg-cyan-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-600"
 				>
-					{$t('select')}
+					选择
 				</button>
 			</header>
 			<div class="mt-2 aspect-[4/3] bg-gray-100 w-full rounded-md flex justify-center items-center">

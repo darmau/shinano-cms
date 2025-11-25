@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { t } from '$lib/functions/i18n';
 	import { getToastStore } from '$lib/toast';
 	import { ThirdPartyAPIs } from '$lib/types/thirdPartyApi';
 	import { browser } from '$app/environment';
@@ -88,7 +87,7 @@
 					class="font-mono text-gray-900 ring-gray-300 placeholder:text-gray-400 focus:ring-indigo-600 block w-full rounded-md border-0 py-1.5 px-2 shadow-sm ring-1 ring-inset focus:ring-2 focus:ring-inset sm:text-sm sm:leading-6"
 				/>
 				<p class="mt-2 text-sm text-gray-500">
-					{$t('api-unsplash')}
+					如果你希望利用 Unsplash API 为文章添加图片，需要在此填写 Unsplash API Key
 				</p>
 			</div>
 			<div>
@@ -117,7 +116,7 @@
 					class="font-mono text-gray-900 ring-gray-300 placeholder:text-gray-400 focus:ring-indigo-600 block w-full rounded-md border-0 py-1.5 px-2 shadow-sm ring-1 ring-inset focus:ring-2 focus:ring-inset sm:text-sm sm:leading-6"
 				/>
 				<p class="mt-2 text-sm text-gray-500">
-					{$t('api-mapbox')}
+					用于查找图片的拍摄地点
 				</p>
 			</div>
 			<div>
@@ -132,7 +131,7 @@
 					class="font-mono text-gray-900 ring-gray-300 placeholder:text-gray-400 focus:ring-indigo-600 block w-full rounded-md border-0 py-1.5 px-2 shadow-sm ring-1 ring-inset focus:ring-2 focus:ring-inset sm:text-sm sm:leading-6"
 				/>
 				<p class="mt-2 text-sm text-gray-500">
-					{$t('api-amap')}
+					如果你的图片在中国拍摄，建议使用高德地图 API
 				</p>
 			</div>
 		</div>
@@ -146,7 +145,7 @@
 				class="font-mono text-gray-900 ring-gray-300 placeholder:text-gray-400 focus:ring-indigo-600 block w-full rounded-md border-0 py-1.5 px-2 shadow-sm ring-1 ring-inset focus:ring-2 focus:ring-inset sm:text-sm sm:leading-6"
 			/>
 			<p class="mt-2 text-sm text-gray-500">
-				{$t('api-resend')}
+				用于给用户发送被评论通知
 			</p>
 		</div>
 		<div class="border-b border-gray-900/10 pb-8">
@@ -159,7 +158,7 @@
 				class="font-mono text-gray-900 ring-gray-300 placeholder:text-gray-400 focus:ring-indigo-600 block w-full rounded-md border-0 py-1.5 px-2 shadow-sm ring-1 ring-inset focus:ring-2 focus:ring-inset sm:text-sm sm:leading-6"
 			/>
 			<p class="mt-2 text-sm text-gray-500">
-				{$t('api-bark-server')}
+				用于给管理员发送通知
 			</p>
 		</div>
 		<button
@@ -167,7 +166,7 @@
 			disabled={!isFormChanged}
 			class="rounded-md bg-cyan-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-cyan-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:bg-gray-200"
 		>
-			{$t('submit')}
+			提交
 		</button>
 	</form>
 </main>

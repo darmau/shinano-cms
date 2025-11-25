@@ -1,6 +1,5 @@
 <script lang="ts">
 	import Pagination from '$components/Pagination.svelte';
-	import { t } from '$lib/functions/i18n';
 	import PageTitle from '$components/PageTitle.svelte';
 	import { invalidateAll } from '$app/navigation';
 	import { getToastStore } from '$lib/toast';
@@ -111,11 +110,11 @@
 </script>
 
 <svelte:head>
-	<title>{$t('photo')}</title>
+	<title>照片</title>
 </svelte:head>
 
 <div>
-	<PageTitle title={$t('photo')} />
+	<PageTitle title="照片" />
 
 	<div class="flex gap-4 items-center justify-between">
 		<button
@@ -123,7 +122,7 @@
 			disabled={deletable}
 			on:click={deletePhotos}
 			class="inline-flex justify-center rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 sm:w-auto disabled:bg-gray-300"
-			>{$t('delete')}
+			>删除
 		</button>
 		<div class="inline-flex rounded-md border border-gray-200 p-0.5">
 			{#each data.allLanguages as language}
@@ -142,9 +141,10 @@
 		</div>
 		<a
 			href="/admin/photo/new"
+			data-sveltekit-reload
 			class="inline-flex justify-between gap-2 rounded-md bg-cyan-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-cyan-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-600"
 		>
-			{$t('add-new')}
+			创建
 		</a>
 	</div>
 
@@ -166,15 +166,17 @@
 									<th
 										scope="col"
 										class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6"
-										>{$t('cover')}
+									>
+										封面
 									</th>
 									<th
 										scope="col"
 										class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6"
-										>{$t('title')}
+									>
+										标题
 									</th>
-									<th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
-										>{$t('photos-count')}
+									<th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+										照片数量
 									</th>
 									<th
 										scope="col"
@@ -184,13 +186,14 @@
 									<th
 										scope="col"
 										class="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 lg:table-cell"
-										>{$t('category')}
+									>
+										分类
 									</th>
-									<th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
-										>{$t('status')}
+									<th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+										状态
 									</th>
 									<th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-6">
-										<span class="sr-only">{$t('edit')}</span>
+										<span class="sr-only">编辑</span>
 									</th>
 								</tr>
 							</thead>
@@ -254,7 +257,7 @@
 													>
 														<circle cx="3" cy="3" r="3" />
 													</svg>
-													{$t('draft')}
+													草稿
 												</span>
 											{:else}
 												<span
@@ -267,7 +270,7 @@
 													>
 														<circle cx="3" cy="3" r="3" />
 													</svg>
-													{$t('published')}
+													已发布
 												</span>
 											{/if}
 
@@ -275,7 +278,7 @@
 												<span
 													class="inline-flex items-center gap-x-1.5 rounded-full bg-sky-100 px-2 py-1 text-xs font-medium text-sky-700 break-keep"
 												>
-													{$t('featured')}
+													精选
 												</span>
 											{/if}
 
@@ -283,7 +286,7 @@
 												<span
 													class="inline-flex items-center gap-x-1.5 rounded-full bg-violet-100 px-2 py-1 text-xs font-medium text-violet-700 break-keep"
 												>
-													{$t('topped')}
+													置顶
 												</span>
 											{/if}
 										</td>
@@ -294,13 +297,13 @@
 											<a
 												href={`/admin/photo/edit/${photo.id}`}
 												data-sveltekit-preload-data
-												class="text-cyan-600 hover:text-cyan-900">{$t('edit')}</a
+												class="text-cyan-600 hover:text-cyan-900">编辑</a
 											>
 											<button
 												on:click={() => deletePhoto(photo.id)}
 												class="text-red-600 hover:text-red-900"
 											>
-												{$t('delete')}
+												删除
 											</button>
 										</td>
 									</tr>
@@ -317,9 +320,10 @@
 				<div class="mt-6">
 					<a
 						href="/admin/photo/new"
+						data-sveltekit-reload
 						class="inline-flex items-center rounded-md bg-cyan-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-cyan-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-600"
 					>
-						{$t('add-new')}
+						创建
 					</a>
 				</div>
 			</div>

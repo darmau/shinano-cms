@@ -1,6 +1,5 @@
 <script lang="ts">
 	import ArticleEditor from '$components/ArticleEditor.svelte';
-	import { t } from '$lib/functions/i18n';
 	import type { ArticleEditorPageData } from '$lib/types/article';
 
 	export let data: ArticleEditorPageData;
@@ -41,7 +40,7 @@
 					<a
 						data-sveltekit-preload-data
 						href={`/admin/article/${data.currentLanguage.lang}/1`}
-						class="ml-4 text-sm font-medium text-gray-500 hover:text-gray-700">{$t('article')}</a
+						class="ml-4 text-sm font-medium text-gray-500 hover:text-gray-700">文章</a
 					>
 				</div>
 			</li>

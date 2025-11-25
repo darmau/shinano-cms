@@ -1,6 +1,5 @@
 <script lang="ts">
 	import PageTitle from '$components/PageTitle.svelte';
-	import { t } from '$lib/functions/i18n';
 	import { invalidateAll } from '$app/navigation';
 	import { getToastStore } from '$lib/toast';
 	import { deleteCategories, deleteCategory } from '$lib/api/categories';
@@ -81,20 +80,20 @@
 </script>
 
 <div>
-	<PageTitle title={$t('category')} />
+	<PageTitle title="分类" />
 	<div class="flex gap-4 items-center justify-between">
 		<button
 			type="button"
 			disabled={deletable}
 			on:click={handleDeleteCategories}
 			class="inline-flex justify-center rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 sm:w-auto disabled:bg-gray-300"
-			>{$t('delete')}
+			>删除
 		</button>
 		<a
 			href="/admin/category/new"
 			class="inline-flex justify-between gap-2 rounded-md bg-cyan-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-cyan-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-600"
 		>
-			{$t('add-new')}
+			创建
 		</a>
 	</div>
 	<div class="mt-8 flow-root">
@@ -114,21 +113,23 @@
 								<th
 									scope="col"
 									class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6"
-									>{$t('title')}
+								>
+									标题
 								</th>
 								<th
 									scope="col"
 									class="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 lg:table-cell"
-									>{$t('language')}
+								>
+									语言
 								</th>
-								<th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
-									>{$t('type')}
+								<th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+									类型
 								</th>
-								<th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
-									>{$t('count')}
+								<th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+									数量
 								</th>
 								<th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-6">
-									<span class="sr-only">{$t('edit')}</span>
+									<span class="sr-only">编辑</span>
 								</th>
 							</tr>
 						</thead>
@@ -188,14 +189,14 @@
 											href={`/admin/category/edit/${category.id}`}
 											class="font-medium text-cyan-600 hover:text-cyan-900"
 										>
-											{$t('edit')}
+											编辑
 										</a>
 										<button
 											type="button"
 											on:click={() => handleDeleteCategory(category.id)}
 											class="text-red-600 hover:text-red-900"
 										>
-											{$t('delete')}
+											删除
 										</button>
 									</td>
 								</tr>

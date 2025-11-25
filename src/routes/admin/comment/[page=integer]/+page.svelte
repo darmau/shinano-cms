@@ -3,7 +3,6 @@
 	import Pagination from '$components/Pagination.svelte';
 	import { invalidateAll } from '$app/navigation';
 	import { localTime } from '$lib/functions/localTime';
-	import { t } from '$lib/functions/i18n';
 	import PageTitle from '$components/PageTitle.svelte';
 	import { browser } from '$app/environment';
 	import { getSupabaseBrowserClient } from '$lib/supabaseClient';
@@ -28,7 +27,7 @@
 			});
 		} else {
 			toastStore.trigger({
-				message: $t('set_public_success'),
+				message: '成功设为公开',
 				hideDismiss: true,
 				background: 'variant-filled-success'
 			});
@@ -50,7 +49,7 @@
 			});
 		} else {
 			toastStore.trigger({
-				message: $t('block_comment_success'),
+				message: '成功封禁评论',
 				hideDismiss: true,
 				background: 'variant-filled-success'
 			});
@@ -72,7 +71,7 @@
 			});
 		} else {
 			toastStore.trigger({
-				message: $t('unblock_comment_success'),
+				message: '成功解封评论',
 				hideDismiss: true,
 				background: 'variant-filled-success'
 			});
@@ -83,7 +82,7 @@
 	// 删除评论（带确认）
 	async function deleteComment(id: number, content: string) {
 		const preview = content.length > 50 ? content.substring(0, 50) + '...' : content;
-		const confirmed = confirm(`${$t('confirm_delete_comment')}\n\n"${preview}"`);
+		const confirmed = confirm(`确认删除这条评论吗？\n\n"${preview}"`);
 
 		if (!confirmed) return;
 
@@ -97,7 +96,7 @@
 			});
 		} else {
 			toastStore.trigger({
-				message: $t('delete_comment_success'),
+				message: '成功删除评论',
 				hideDismiss: true,
 				background: 'variant-filled-success'
 			});
@@ -108,10 +107,10 @@
 </script>
 
 <svelte:head>
-	<title>{$t('comment')}</title>
+	<title>评论</title>
 </svelte:head>
 
-<PageTitle title={$t('comment')} />
+<PageTitle title="评论" />
 <div class="grid grid-cols-1 gap-x-6 gap-y-8 lg:grid-cols-3 xl:gap-x-8">
 	{#each data.comments as comment}
 		<div
@@ -180,26 +179,26 @@
 						class="text-violet-500 text-sm font-medium"
 						on:click={() => setPublic(comment.id)}
 					>
-						{$t('set_public')}
+						设为公开
 					</button>
 				{/if}
 				{#if comment.is_blocked === false}
 					<button class="text-sm font-medium text-yellow-500" on:click={() => setBlock(comment.id)}>
-						{$t('block_comment')}
+						封禁评论
 					</button>
 				{:else}
 					<button
 						class="text-sm font-medium text-green-500"
 						on:click={() => cancelBlock(comment.id)}
 					>
-						{$t('unblock_comment')}
+						解封评论
 					</button>
 				{/if}
 				<button
 					class="text-sm font-medium text-red-500"
 					on:click={() => deleteComment(comment.id, comment.content_text)}
 				>
-					{$t('delete_comment')}
+					删除评论
 				</button>
 			</div>
 		</div>

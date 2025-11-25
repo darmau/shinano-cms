@@ -2,7 +2,6 @@
 	import { onMount } from 'svelte';
 	import { getToastStore } from '$lib/toast';
 	import { AI, type AIConfigKey, type AIMutableConfig, type AIModelKey } from '$lib/types/prompts';
-	import { t } from '$lib/functions/i18n';
 	import { browser } from '$app/environment';
 	import { getSupabaseBrowserClient } from '$lib/supabaseClient';
 	import { invalidateAll } from '$app/navigation';
@@ -314,7 +313,7 @@
 			disabled={!isFormChanged}
 			class="rounded-md bg-cyan-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-cyan-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:bg-gray-200"
 		>
-			{$t('submit')}
+			提交
 		</button>
 	</form>
 </main>
