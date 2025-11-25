@@ -906,7 +906,7 @@
 					type="button"
 					on:click={generateTags}
 					disabled={isGeneratingTags}
-					class="rounded bg-cyan-600 px-2 py-1 text-sm font-semibold text白色shadow-sm hover:bg-cyan-500 cursor-pointer disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
+					class="rounded bg-cyan-600 px-2 py-1 text-sm font-semibold text-white shadow-sm hover:bg-cyan-500 cursor-pointer disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
 					>{isGeneratingTags ? '生成中...' : '生成'}</button
 				>
 			</div>
@@ -955,7 +955,7 @@
 					type="button"
 					on:click={generateAbstract}
 					disabled={isGeneratingAbstract}
-					class="rounded bg-cyan-600 px-2 py-1 text-sm font-semibold text白色shadow-sm hover:bg-cyan-500 cursor-pointer disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
+					class="rounded bg-cyan-600 px-2 py-1 text-sm font-semibold text-white shadow-sm hover:bg-cyan-500 cursor-pointer disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
 					>{isGeneratingAbstract ? '生成中...' : '生成'}</button
 				>
 			</div>

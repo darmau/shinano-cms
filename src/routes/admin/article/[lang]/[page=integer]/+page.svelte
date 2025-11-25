@@ -124,7 +124,7 @@
 			type="button"
 			disabled={deletable}
 			on:click={deleteArticles}
-			class="inline-flex justify-center rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 sm:w-auto disabled:bg灰色"
+			class="inline-flex justify-center rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 sm:w-auto disabled:bg-gray-300"
 			>删除
 		</button>
 		<div class="inline-flex rounded-md border border-gray-200 p-0.5">
