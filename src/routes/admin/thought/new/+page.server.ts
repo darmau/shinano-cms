@@ -18,7 +18,8 @@ export const load: PageServerLoad = async () => {
 			]
 		},
 		content_html: '<p>只言片语</p>',
-		content_text: '只言片语'
+		content_text: '只言片语',
+		push_to_gallery: false
 	};
 	return {
 		prefix: URL_PREFIX,

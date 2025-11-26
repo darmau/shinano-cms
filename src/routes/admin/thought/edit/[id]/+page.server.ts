@@ -13,7 +13,7 @@ export const load: PageServerLoad = async ({ params, locals: { supabase } }) => 
 	  content_json,
 	  content_html,
 	  content_text,
-	  topic,
+	  push_to_gallery,
 	  thought_image (order, image (id, alt, storage_key))
   `
 		)
@@ -30,7 +30,7 @@ export const load: PageServerLoad = async ({ params, locals: { supabase } }) => 
 		content_json: thoughtData!.content_json,
 		content_html: thoughtData!.content_html,
 		content_text: thoughtData!.content_text,
-		topic: thoughtData!.topic,
+		push_to_gallery: thoughtData!.push_to_gallery ?? false,
 		images: thoughtData?.thought_image
 	};
 

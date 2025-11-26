@@ -33,11 +33,11 @@
 
 	const toastStore = getToastStore();
 
-	let thoughtContent: ThoughtContent = {
-		...data.thoughtContent,
-		images: [...(data.thoughtContent.images ?? [])],
-		topic: [...(data.thoughtContent.topic ?? [])]
-	};
+let thoughtContent: ThoughtContent = {
+	...data.thoughtContent,
+	images: [...(data.thoughtContent.images ?? [])],
+	push_to_gallery: data.thoughtContent.push_to_gallery ?? false
+};
 
 	let contentJSON: Record<string, unknown> = thoughtContent.content_json ?? {};
 	let contentHTML: string = thoughtContent.content_html;
@@ -130,28 +130,16 @@
 		draggingIndex = index;
 	}
 
-	function dragEnd(): void {
-		draggingIndex = null;
-	}
+function dragEnd(): void {
+	draggingIndex = null;
+}
 
-	let topicInput = '';
-
-	function handleKeydown(event: KeyboardEvent): void {
-		if (event.key === 'Enter' && topicInput.trim() !== '') {
-			thoughtContent = {
-				...thoughtContent,
-				topic: [...thoughtContent.topic, topicInput.trim()]
-			};
-			topicInput = '';
-		}
-	}
-
-	function removeTopic(index: number): void {
-		thoughtContent = {
-			...thoughtContent,
-			topic: thoughtContent.topic.filter((_, currentIndex) => currentIndex !== index)
-		};
-	}
+function togglePushToGallery(): void {
+	thoughtContent = {
+		...thoughtContent,
+		push_to_gallery: !thoughtContent.push_to_gallery
+	};
+}
 
 	async function saveThought(): Promise<void> {
 		if (!supabase || !thoughtContent.id) {
@@ -164,7 +152,7 @@
 				content_json: thoughtContent.content_json,
 				content_html: thoughtContent.content_html,
 				content_text: thoughtContent.content_text,
-				topic: thoughtContent.topic
+				push_to_gallery: thoughtContent.push_to_gallery
 			})
 			.eq('id', thoughtContent.id);
 
@@ -317,45 +305,28 @@
 			</div>
 		</div>
 
-		<!--话题-->
-		<div>
-			<label for="topic-input" class="text-sm font-medium leading-6 text-gray-900"
-				>话题</label
-			>
-			<div class="relative mt-2">
-				<div
-					class="flex flex-wrap gap-1 w-full rounded-md border-0 p-1.5 text-gray-900 ring-1 ring-inset ring-gray-300 sm:text-sm sm:leading-6"
-				>
-					{#each thoughtContent.topic as topic, index}
-						<span
-							class="inline-flex items-center gap-x-0.5 rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10"
-						>
-							{topic}
-							<button
-								type="button"
-								on:click={() => removeTopic(index)}
-								class="group relative -mr-1 h-3.5 w-3.5 rounded-sm hover:bg-gray-500/20"
-							>
-								<span class="sr-only">Remove</span>
-								<svg
-									viewBox="0 0 14 14"
-									class="h-3.5 w-3.5 stroke-gray-600/50 group-hover:stroke-gray-600/75"
-								>
-									<path d="M4 4l6 6m0-6l-6 6" />
-								</svg>
-								<span class="absolute -inset-1"></span>
-							</button>
-						</span>
-					{/each}
-					<input
-						type="text"
-						id="topic-input"
-						bind:value={topicInput}
-						on:keydown={handleKeydown}
-						class="peer border-none text-sm focus:ring-0 focus:outline-none bg-transparent"
-					/>
-				</div>
+		<!--推送到图集-->
+		<div class="flex items-center justify-between">
+			<div>
+				<label class="text-sm font-medium leading-6 text-gray-900">推送到Gallery</label>
+				<p class="text-sm text-gray-500">开启后会在图集中展示该想法。</p>
 			</div>
+			<button
+				type="button"
+				role="switch"
+				aria-checked={thoughtContent.push_to_gallery}
+				on:click={togglePushToGallery}
+				class={`${
+					thoughtContent.push_to_gallery ? 'bg-cyan-600' : 'bg-gray-200'
+				} relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:ring-offset-2`}
+			>
+				<span class="sr-only">推送到Gallery</span>
+				<span
+					class={`${
+						thoughtContent.push_to_gallery ? 'translate-x-5' : 'translate-x-0'
+					} pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out`}
+				></span>
+			</button>
 		</div>
 
 		<!--保存-->

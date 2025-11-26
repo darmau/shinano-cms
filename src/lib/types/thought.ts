@@ -10,12 +10,12 @@ export type ThoughtContentBase = {
 	content_json: Record<string, unknown>;
 	content_html: string;
 	content_text: string;
-	topic?: string[];
+	push_to_gallery?: boolean;
 	images?: ThoughtImage[];
 };
 
 export type ThoughtContent = ThoughtContentBase & {
-	topic: string[];
+	push_to_gallery: boolean;
 	images: ThoughtImage[];
 };
 
