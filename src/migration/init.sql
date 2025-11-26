@@ -1165,6 +1165,86 @@ $$;
 -- 授予执行权限
 GRANT EXECUTE ON FUNCTION get_photo_map_geojson(text) TO authenticated, anon;
 
+-- Gallery Feed View (合并 photo 和 thought)
+CREATE OR REPLACE VIEW gallery_feed AS
+SELECT 
+    'photo' as content_type,
+    p.id,
+    p.title,
+    p.slug::text as slug,
+    p.content_text,
+    p.created_at,
+    p.published_at as sort_date,
+    l.lang,
+    CASE 
+        WHEN c.id IS NOT NULL THEN jsonb_build_object(
+            'id', c.id,
+            'alt', c.alt,
+            'storage_key', c.storage_key,
+            'width', c.width,
+            'height', c.height
+        )
+        ELSE NULL
+    END as cover,
+    (
+        SELECT jsonb_agg(
+            jsonb_build_object(
+                'order', pi.order,
+                'image', jsonb_build_object(
+                    'id', i.id,
+                    'alt', i.alt,
+                    'storage_key', i.storage_key,
+                    'width', i.width,
+                    'height', i.height
+                )
+            )
+            ORDER BY pi.order
+        )
+        FROM photo_image pi
+        JOIN image i ON pi.image_id = i.id
+        WHERE pi.photo_id = p.id
+    ) as images
+FROM photo p
+JOIN language l ON p.lang = l.id
+LEFT JOIN image c ON p.cover = c.id
+WHERE p.is_draft = false
+
+UNION ALL
+
+SELECT 
+    'thought' as content_type,
+    t.id,
+    NULL as title,
+    t.slug::text as slug,
+    t.content_text,
+    t.created_at,
+    t.created_at as sort_date,
+    NULL as lang,
+    NULL as cover,
+    (
+        SELECT jsonb_agg(
+            jsonb_build_object(
+                'order', ti.order,
+                'image', jsonb_build_object(
+                    'id', i.id,
+                    'alt', i.alt,
+                    'storage_key', i.storage_key,
+                    'width', i.width,
+                    'height', i.height
+                )
+            )
+            ORDER BY ti.order
+        )
+        FROM thought_image ti
+        JOIN image i ON ti.image_id = i.id
+        WHERE ti.thought_id = t.id
+    ) as images
+FROM thought t
+WHERE t.push_to_gallery = true;
+
+-- 为 view 添加 RLS（通过授权）
+GRANT SELECT ON gallery_feed TO authenticated, anon;
+
 -- 验证函数创建成功
 SELECT 'Function created successfully!' as status;
 
