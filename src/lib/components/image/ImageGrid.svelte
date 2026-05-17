@@ -315,6 +315,12 @@
 				</button>
 				<img
 					src={`${data.prefix}/cdn-cgi/image/format=auto,width=480/${data.prefix}/${image.storage_key}`}
+					srcset={`${data.prefix}/cdn-cgi/image/format=auto,width=240/${data.prefix}/${image.storage_key} 240w, ${data.prefix}/cdn-cgi/image/format=auto,width=480/${data.prefix}/${image.storage_key} 480w, ${data.prefix}/cdn-cgi/image/format=auto,width=720/${data.prefix}/${image.storage_key} 720w, ${data.prefix}/cdn-cgi/image/format=auto,width=960/${data.prefix}/${image.storage_key} 960w`}
+					sizes="(min-width: 1280px) 16vw, (min-width: 1024px) 25vw, (min-width: 768px) 50vw, 100vw"
+					width={image.width ?? undefined}
+					height={image.height ?? undefined}
+					loading="lazy"
+					decoding="async"
 					class="img-bg h-full w-full object-contain"
 					alt={image.alt}
 				/>
