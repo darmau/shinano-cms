@@ -24,7 +24,7 @@ export const load: PageServerLoad = async ({ url, params: { page }, locals: { su
 		.order('created_at', { ascending: false });
 
 	if (fetchError) {
-		console.error(error);
+		console.error(fetchError);
 		error(Number(fetchError.code), { message: fetchError.message });
 	}
 

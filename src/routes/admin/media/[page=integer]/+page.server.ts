@@ -16,7 +16,7 @@ export const load: PageServerLoad = async ({ url, params: { page }, locals: { su
 	const { count } = await supabase.from('image').select('id', { count: 'exact' });
 
 	if (fetchError) {
-		console.error(error);
+		console.error(fetchError);
 		error(Number(fetchError.code), { message: fetchError.message });
 	}
 

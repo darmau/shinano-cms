@@ -34,7 +34,7 @@ export const load: PageServerLoad = async ({ url, params: { page }, locals: { su
 	const { count } = await supabase.from('comment').select('id', { count: 'exact' });
 
 	if (fetchError) {
-		console.error(error);
+		console.error(fetchError);
 		error(Number(fetchError.code), { message: fetchError.message });
 	}
 

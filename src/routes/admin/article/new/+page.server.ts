@@ -96,7 +96,7 @@ export const load: PageServerLoad = async ({ url, locals: { supabase } }) => {
 			.single();
 
 		if (sourceError) {
-			console.error(error);
+			console.error(sourceError);
 			error(Number(sourceError.code), { message: sourceError.message });
 		}
 
