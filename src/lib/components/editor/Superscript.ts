@@ -4,6 +4,16 @@ export interface SuperscriptOptions {
 	HTMLAttributes: Record<string, any>;
 }
 
+declare module '@tiptap/core' {
+	interface Commands<ReturnType> {
+		superscript: {
+			setSuperscript: () => ReturnType;
+			toggleSuperscript: () => ReturnType;
+			unsetSuperscript: () => ReturnType;
+		};
+	}
+}
+
 /**
  * Minimal superscript mark so we don't need to pull another dependency.
  * Matches <sup> tags and exposes TipTap commands for toggling it.

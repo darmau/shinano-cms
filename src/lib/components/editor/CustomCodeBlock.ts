@@ -1,9 +1,7 @@
 import { CodeBlock } from '@tiptap/extension-code-block';
 import type { CodeBlockOptions } from '@tiptap/extension-code-block';
 
-export interface CustomCodeBlockOptions extends CodeBlockOptions {
-	HTMLAttributes?: Record<string, any>;
-}
+export type CustomCodeBlockOptions = CodeBlockOptions;
 
 /**
  * CustomCodeBlock 扩展自 TipTap 自带的 CodeBlock

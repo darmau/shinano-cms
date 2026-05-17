@@ -183,7 +183,7 @@
 										</td>
 										<td class="px-3 py-4 text-sm text-gray-500 line-clamp-2">{book.title} </td>
 										<td class="font-mono px-3 py-4 text-sm text-gray-500">{book.rate} </td>
-										<td class="px-3 py-4 text-sm text-gray-500">{getDateFormat(book.date, true)}</td
+										<td class="px-3 py-4 text-sm text-gray-500">{book.date ? getDateFormat(book.date, true) : ''}</td
 										>
 
 										<td
