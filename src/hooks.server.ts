@@ -65,7 +65,10 @@ const authGuard: Handle = async ({ event, resolve }) => {
 		if (!event.url.pathname.startsWith('/auth/login')) {
 			return redirect(303, '/auth/login');
 		}
-	} else if (event.url.pathname.startsWith('/auth')) {
+	} else if (
+		event.url.pathname.startsWith('/auth') &&
+		!event.url.pathname.startsWith('/auth/logout')
+	) {
 		return redirect(303, '/admin');
 	}
 
