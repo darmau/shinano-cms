@@ -6,28 +6,48 @@
 	import { goto } from '$app/navigation';
 	import { browser } from '$app/environment';
 	import { getSupabaseBrowserClient } from '$lib/supabaseClient';
+	import type { SelectedImage } from '$lib/types/editor';
 
-	export let data;
+	type CoverImage = { id: number; alt: string | null; storage_key: string };
+	type BookRow = {
+		id: number;
+		title: string;
+		rate: number | null;
+		comment: string | null;
+		date: string | null;
+		link: string | null;
+		cover: CoverImage | null;
+	};
+
+	export let data: { prefix: string; book: BookRow };
 	const supabase = browser ? getSupabaseBrowserClient() : null;
 
 	const toastStore = getToastStore();
 
-	let bookContent = {
+	let bookContent: {
+		title: string;
+		rate: number | null;
+		comment: string | null;
+		date: string | null;
+		cover: number | null;
+		link: string | null;
+	} = {
 		title: data.book.title,
 		rate: data.book.rate,
 		comment: data.book.comment,
 		date: data.book.date,
-		cover: data.book.cover,
+		cover: data.book.cover?.id ?? null,
 		link: data.book.link
 	};
 
-	let coverImage = bookContent.cover || {};
+	let coverImage: CoverImage | null = data.book.cover ?? null;
 	let localTime = bookContent.date ? getDateFormat(bookContent.date, true) : null;
 	let isChanged = false;
 
 	// 保存图书信息
 	async function saveBook() {
-		bookContent.cover = coverImage.id;
+		if (!supabase) return;
+		bookContent.cover = coverImage?.id ?? null;
 		bookContent.date = localTime ? new Date(localTime).toISOString() : null;
 		const { error: saveBookError } = await supabase
 			.from('book')
@@ -58,25 +78,27 @@
 		isModalOpen = false;
 	}
 
-	function selectPicture(images) {
+	function selectPicture(images: SelectedImage[]) {
+		const [image] = images;
+		if (!image) return;
 		coverImage = {
-			id: images[0].id,
-			alt: images[0].alt,
-			storage_key: images[0].storage_key
+			id: image.id,
+			alt: image.alt,
+			storage_key: image.storage_key
 		};
 		bookContent.cover = coverImage.id;
 		isChanged = true;
 	}
 
 	function resetCoverImage() {
-		coverImage = {};
+		coverImage = null;
 		bookContent.cover = null;
 		isChanged = true;
 	}
 </script>
 
 {#if isModalOpen}
-	<ImagesModel {data} {closeModel} onSelect={selectPicture} />
+	<ImagesModel data={{ supabase, prefix: data.prefix }} {closeModel} onSelect={selectPicture} />
 {/if}
 
 <div class="max-w-3xl mx-auto">
@@ -161,7 +183,7 @@
 				<h2 class="text-sm font-medium leading-6 text-gray-900 grow">封面</h2>
 				<button
 					on:click={resetCoverImage}
-					disabled={Object.keys(coverImage).length === 0}
+					disabled={!coverImage}
 					class="rounded bg-red-600 px-2 py-1 text-sm font-semibold text-white shadow-sm hover:bg-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600 disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed"
 				>
 					重置
@@ -176,10 +198,10 @@
 				</button>
 			</header>
 			<div class="mt-2 aspect-[4/3] bg-gray-100 w-full rounded-md flex justify-center items-center">
-				{#if Object.keys(coverImage).length > 0}
+				{#if coverImage}
 					<img
 						src={`${data.prefix}/cdn-cgi/image/format=auto,width=480/${coverImage.storage_key}`}
-						alt={coverImage.alt}
+						alt={coverImage.alt ?? ''}
 						class="img-bg h-full w-full object-contain"
 					/>
 				{:else}
