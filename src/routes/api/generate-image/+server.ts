@@ -72,7 +72,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	const aiGatewayEndpoint = configMap.get('ai_GATEWAY_ENDPOINT');
 	const cfAIGToken = configMap.get('cf_AIG_TOKEN');
 
-	if (!aiGatewayEndpoint || !cfAIGToken || !openaiApiKey) {
+	if (!aiGatewayEndpoint || !cfAIGToken || !apiKey) {
 		error(500, 'AI gateway or OpenAI API key configuration not configured');
 	}
 
