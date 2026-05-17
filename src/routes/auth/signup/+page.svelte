@@ -1,16 +1,5 @@
 <script lang="ts">
 	import InputField from '$components/InputField.svelte';
-
-	// check if two passwords are the same
-	function checkPassword() {
-		const password = document.getElementById('password');
-		const passwordConfirm = document.getElementById('password-confirm');
-		if (password.value !== passwordConfirm.value) {
-			alert('Passwords do not match');
-			return false;
-		}
-		return true;
-	}
 </script>
 
 <div class="flex min-h-full items-center justify-center px-4 py-12 sm:px-6 lg:px-8">

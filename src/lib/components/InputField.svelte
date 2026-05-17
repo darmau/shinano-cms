@@ -1,12 +1,13 @@
 <script lang="ts">
 	import { fade } from 'svelte/transition';
+	import type { HTMLInputAttributes } from 'svelte/elements';
 	import Error from '$assets/icons/error.svelte';
 
 	export let type: string = 'text';
 	export let id: string;
 	export let name: string;
-	export let placeholder: string;
-	export let autocomplete: string = 'off';
+	export let placeholder: string = '';
+	export let autocomplete: HTMLInputAttributes['autocomplete'] = 'off';
 	export let status: string = 'normal';
 	export let required: boolean = false;
 	export let label: string;
