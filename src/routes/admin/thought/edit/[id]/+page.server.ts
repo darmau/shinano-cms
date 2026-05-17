@@ -22,7 +22,7 @@ export const load: PageServerLoad = async ({ params, locals: { supabase } }) => 
 
 	if (thoughtError) {
 		console.error('Error fetching thought data:', thoughtError);
-		error(Number(thoughtError.code), { message: thoughtError.message });
+		error(thoughtError.code === 'PGRST116' ? 404 : 500, { message: thoughtError.message });
 	}
 
 	const thoughtContent = {

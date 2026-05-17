@@ -9,7 +9,7 @@ export const load: PageServerLoad = async ({ locals: { supabase } }) => {
 		.order('id', { ascending: true });
 
 	if (languageError) {
-		error(Number(languageError.code), { message: languageError.message });
+		error(500, { message: languageError.message });
 	}
 
 	return {

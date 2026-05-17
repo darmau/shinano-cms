@@ -16,7 +16,7 @@ export const load: PageServerLoad = async ({ url, params: { page }, locals: { su
 
 	if (fetchError) {
 		console.error(fetchError);
-		error(Number(fetchError.code), { message: fetchError.message });
+		error(500, { message: fetchError.message });
 	}
 
 	// 获取url中域名开始到page之间的字符串

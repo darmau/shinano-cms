@@ -25,7 +25,7 @@ export const load: PageServerLoad = async ({ url, params: { page }, locals: { su
 
 	if (fetchError) {
 		console.error(fetchError);
-		error(Number(fetchError.code), { message: fetchError.message });
+		error(500, { message: fetchError.message });
 	}
 
 	const path = url.pathname.substring(0, url.pathname.indexOf(page) - 1);

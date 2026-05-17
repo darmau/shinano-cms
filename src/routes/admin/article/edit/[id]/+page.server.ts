@@ -36,7 +36,7 @@ export const load: PageServerLoad = async ({ params, locals: { supabase } }) => 
 
 	if (articleError) {
 		console.error('Error fetching article data:', articleError);
-		error(Number(articleError.code), { message: articleError.message });
+		error(articleError.code === 'PGRST116' ? 404 : 500, { message: articleError.message });
 	}
 
 	const currentLanguage = allLanguages?.find((lang) => lang.id === articleData.lang);

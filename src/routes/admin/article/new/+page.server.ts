@@ -105,7 +105,7 @@ export const load: PageServerLoad = async ({ url, locals: { supabase } }) => {
 
 		if (sourceError) {
 			console.error(sourceError);
-			error(Number(sourceError.code), { message: sourceError.message });
+			error(sourceError.code === 'PGRST116' ? 404 : 500, { message: sourceError.message });
 		}
 
 		articleContent = {

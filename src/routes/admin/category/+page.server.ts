@@ -12,7 +12,7 @@ export const load: PageServerLoad = async ({ locals: { supabase } }) => {
 
 	if (fetchError) {
 		console.error(fetchError);
-		error(Number(fetchError.code), { message: fetchError.message });
+		error(500, { message: fetchError.message });
 	}
 
 	return {
