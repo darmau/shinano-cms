@@ -5,15 +5,15 @@ export const load: PageServerLoad = async ({ url, params: { page }, locals: { su
 	const pageNumber = Number(page);
 	const limit = url.searchParams.get('limit') ? Number(url.searchParams.get('limit')) : 16;
 
-	const { data: messages, error: fetchError } = await supabase
-		.from('message')
-		.select('*')
-		.range((pageNumber - 1) * limit, pageNumber * limit - 1)
-		.order('is_read', { ascending: true })
-		.order('created_at', { ascending: false });
-
-	// 获取image表中数据的条目数
-	const { count } = await supabase.from('message').select('id', { count: 'exact' });
+	const [{ data: messages, error: fetchError }, { count }] = await Promise.all([
+		supabase
+			.from('message')
+			.select('*')
+			.range((pageNumber - 1) * limit, pageNumber * limit - 1)
+			.order('is_read', { ascending: true })
+			.order('created_at', { ascending: false }),
+		supabase.from('message').select('id', { count: 'exact' })
+	]);
 
 	if (fetchError) {
 		console.error(fetchError);

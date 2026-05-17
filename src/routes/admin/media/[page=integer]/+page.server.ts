@@ -6,14 +6,14 @@ export const load: PageServerLoad = async ({ url, params: { page }, locals: { su
 	const pageNumber = Number(page);
 	const limit = url.searchParams.get('limit') ? Number(url.searchParams.get('limit')) : 24;
 
-	const { data: images, error: fetchError } = await supabase
-		.from('image')
-		.select()
-		.range((pageNumber - 1) * limit, pageNumber * limit - 1)
-		.order('id', { ascending: false });
-
-	// 获取image表中数据的条目数
-	const { count } = await supabase.from('image').select('id', { count: 'exact' });
+	const [{ data: images, error: fetchError }, { count }] = await Promise.all([
+		supabase
+			.from('image')
+			.select()
+			.range((pageNumber - 1) * limit, pageNumber * limit - 1)
+			.order('id', { ascending: false }),
+		supabase.from('image').select('id', { count: 'exact' })
+	]);
 
 	if (fetchError) {
 		console.error(fetchError);

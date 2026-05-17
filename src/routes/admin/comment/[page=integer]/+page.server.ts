@@ -6,10 +6,11 @@ export const load: PageServerLoad = async ({ url, params: { page }, locals: { su
 	const pageNumber = Number(page);
 	const limit = url.searchParams.get('limit') ? Number(url.searchParams.get('limit')) : 16;
 
-	const { data: comments, error: fetchError } = await supabase
-		.from('comment')
-		.select(
-			`
+	const [{ data: comments, error: fetchError }, { count }] = await Promise.all([
+		supabase
+			.from('comment')
+			.select(
+				`
 	  id,
 	  user_id (name),
 	  name,
@@ -25,13 +26,12 @@ export const load: PageServerLoad = async ({ url, params: { page }, locals: { su
 	  to_thought (content_text, slug),
 		ip_info
 	`
-		)
-		.range((pageNumber - 1) * limit, pageNumber * limit - 1)
-		.order('is_public', { ascending: true })
-		.order('created_at', { ascending: false });
-
-	// 获取image表中数据的条目数
-	const { count } = await supabase.from('comment').select('id', { count: 'exact' });
+			)
+			.range((pageNumber - 1) * limit, pageNumber * limit - 1)
+			.order('is_public', { ascending: true })
+			.order('created_at', { ascending: false }),
+		supabase.from('comment').select('id', { count: 'exact' })
+	]);
 
 	if (fetchError) {
 		console.error(fetchError);
