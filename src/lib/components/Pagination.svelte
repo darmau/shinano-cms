@@ -8,11 +8,13 @@
 
 	let limitOptions: number[] = [8, 12, 16, 24, 36, 48];
 
+	type PageItem = number | '...';
+
 	// 根据总数count、每页数量limit、当前页码page生成页码数组。
 	// 当页数超过5页时，只显示当前页、前后两页及第一页和最后一页。
 	// 比如总数为100，每页数量为10，当前页为5，则生成的页码数组为[1, "...", 4, 5, 6, "...", 10]。
-	function generatePages(count: number, limit: number, page: number): number[] {
-		let pages = [];
+	function generatePages(count: number, limit: number, page: number): PageItem[] {
+		let pages: PageItem[] = [];
 		let total = Math.ceil(count / limit);
 		if (total <= 5) {
 			for (let i = 1; i <= total; i++) {
@@ -52,7 +54,7 @@
 	<div class="flex gap-4 items-center">
 		<select
 			bind:value={limit}
-			on:change={generatePages(count, limit, page)}
+			on:change={() => (pages = generatePages(count, limit, page))}
 			class="block rounded-md border-0 py-1.5 pl-3 pr-10 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-cyan-600 sm:text-sm sm:leading-6"
 		>
 			{#each limitOptions as option}

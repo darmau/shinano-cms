@@ -149,7 +149,7 @@
 				class="flex items-center justify-between gap-x-4 border-b border-gray-900/5 bg-gray-50 p-6"
 			>
 				<div class="text-base font-medium text-gray-900 dark:text-white">
-					{comment.is_anonymous ? comment.name : comment.user_id.name}
+					{comment.is_anonymous ? comment.name : (comment.user_id?.name ?? '')}
 				</div>
 				<div class="flex flex-col gap-y-1 items-end">
 					{#if comment.is_anonymous}

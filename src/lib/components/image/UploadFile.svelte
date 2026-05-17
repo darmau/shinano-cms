@@ -74,12 +74,12 @@
 			});
 		} catch (error) {
 			isLoading = false;
+			console.error('图片上传失败', error);
 			toastStore.trigger({
 				message: '图片上传失败',
 				hideDismiss: true,
 				background: 'variant-filled-error'
 			});
-			error(500, { message: '上传失败' });
 		}
 	}
 </script>

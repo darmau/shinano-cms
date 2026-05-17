@@ -63,7 +63,7 @@
 </script>
 
 {#if isModalOpen}
-	<ImagesModel {data} {closeModel} onSelect={selectCoverImage} />
+	<ImagesModel data={{ supabase, prefix: data.prefix }} {closeModel} onSelect={selectCoverImage} />
 {/if}
 
 <div class="max-w-96 mx-auto">
