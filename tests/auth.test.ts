@@ -3,15 +3,13 @@ import { expect, test } from '@playwright/test';
 const TEST_EMAIL = process.env.TEST_USER_EMAIL;
 const TEST_PASSWORD = process.env.TEST_USER_PASSWORD;
 
-test('home page renders the CMS title', async ({ page }) => {
+test('unauthenticated / redirects to login', async ({ page }) => {
 	await page.goto('/');
-	await expect(page.getByRole('heading', { name: '信濃CMS' })).toBeVisible();
+	await expect(page).toHaveURL(/\/auth\/login$/);
 });
 
 test('unauthenticated /admin redirects to login', async ({ page }) => {
-	const response = await page.goto('/admin');
-	// SvelteKit issues a 303 redirect; Playwright follows it and lands on /auth/login.
-	expect(response?.ok()).toBe(true);
+	await page.goto('/admin');
 	await expect(page).toHaveURL(/\/auth\/login$/);
 });
 

@@ -16,8 +16,12 @@ try {
 
 const config: PlaywrightTestConfig = {
 	webServer: {
-		command: 'npm run build && npm run preview',
-		port: 4173
+		// vite dev (port 5173) is enough for routing/auth tests and avoids
+		// the Cloudflare adapter's wrangler-dev wrapper, which requires a
+		// fresh `wrangler login`. Re-uses an already-running pnpm dev server.
+		command: 'pnpm dev',
+		port: 5173,
+		reuseExistingServer: !process.env.CI
 	},
 	testDir: 'tests',
 	testMatch: /(.+\.)?(test|spec)\.[jt]s/
