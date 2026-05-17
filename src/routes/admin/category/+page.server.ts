@@ -11,8 +11,8 @@ export const load: PageServerLoad = async ({ locals: { supabase } }) => {
 		.order('id', { ascending: false });
 
 	if (fetchError) {
-		console.error(error);
-		error(Number(fetchError.code), { message: fetchError.message });
+		console.error(fetchError);
+		error(500, { message: fetchError.message });
 	}
 
 	return {

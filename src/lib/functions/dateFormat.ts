@@ -1,5 +1,6 @@
 export default function getDateFormat(isoString: string, withTime: boolean = false) {
-	const today = new Date(isoString) || new Date();
+	const parsed = new Date(isoString);
+	const today = Number.isNaN(parsed.getTime()) ? new Date() : parsed;
 	const year = today.getFullYear();
 	const month = ('0' + (today.getMonth() + 1)).slice(-2);
 	const day = ('0' + today.getDate()).slice(-2);

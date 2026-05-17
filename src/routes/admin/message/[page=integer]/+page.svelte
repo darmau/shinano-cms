@@ -13,13 +13,13 @@
 
 	const toastStore = getToastStore();
 
-	let selectedMessageList = [];
+	let selectedMessageList: number[] = [];
 	let deletable = true;
 
 	// 删除选中消息
 	async function deleteMessages() {
 		try {
-			await supabase.from('message').delete().in('id', selectedMessageList);
+			await supabase?.from('message').delete().in('id', selectedMessageList);
 			selectedMessageList = [];
 			deletable = true;
 			await invalidateAll();
@@ -31,7 +31,7 @@
 		} catch (error) {
 			console.error('删除消息时出错:', error);
 			toastStore.trigger({
-				message: error.message,
+				message: error instanceof Error ? error.message : '删除消息失败',
 				hideDismiss: true,
 				background: 'variant-filled-error'
 			});
@@ -40,6 +40,7 @@
 
 	// 直接删除消息
 	async function deleteMessage(id: number) {
+		if (!supabase) return;
 		const { error: deleteError } = await supabase.from('message').delete().eq('id', id);
 		if (deleteError) {
 			toastStore.trigger({
@@ -59,7 +60,7 @@
 
 	// 选中所有消息并添加到selectedMessagesList
 	function switchSelectAll() {
-		const checkboxes = document.querySelectorAll('.message-checkbox');
+		const checkboxes = document.querySelectorAll<HTMLInputElement>('.message-checkbox');
 		if (selectedMessageList.length === data.messages.length) {
 			checkboxes.forEach((checkbox) => {
 				checkbox.checked = false;

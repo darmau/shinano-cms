@@ -1,11 +1,10 @@
-<script>
+<script lang="ts">
 	import NavItems from '$components/NavItems.svelte';
 
 	let menuOpen = false;
 
-	export let data;
-	export let message;
-	export let comment;
+	export let message: number;
+	export let comment: number;
 </script>
 
 <div>
@@ -62,7 +61,7 @@
 						<div class="flex h-16 shrink-0 items-center">
 							<img class="h-8 w-auto" src="https://darmau.co/logo.svg" alt="logo" />
 						</div>
-						<NavItems {data} bind:menuOpen {message} {comment} />
+						<NavItems bind:menuOpen {message} {comment} />
 					</div>
 				</div>
 			</div>
@@ -79,7 +78,7 @@
 				<img class="h-8 w-auto" src="https://darmau.co/logo.svg" alt="可可托海没有海管理后台" />
 			</div>
 
-			<NavItems {data} bind:menuOpen {message} {comment} />
+			<NavItems bind:menuOpen {message} {comment} />
 		</div>
 	</div>
 </div>

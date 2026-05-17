@@ -22,7 +22,7 @@ export const load: PageServerLoad = async ({ params, locals: { supabase } }) => 
 
 	if (messageError) {
 		console.error('Error fetching message data:', messageError);
-		error(Number(messageError.code), { message: messageError.message });
+		error(messageError.code === 'PGRST116' ? 404 : 500, { message: messageError.message });
 	}
 
 	return {

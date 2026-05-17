@@ -8,18 +8,33 @@
 	import { browser } from '$app/environment';
 	import { getSupabaseBrowserClient } from '$lib/supabaseClient';
 
-	export let data;
+	type BookRow = {
+		id: number;
+		title: string;
+		rate: number | null;
+		date: string | null;
+		cover: { id: number; alt: string | null; storage_key: string } | null;
+	};
+
+	export let data: {
+		page: number;
+		prefix: string;
+		count: number;
+		books: BookRow[];
+		limit: number;
+		path: string;
+	};
 	const supabase = browser ? getSupabaseBrowserClient() : null;
 
 	const toastStore = getToastStore();
 
-	let selectedBookList = [];
+	let selectedBookList: number[] = [];
 	let deletable = true;
 
 	// 删除选中书籍
 	async function deleteBooks() {
 		try {
-			await supabase.from('book').delete().in('id', selectedBookList);
+			await supabase?.from('book').delete().in('id', selectedBookList);
 			selectedBookList = [];
 			deletable = true;
 			await invalidateAll();
@@ -31,7 +46,7 @@
 		} catch (error) {
 			console.error('删除图书时出错:', error);
 			toastStore.trigger({
-				message: error.message,
+				message: error instanceof Error ? error.message : '删除图书失败',
 				hideDismiss: true,
 				background: 'variant-filled-error'
 			});
@@ -40,6 +55,7 @@
 
 	// 直接删除书籍
 	async function deleteBook(id: number) {
+		if (!supabase) return;
 		const { error: deleteError } = await supabase.from('book').delete().eq('id', id);
 		if (deleteError) {
 			toastStore.trigger({
@@ -59,7 +75,7 @@
 
 	// 选中所有书籍并添加到selectedBookList
 	function switchSelectAll() {
-		const checkboxes = document.querySelectorAll('.book-checkbox');
+		const checkboxes = document.querySelectorAll<HTMLInputElement>('.book-checkbox');
 		if (selectedBookList.length === data.books.length) {
 			checkboxes.forEach((checkbox) => {
 				checkbox.checked = false;
@@ -168,7 +184,7 @@
 										</td>
 										<td class="px-3 py-4 text-sm text-gray-500 line-clamp-2">{book.title} </td>
 										<td class="font-mono px-3 py-4 text-sm text-gray-500">{book.rate} </td>
-										<td class="px-3 py-4 text-sm text-gray-500">{getDateFormat(book.date, true)}</td
+										<td class="px-3 py-4 text-sm text-gray-500">{book.date ? getDateFormat(book.date, true) : ''}</td
 										>
 
 										<td

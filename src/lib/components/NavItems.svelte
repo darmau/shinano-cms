@@ -9,6 +9,7 @@
 	import Comment from '$assets/icons/chat-bubble-left.svelte';
 	import User from '$assets/icons/users.svelte';
 	import Setting from '$assets/icons/cog.svelte';
+	import Logout from '$assets/icons/logout.svelte';
 	import { page } from '$app/stores';
 	import UnreadBadge from '$components/UnreadBadge.svelte';
 	import Book from '$assets/icons/book.svelte';
@@ -59,5 +60,16 @@
 				{/if}
 			</li>
 		{/each}
+		<li class="mt-auto pt-4 border-t border-gray-100">
+			<form method="POST" action="/auth/logout">
+				<button
+					type="submit"
+					class="text-gray-700 hover:text-red-600 hover:bg-gray-50 group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold cursor-pointer w-full text-left"
+				>
+					<Logout classList="h-6 w-6 shrink-0 text-gray-400 group-hover:text-red-600" />
+					退出登录
+				</button>
+			</form>
+		</li>
 	</ul>
 </nav>

@@ -4,13 +4,24 @@
 	import { getToastStore } from '$lib/toast';
 	import { deleteCategories, deleteCategory } from '$lib/api/categories';
 
-	export let data;
+	type CategoryRow = {
+		id: number;
+		title: string;
+		slug: string;
+		description: string | null;
+		type: 'article' | 'photo' | 'video';
+		lang: { locale: string };
+		[key: string]: unknown;
+	};
+
+	export let data: { categories: CategoryRow[] };
 
 	const toastStore = getToastStore();
 
-	function getCountByType(category) {
+	function getCountByType(category: CategoryRow): number {
 		if (category && category.type) {
-			return category[category.type][0].count;
+			const rows = category[category.type] as Array<{ count: number }> | undefined;
+			return rows?.[0]?.count ?? 0;
 		}
 		return 0;
 	}
@@ -61,7 +72,7 @@
 	}
 
 	function switchSelectAll() {
-		const checkboxes = document.querySelectorAll('.category-checkbox');
+		const checkboxes = document.querySelectorAll<HTMLInputElement>('.category-checkbox');
 
 		if (selectedCategoryList.length === data.categories.length) {
 			checkboxes.forEach((checkbox) => {

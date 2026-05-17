@@ -155,7 +155,7 @@ export const load: PageServerLoad = async ({ params, locals: { supabase } }) => 
 
 	if (photoError) {
 		console.error('Error fetching photo data:', photoError);
-		error(Number(photoError.code), { message: photoError.message });
+		error(photoError.code === 'PGRST116' ? 404 : 500, { message: photoError.message });
 	}
 
 	if (!sourcePhoto) {

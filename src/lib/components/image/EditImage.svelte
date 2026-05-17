@@ -4,9 +4,21 @@
 	import { browser } from '$app/environment';
 	import { getSupabaseBrowserClient } from '$lib/supabaseClient';
 
-	export let data;
+	type ImageData = {
+		id: number;
+		storage_key: string;
+		file_name?: string | null;
+		alt?: string | null;
+		folder?: string | null;
+		caption?: string | null;
+		location?: string | null;
+		taken_at?: string | null;
+		[key: string]: unknown;
+	};
+
+	export let data: { prefix: string };
 	const supabase = browser ? getSupabaseBrowserClient() : null;
-	export let imageData;
+	export let imageData: ImageData;
 	export let closeEdit: () => void;
 
 	const toastStore = getToastStore();

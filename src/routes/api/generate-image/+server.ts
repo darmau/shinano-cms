@@ -1,6 +1,5 @@
-import OpenAI from 'openai';
-import type { ConfigRow } from '$lib/types/config';
 import { error, type RequestHandler } from '@sveltejs/kit';
+import { createGatewayOpenAI, loadAiConfigMap } from '$lib/server/ai';
 
 type GenerateImageRequest = {
 	prompt?: unknown;
@@ -55,34 +54,8 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	const size = parseSize(body.size);
 	const quality = parseQuality(body.quality);
 
-	const supabase = locals.supabase;
-	const { data, error: supabaseError } = await supabase
-		.from('config')
-		.select('key, value')
-		.in('key', ['config_OPENAI', 'ai_GATEWAY_ENDPOINT', 'cf_AIG_TOKEN']);
-
-	if (supabaseError) {
-		console.error(supabaseError);
-		error(500, 'Failed to fetch configuration');
-	}
-
-	const rows = (data ?? []) as ConfigRow[];
-	const configMap = new Map(rows.map(({ key, value }) => [key, value ?? '']));
-	const apiKey = configMap.get('config_OPENAI');
-	const aiGatewayEndpoint = configMap.get('ai_GATEWAY_ENDPOINT');
-	const cfAIGToken = configMap.get('cf_AIG_TOKEN');
-
-	if (!aiGatewayEndpoint || !cfAIGToken || !openaiApiKey) {
-		error(500, 'AI gateway or OpenAI API key configuration not configured');
-	}
-
-	const openai = new OpenAI({
-		apiKey: apiKey,
-		baseURL: aiGatewayEndpoint,
-		defaultHeaders: {
-			"cf-aig-authorization": `Bearer ${cfAIGToken}`,
-		},
-	});
+	const configMap = await loadAiConfigMap(locals.supabase);
+	const openai = createGatewayOpenAI(configMap);
 
 	try {
 		const requestPayload: Record<string, unknown> = {

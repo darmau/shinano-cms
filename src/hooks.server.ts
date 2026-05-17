@@ -6,9 +6,12 @@ import { sequence } from '@sveltejs/kit/hooks';
 const supabase: Handle = async ({ event, resolve }) => {
 	const supabaseClient = createServerClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
 		cookies: {
-			get: (name) => event.cookies.get(name),
-			set: (name, value, options) => event.cookies.set(name, value, { ...options, path: '/' }),
-			remove: (name, options) => event.cookies.delete(name, { ...options, path: '/' })
+			getAll: () => event.cookies.getAll(),
+			setAll: (cookiesToSet) => {
+				cookiesToSet.forEach(({ name, value, options }) => {
+					event.cookies.set(name, value, { ...options, path: '/' });
+				});
+			}
 		}
 	});
 
@@ -54,6 +57,7 @@ const authGuard: Handle = async ({ event, resolve }) => {
 	if (!event.locals.session) {
 		if (
 			event.url.pathname.startsWith('/auth/signup') ||
+			event.url.pathname.startsWith('/auth/confirm') ||
 			event.url.pathname.startsWith('/api/auth')
 		) {
 			return resolve(event);
@@ -61,7 +65,10 @@ const authGuard: Handle = async ({ event, resolve }) => {
 		if (!event.url.pathname.startsWith('/auth/login')) {
 			return redirect(303, '/auth/login');
 		}
-	} else if (event.url.pathname.startsWith('/auth')) {
+	} else if (
+		event.url.pathname.startsWith('/auth') &&
+		!event.url.pathname.startsWith('/auth/logout')
+	) {
 		return redirect(303, '/admin');
 	}
 

@@ -36,10 +36,11 @@
 
 	// 保存
 	async function saveCategory() {
+		if (!supabase) return;
 		categoryData.cover = coverImage?.id || null;
 
 		const { error: updateError } = await supabase
-			?.from('category')
+			.from('category')
 			.update(categoryData)
 			.eq('id', categoryData.id)
 			.select();
@@ -63,7 +64,7 @@
 </script>
 
 {#if isModalOpen}
-	<ImagesModel {data} {closeModel} onSelect={selectCoverImage} />
+	<ImagesModel data={{ supabase, prefix: data.prefix }} {closeModel} onSelect={selectCoverImage} />
 {/if}
 
 <div class="max-w-96 mx-auto">

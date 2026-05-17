@@ -23,7 +23,7 @@ export const load: PageServerLoad = async ({ params, locals: { supabase } }) => 
 
 	if (bookError) {
 		console.error('Error fetching book data:', bookError);
-		error(Number(bookError.code), { message: bookError.message });
+		error(bookError.code === 'PGRST116' ? 404 : 500, { message: bookError.message });
 	}
 
 	return {

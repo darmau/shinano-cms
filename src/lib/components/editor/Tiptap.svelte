@@ -37,17 +37,11 @@
 	import DeleteRow from '$assets/icons/editor/tableRowDelete.svelte';
 	import Undo from '$assets/icons/editor/undo.svelte';
 	import Redo from '$assets/icons/editor/redo.svelte';
-	import { Table } from '@tiptap/extension-table';
-	import TableCell from '@tiptap/extension-table-cell';
-	import TableHeader from '@tiptap/extension-table-header';
-	import TableRow from '@tiptap/extension-table-row';
 	import { CustomCodeBlock } from '$components/editor/CustomCodeBlock';
 	import { Typography } from '@tiptap/extension-typography';
 	import UniqueId from 'tiptap-unique-id';
 	import Heading from '@tiptap/extension-heading';
 	import ImagesModel from '$components/editor/ImagesModel.svelte';
-	import Image from '$components/editor/Image';
-	import { Embed } from '$components/editor/Embed';
 	import Gapcursor from '@tiptap/extension-gapcursor';
 	import SuperscriptIcon from '$assets/icons/editor/superscript.svelte';
 	import { Superscript } from '$components/editor/Superscript';
@@ -340,7 +334,24 @@
 	let menuItems: MenuItem[] = [];
 	let tableItems: MenuItem[] = [];
 
-	onMount(() => {
+	onMount(async () => {
+		// 大扩展（表格、图片、嵌入）按需动态加载，避免首屏打包进所有编辑器代码
+		const [
+			{ Table },
+			{ default: TableCell },
+			{ default: TableHeader },
+			{ default: TableRow },
+			{ default: Image },
+			{ Embed }
+		] = await Promise.all([
+			import('@tiptap/extension-table'),
+			import('@tiptap/extension-table-cell'),
+			import('@tiptap/extension-table-header'),
+			import('@tiptap/extension-table-row'),
+			import('$components/editor/Image'),
+			import('$components/editor/Embed')
+		]);
+
 		const editorStore = createEditor({
 			extensions: [
 				StarterKit.configure({

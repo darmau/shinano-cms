@@ -14,7 +14,7 @@ export const DELETE: RequestHandler = async ({ request, locals }) => {
 	const { error } = await supabase.from('category').delete().in('id', ids);
 
 	if (error) {
-		return json({ error: error.message }, { status: error.status ?? 500 });
+		return json({ error: error.message }, { status: 500 });
 	}
 
 	return json({ success: true });

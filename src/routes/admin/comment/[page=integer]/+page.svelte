@@ -8,13 +8,42 @@
 	import { getSupabaseBrowserClient } from '$lib/supabaseClient';
 	import { CountryChineseName, CountryFlagEmoji } from '$lib/types/country.js';
 
-	export let data;
+	type LangRef = { lang: string };
+	type ContentRef = { title: string; slug: string; language: LangRef } | null;
+	type ThoughtRef = { content_text: string; slug: string } | null;
+	type IpInfo = { countryCode: string; regionName: string; city: string } | null;
+	type CommentRow = {
+		id: number;
+		user_id: { name: string } | null;
+		name: string | null;
+		email: string | null;
+		website: string | null;
+		content_text: string;
+		is_public: boolean;
+		is_blocked: boolean;
+		is_anonymous: boolean;
+		created_at: string;
+		to_article: ContentRef;
+		to_photo: ContentRef;
+		to_thought: ThoughtRef;
+		ip_info: IpInfo;
+	};
+
+	export let data: {
+		page: number;
+		comments: CommentRow[];
+		count: number;
+		limit: number;
+		path: string;
+		baseUrl: string;
+	};
 	const supabase = browser ? getSupabaseBrowserClient() : null;
 
 	const toastStore = getToastStore();
 
 	// 设为公开
 	async function setPublic(id: number) {
+		if (!supabase) return;
 		const { error: publicError } = await supabase
 			.from('comment')
 			.update({ is_public: true })
@@ -37,6 +66,7 @@
 
 	// 设为屏蔽
 	async function setBlock(id: number) {
+		if (!supabase) return;
 		const { error: blockError } = await supabase
 			.from('comment')
 			.update({ is_blocked: true })
@@ -59,6 +89,7 @@
 
 	// 取消屏蔽
 	async function cancelBlock(id: number) {
+		if (!supabase) return;
 		const { error: cancelError } = await supabase
 			.from('comment')
 			.update({ is_blocked: false })
@@ -85,6 +116,7 @@
 		const confirmed = confirm(`确认删除这条评论吗？\n\n"${preview}"`);
 
 		if (!confirmed) return;
+		if (!supabase) return;
 
 		const { error: deleteError } = await supabase.from('comment').delete().eq('id', id);
 
@@ -121,7 +153,7 @@
 				class="flex items-center justify-between gap-x-4 border-b border-gray-900/5 bg-gray-50 p-6"
 			>
 				<div class="text-base font-medium text-gray-900 dark:text-white">
-					{comment.is_anonymous ? comment.name : comment.user_id.name}
+					{comment.is_anonymous ? comment.name : (comment.user_id?.name ?? '')}
 				</div>
 				<div class="flex flex-col gap-y-1 items-end">
 					{#if comment.is_anonymous}
