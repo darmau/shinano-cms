@@ -54,6 +54,7 @@ const authGuard: Handle = async ({ event, resolve }) => {
 	if (!event.locals.session) {
 		if (
 			event.url.pathname.startsWith('/auth/signup') ||
+			event.url.pathname.startsWith('/auth/confirm') ||
 			event.url.pathname.startsWith('/api/auth')
 		) {
 			return resolve(event);
