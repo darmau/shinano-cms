@@ -22,7 +22,7 @@
 
 			const reader = new FileReader();
 			reader.onload = (e) => {
-				img.src = e.target.result as string;
+				img.src = (e.target?.result ?? '') as string;
 			};
 			reader.onerror = reject;
 			reader.readAsDataURL(file);

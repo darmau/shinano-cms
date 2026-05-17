@@ -13,7 +13,8 @@
 	const toastStore = getToastStore();
 
 	// 封禁用户
-	async function blockUser(id) {
+	async function blockUser(id: string) {
+		if (!supabase) return;
 		const { error: blockError } = await supabase
 			.from('users')
 			.update({ role: 'banned' })
@@ -35,7 +36,8 @@
 	}
 
 	// 解封用户
-	async function unBlockUser(id) {
+	async function unBlockUser(id: string) {
+		if (!supabase) return;
 		const { error: unBlockError } = await supabase
 			.from('users')
 			.update({ role: 'reader' })

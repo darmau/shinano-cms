@@ -6,7 +6,7 @@
 	<div class="text-center">
 		<p class="text-base font-semibold text-indigo-600">{$page.status}</p>
 		<h1 class="mt-4 text-3xl font-bold tracking-tight text-gray-900 sm:text-5xl">
-			{$page.error.message}
+			{$page.error?.message ?? ''}
 		</h1>
 		<div class="mt-10 flex items-center justify-center gap-x-6">
 			<a

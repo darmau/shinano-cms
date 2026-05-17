@@ -8,8 +8,9 @@
 	function submitForm(event: Event) {
 		event.preventDefault();
 		const formData = new FormData(event.target as HTMLFormElement);
-		const languageData = Object.fromEntries(formData.entries());
-		addLanguage(languageData.lang, languageData.locale);
+		const lang = String(formData.get('lang') ?? '');
+		const locale = String(formData.get('locale') ?? '');
+		addLanguage(lang, locale);
 		closeAddLanguage();
 	}
 </script>
