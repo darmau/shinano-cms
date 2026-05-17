@@ -8,7 +8,7 @@ export const load: PageServerLoad = async ({ url, params: { page }, locals: { su
 	const [{ data: users, error: fetchError }, { count }] = await Promise.all([
 		supabase
 			.from('users')
-			.select('*')
+			.select('id, name, user_id, source, created_at, role')
 			.range((pageNumber - 1) * limit, pageNumber * limit - 1)
 			.order('created_at', { ascending: false }),
 		supabase.from('users').select('id', { count: 'exact' })

@@ -8,7 +8,7 @@ export const load: PageServerLoad = async ({ url, params: { page }, locals: { su
 	const [{ data: messages, error: fetchError }, { count }] = await Promise.all([
 		supabase
 			.from('message')
-			.select('*')
+			.select('id, name, message, contact_type, contact_detail, created_at, is_read')
 			.range((pageNumber - 1) * limit, pageNumber * limit - 1)
 			.order('is_read', { ascending: true })
 			.order('created_at', { ascending: false }),

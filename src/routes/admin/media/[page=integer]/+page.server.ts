@@ -9,7 +9,9 @@ export const load: PageServerLoad = async ({ url, params: { page }, locals: { su
 	const [{ data: images, error: fetchError }, { count }] = await Promise.all([
 		supabase
 			.from('image')
-			.select()
+			.select(
+				'id, storage_key, file_name, alt, folder, caption, location, taken_at, exif, width, height, size'
+			)
 			.range((pageNumber - 1) * limit, pageNumber * limit - 1)
 			.order('id', { ascending: false }),
 		supabase.from('image').select('id', { count: 'exact' })
