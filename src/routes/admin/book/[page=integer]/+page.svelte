@@ -13,13 +13,13 @@
 
 	const toastStore = getToastStore();
 
-	let selectedBookList = [];
+	let selectedBookList: number[] = [];
 	let deletable = true;
 
 	// 删除选中书籍
 	async function deleteBooks() {
 		try {
-			await supabase.from('book').delete().in('id', selectedBookList);
+			await supabase?.from('book').delete().in('id', selectedBookList);
 			selectedBookList = [];
 			deletable = true;
 			await invalidateAll();
@@ -31,7 +31,7 @@
 		} catch (error) {
 			console.error('删除图书时出错:', error);
 			toastStore.trigger({
-				message: error.message,
+				message: error instanceof Error ? error.message : '删除图书失败',
 				hideDismiss: true,
 				background: 'variant-filled-error'
 			});
@@ -59,7 +59,7 @@
 
 	// 选中所有书籍并添加到selectedBookList
 	function switchSelectAll() {
-		const checkboxes = document.querySelectorAll('.book-checkbox');
+		const checkboxes = document.querySelectorAll<HTMLInputElement>('.book-checkbox');
 		if (selectedBookList.length === data.books.length) {
 			checkboxes.forEach((checkbox) => {
 				checkbox.checked = false;
