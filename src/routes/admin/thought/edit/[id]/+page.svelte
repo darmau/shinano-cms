@@ -308,7 +308,7 @@ function togglePushToGallery(): void {
 		<!--推送到图集-->
 		<div class="flex items-center justify-between">
 			<div>
-				<label class="text-sm font-medium leading-6 text-gray-900">推送到Gallery</label>
+				<span class="text-sm font-medium leading-6 text-gray-900">推送到Gallery</span>
 				<p class="text-sm text-gray-500">开启后会在图集中展示该想法。</p>
 			</div>
 			<button
