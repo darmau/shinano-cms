@@ -8,7 +8,22 @@
 	import { browser } from '$app/environment';
 	import { getSupabaseBrowserClient } from '$lib/supabaseClient';
 
-	export let data;
+	type BookRow = {
+		id: number;
+		title: string;
+		rate: number | null;
+		date: string | null;
+		cover: { id: number; alt: string | null; storage_key: string } | null;
+	};
+
+	export let data: {
+		page: number;
+		prefix: string;
+		count: number;
+		books: BookRow[];
+		limit: number;
+		path: string;
+	};
 	const supabase = browser ? getSupabaseBrowserClient() : null;
 
 	const toastStore = getToastStore();

@@ -8,7 +8,35 @@
 	import { getSupabaseBrowserClient } from '$lib/supabaseClient';
 	import { CountryChineseName, CountryFlagEmoji } from '$lib/types/country.js';
 
-	export let data;
+	type LangRef = { lang: string };
+	type ContentRef = { title: string; slug: string; language: LangRef } | null;
+	type ThoughtRef = { content_text: string; slug: string } | null;
+	type IpInfo = { countryCode: string; regionName: string; city: string } | null;
+	type CommentRow = {
+		id: number;
+		user_id: { name: string } | null;
+		name: string | null;
+		email: string | null;
+		website: string | null;
+		content_text: string;
+		is_public: boolean;
+		is_blocked: boolean;
+		is_anonymous: boolean;
+		created_at: string;
+		to_article: ContentRef;
+		to_photo: ContentRef;
+		to_thought: ThoughtRef;
+		ip_info: IpInfo;
+	};
+
+	export let data: {
+		page: number;
+		comments: CommentRow[];
+		count: number;
+		limit: number;
+		path: string;
+		baseUrl: string;
+	};
 	const supabase = browser ? getSupabaseBrowserClient() : null;
 
 	const toastStore = getToastStore();
