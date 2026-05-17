@@ -37,7 +37,7 @@
 	export let onSelect: ImagesModelCallback;
 
 	let isEditing = false;
-	let imageData: Record<string, unknown> = {};
+	let imageData: ImageRecord = { id: 0, alt: null, storage_key: '' };
 
 	onMount(() => {
 		getImages();

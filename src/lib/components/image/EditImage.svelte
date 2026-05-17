@@ -13,6 +13,7 @@
 		caption?: string | null;
 		location?: string | null;
 		taken_at?: string | null;
+		[key: string]: unknown;
 	};
 
 	export let data: { prefix: string };

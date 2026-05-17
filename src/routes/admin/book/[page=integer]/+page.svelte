@@ -55,6 +55,7 @@
 
 	// 直接删除书籍
 	async function deleteBook(id: number) {
+		if (!supabase) return;
 		const { error: deleteError } = await supabase.from('book').delete().eq('id', id);
 		if (deleteError) {
 			toastStore.trigger({

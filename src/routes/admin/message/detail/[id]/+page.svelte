@@ -13,6 +13,7 @@
 
 	// 进入该页面，将该数据的is_read字段设为true
 	const setRead = async () => {
+		if (!supabase) return;
 		const { error } = await supabase.from('message').update({ is_read: true }).eq('id', message.id);
 
 		if (error) {

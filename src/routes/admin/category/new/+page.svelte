@@ -36,6 +36,7 @@
 
 	// 保存
 	async function saveCategory() {
+		if (!supabase) return;
 		categoryData.cover = coverImage?.id ?? null;
 
 		const { error: insertError } = await supabase.from('category').insert(categoryData).select();

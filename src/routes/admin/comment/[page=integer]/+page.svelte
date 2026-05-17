@@ -43,6 +43,7 @@
 
 	// 设为公开
 	async function setPublic(id: number) {
+		if (!supabase) return;
 		const { error: publicError } = await supabase
 			.from('comment')
 			.update({ is_public: true })
@@ -65,6 +66,7 @@
 
 	// 设为屏蔽
 	async function setBlock(id: number) {
+		if (!supabase) return;
 		const { error: blockError } = await supabase
 			.from('comment')
 			.update({ is_blocked: true })
@@ -87,6 +89,7 @@
 
 	// 取消屏蔽
 	async function cancelBlock(id: number) {
+		if (!supabase) return;
 		const { error: cancelError } = await supabase
 			.from('comment')
 			.update({ is_blocked: false })
@@ -113,6 +116,7 @@
 		const confirmed = confirm(`确认删除这条评论吗？\n\n"${preview}"`);
 
 		if (!confirmed) return;
+		if (!supabase) return;
 
 		const { error: deleteError } = await supabase.from('comment').delete().eq('id', id);
 

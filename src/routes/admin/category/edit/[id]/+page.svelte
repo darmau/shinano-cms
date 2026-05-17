@@ -36,10 +36,11 @@
 
 	// 保存
 	async function saveCategory() {
+		if (!supabase) return;
 		categoryData.cover = coverImage?.id || null;
 
 		const { error: updateError } = await supabase
-			?.from('category')
+			.from('category')
 			.update(categoryData)
 			.eq('id', categoryData.id)
 			.select();

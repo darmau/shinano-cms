@@ -40,6 +40,7 @@
 
 	// 直接删除消息
 	async function deleteMessage(id: number) {
+		if (!supabase) return;
 		const { error: deleteError } = await supabase.from('message').delete().eq('id', id);
 		if (deleteError) {
 			toastStore.trigger({
