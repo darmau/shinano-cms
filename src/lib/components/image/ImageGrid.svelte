@@ -192,7 +192,7 @@
 
 	// 打开图片编辑窗口
 	let isEditing = false;
-	let imageData: ImageItem | Record<string, unknown> = {};
+	let imageData: ImageItem | null = null;
 
 	function closeEdit() {
 		isEditing = false;
@@ -243,7 +243,7 @@
 	}
 </script>
 
-{#if isEditing}
+{#if isEditing && imageData}
 	<EditImage {data} {closeEdit} {imageData} />
 {/if}
 
