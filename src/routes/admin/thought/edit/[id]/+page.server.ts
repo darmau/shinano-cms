@@ -1,9 +1,10 @@
 import type { PageServerLoad } from './$types';
 import { error } from '@sveltejs/kit';
 import { URL_PREFIX } from '$env/static/private';
+import { parseIdParam } from '$lib/server/params';
 
 export const load: PageServerLoad = async ({ params, locals: { supabase } }) => {
-	const thoughtId = params.id;
+	const thoughtId = parseIdParam(params.id, '想法');
 
 	const { data: thoughtData, error: thoughtError } = await supabase
 		.from('thought')

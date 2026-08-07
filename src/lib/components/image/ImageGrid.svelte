@@ -10,6 +10,8 @@
 	import { browser } from '$app/environment';
 	import { getSupabaseBrowserClient } from '$lib/supabaseClient';
 	import type { MediaImageRecord } from '$lib/api/media';
+	import type { ImageListItem } from '$lib/types/images';
+	import type { Json } from '$lib/types/database';
 
 	type ImageExif = Partial<{
 		Make: string;
@@ -20,20 +22,12 @@
 		ISO: string | number;
 	}>;
 
-	type ImageItem = {
-		id: number;
-		storage_key: string;
-		file_name?: string | null;
-		alt?: string | null;
-		caption?: string | null;
-		width?: number | null;
-		height?: number | null;
-		size?: number | null;
-		taken_at?: string | null;
-		location?: string | null;
-		exif?: ImageExif | null;
-		[key: string]: unknown;
-	};
+	type ImageItem = ImageListItem & { exif?: Json | null };
+
+	// exif 在库里是 JSONB，取出来是 Json（可能是数组、字符串、null）。
+	// 这里收窄成一个对象再读相机参数，读不到就当空对象。
+	const asExif = (value: unknown): ImageExif =>
+		value && typeof value === 'object' && !Array.isArray(value) ? (value as ImageExif) : {};
 
 	type MediaPageData = {
 		page: number;
@@ -363,43 +357,44 @@
 					</div>
 				{/if}
 				{#if image.exif}
+					{@const exif = asExif(image.exif)}
 					<ul class="space-y-1">
-						{#if image.exif.Make}
+						{#if exif.Make}
 							<li class="flex justify-between gap-4">
 								<h4 class="font-medium text-sm mb-1 shrink-0">品牌</h4>
-								<p class="text-sm text-gray-700 text-right">{image.exif.Make}</p>
+								<p class="text-sm text-gray-700 text-right">{exif.Make}</p>
 							</li>
 						{/if}
-						{#if image.exif.Model}
+						{#if exif.Model}
 							<li class="flex justify-between gap-4">
 								<h4 class="font-medium text-sm mb-1 shrink-0">型号</h4>
-								<p class="text-sm text-gray-700 text-right">{image.exif.Model}</p>
+								<p class="text-sm text-gray-700 text-right">{exif.Model}</p>
 							</li>
 						{/if}
-						{#if image.exif.LensModel}
+						{#if exif.LensModel}
 							<li class="flex justify-between gap-4">
 								<h4 class="font-medium text-sm mb-1 shrink-0">镜头</h4>
-								<p class="text-sm text-gray-700 text-right">{image.exif.LensModel}</p>
+								<p class="text-sm text-gray-700 text-right">{exif.LensModel}</p>
 							</li>
 						{/if}
-						{#if image.exif.FNumber}
+						{#if exif.FNumber}
 							<li class="flex justify-between gap-4">
 								<h4 class="font-medium text-sm mb-1 shrink-0">光圈</h4>
-								<p class="text-sm text-gray-700 text-right">{image.exif.FNumber}</p>
+								<p class="text-sm text-gray-700 text-right">{exif.FNumber}</p>
 							</li>
 						{/if}
-						{#if image.exif.ExposureTime}
+						{#if exif.ExposureTime}
 							<li class="flex justify-between gap-4">
 								<h4 class="font-medium text-sm mb-1 shrink-0">快门速度</h4>
 								<p class="text-sm text-gray-700 text-right">
-									{shutterSpeed(String(image.exif.ExposureTime))}
+									{shutterSpeed(String(exif.ExposureTime))}
 								</p>
 							</li>
 						{/if}
-						{#if image.exif.ISO}
+						{#if exif.ISO}
 							<li class="flex justify-between gap-4">
 								<h4 class="font-medium text-sm mb-1 shrink-0">ISO</h4>
-								<p class="text-sm text-gray-700 text-right">{image.exif.ISO}</p>
+								<p class="text-sm text-gray-700 text-right">{exif.ISO}</p>
 							</li>
 						{/if}
 					</ul>

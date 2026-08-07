@@ -1,12 +1,12 @@
 import { error } from '@sveltejs/kit';
 import OpenAI from 'openai';
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { TypedSupabaseClient } from '$lib/supabaseClient';
 import type { ConfigRow } from '$lib/types/config';
 
 const REQUIRED_KEYS = ['config_OPENAI', 'ai_GATEWAY_ENDPOINT', 'cf_AIG_TOKEN'] as const;
 
 export async function loadAiConfigMap(
-	supabase: SupabaseClient,
+	supabase: TypedSupabaseClient,
 	extraKeys: readonly string[] = []
 ): Promise<Map<string, string>> {
 	const keys = [...REQUIRED_KEYS, ...extraKeys];

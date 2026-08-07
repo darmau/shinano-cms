@@ -1,5 +1,5 @@
 import { error } from '@sveltejs/kit';
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { TypedSupabaseClient } from '$lib/supabaseClient';
 
 /**
  * 解析当前会话是否具备管理员角色。
@@ -7,7 +7,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
  * 出错时返回 false（fail closed）：解析不出角色就当作没有权限，
  * 否则数据库抖动会变成一次静默的权限放行。
  */
-export async function resolveIsAdmin(supabase: SupabaseClient): Promise<boolean> {
+export async function resolveIsAdmin(supabase: TypedSupabaseClient): Promise<boolean> {
 	const { data, error: rpcError } = await supabase.rpc('is_admin');
 
 	if (rpcError) {

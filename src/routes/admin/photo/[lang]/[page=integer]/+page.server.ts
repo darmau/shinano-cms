@@ -1,126 +1,15 @@
 import type { PageServerLoad } from './$types';
 import { error } from '@sveltejs/kit';
 import { URL_PREFIX } from '$env/static/private';
-import type {
-	AlbumImage,
-	Category,
-	Language,
-	PhotoListItem,
-	PhotoListPageData
-} from '$lib/types/photo';
+import type { Language, PhotoListItem, PhotoListPageData } from '$lib/types/photo';
 
-const normalizeLanguage = (lang: unknown): Language | null => {
-	if (!lang || typeof lang !== 'object') {
-		return null;
-	}
+// 同 article 列表：原先的 110 行运行时规范化器已由生成的数据库类型取代。
 
-	const {
-		id,
-		lang: langCode,
-		locale,
-		is_default
-	} = lang as {
-		id?: number;
-		lang?: string;
-		locale?: string;
-		is_default?: boolean | null;
-	};
-
-	if (typeof id !== 'number' || typeof langCode !== 'string' || typeof locale !== 'string') {
-		return null;
-	}
-
-	return {
-		id,
-		lang: langCode,
-		locale,
-		is_default: is_default ?? null
-	};
-};
-
-const normalizeCategory = (category: unknown): Category | null => {
-	if (!category || typeof category !== 'object') {
-		return null;
-	}
-
-	const { id, title, slug } = category as { id?: number; title?: string; slug?: string };
-	if (typeof id !== 'number' || typeof title !== 'string' || typeof slug !== 'string') {
-		return null;
-	}
-
-	return { id, title, slug };
-};
-
-const normalizeAlbumImage = (image: unknown): AlbumImage | null => {
-	if (!image || typeof image !== 'object') {
-		return null;
-	}
-
-	const { id, alt, storage_key, caption } = image as {
-		id?: number;
-		alt?: string | null;
-		storage_key?: string;
-		caption?: string | null;
-	};
-
-	if (typeof id !== 'number' || typeof storage_key !== 'string') {
-		return null;
-	}
-
-	return {
-		id,
-		alt: alt ?? null,
-		storage_key,
-		caption: caption ?? null
-	};
-};
-
-const toPhotoListItem = (photo: unknown): PhotoListItem | null => {
-	if (!photo || typeof photo !== 'object') {
-		return null;
-	}
-
-	const { id, title, slug, is_draft, is_featured, is_top, lang, category, cover, photo_image } =
-		photo as Record<string, unknown>;
-
-	if (
-		typeof id !== 'number' ||
-		typeof title !== 'string' ||
-		typeof slug !== 'string' ||
-		typeof is_draft !== 'boolean' ||
-		typeof is_featured !== 'boolean' ||
-		typeof is_top !== 'boolean'
-	) {
-		return null;
-	}
-
-	const normalizedLang = normalizeLanguage(lang);
-	if (!normalizedLang) {
-		return null;
-	}
-
-	const normalizedCategory = normalizeCategory(category);
-	const normalizedCover = normalizeAlbumImage(cover);
-	const imageCount =
-		Array.isArray(photo_image) && typeof photo_image[0]?.count === 'number'
-			? photo_image[0].count
-			: 0;
-
-	return {
-		id,
-		title,
-		slug,
-		is_draft,
-		is_featured,
-		is_top,
-		lang: normalizedLang,
-		category: normalizedCategory,
-		cover: normalizedCover,
-		imageCount
-	};
-};
-
-export const load: PageServerLoad = async ({ url, params: { lang, page }, locals: { supabase } }) => {
+export const load: PageServerLoad = async ({
+	url,
+	params: { lang, page },
+	locals: { supabase }
+}) => {
 	const pageNumber = Number(page);
 	const limit = url.searchParams.get('limit') ? Number(url.searchParams.get('limit')) : 12;
 
@@ -139,13 +28,13 @@ export const load: PageServerLoad = async ({ url, params: { lang, page }, locals
 		.from('photo')
 		.select(
 			`
-	  id, 
-	  title, 
-	  lang (id, lang, locale), 
-	  slug, 
-	  category (id, title, slug), 
-	  is_draft, 
-	  is_featured, 
+	  id,
+	  title,
+	  lang (id, lang, locale, is_default),
+	  slug,
+	  category (id, title, slug),
+	  is_draft,
+	  is_featured,
 	  is_top,
 	  cover (id, alt, storage_key, caption),
 	  photo_image (count),
@@ -162,36 +51,42 @@ export const load: PageServerLoad = async ({ url, params: { lang, page }, locals
 
 	const path = url.pathname.substring(0, url.pathname.indexOf(page) - 1);
 
-	const photosList: PhotoListItem[] = (photos ?? [])
-		.map((photo) => toPhotoListItem(photo))
-		.filter((photo): photo is PhotoListItem => photo !== null);
+	const photosList: PhotoListItem[] = (photos ?? []).map((photo) => ({
+		id: photo.id,
+		title: photo.title,
+		slug: photo.slug,
+		is_draft: photo.is_draft ?? true,
+		is_featured: photo.is_featured ?? false,
+		is_top: photo.is_top ?? false,
+		lang: photo.lang,
+		category: photo.category,
+		cover: photo.cover,
+		imageCount: photo.photo_image[0]?.count ?? 0
+	}));
 
 	// 获取所有语言列表
 	const { data: allLanguages, error: languagesError } = await supabase
 		.from('language')
-		.select('id, lang, locale')
+		.select('id, lang, locale, is_default')
 		.order('id', { ascending: true });
 
 	if (languagesError) {
-		console.error('Error fetching languages:', languagesError);
+		throw error(500, { message: languagesError.message });
 	}
 
-	// 获取当前语言信息
-	const currentLanguage = allLanguages?.find((l) => l.lang === lang);
+	const currentLanguage = allLanguages.find((l) => l.lang === lang) ?? null;
 
-	const response: PhotoListPageData & {
-		allLanguages: Array<{ id: number; lang: string; locale: string }>;
-		currentLanguage: { id: number; lang: string; locale: string } | null;
-	} = {
+	return {
 		page: pageNumber,
 		prefix: URL_PREFIX,
 		count: count ?? 0,
 		photos: photosList,
 		limit,
 		path,
-		allLanguages: allLanguages ?? [],
-		currentLanguage: currentLanguage ?? null
+		allLanguages,
+		currentLanguage
+	} satisfies PhotoListPageData & {
+		allLanguages: Language[];
+		currentLanguage: Language | null;
 	};
-
-	return response;
 };

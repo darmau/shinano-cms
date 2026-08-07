@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { getToastStore, ProgressRadial } from '$lib/toast';
-	import type { SupabaseClient } from '@supabase/supabase-js';
+	import type { TypedSupabaseClient } from '$lib/supabaseClient';
 	import { uploadImageFile, updateImageMetadata, type MediaImageRecord } from '$lib/api/media';
 
 	type ImageSize = 'auto' | '1024x1024' | '1536x1024' | '1024x1536';
@@ -38,7 +38,7 @@
 
 	export let onImport: ((detail: ImportEventDetail) => void) | undefined;
 
-	export let supabase: SupabaseClient | null = null;
+	export let supabase: TypedSupabaseClient | null = null;
 
 	let prompt = '';
 	let size: ImageSize = 'auto';

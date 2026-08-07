@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { getToastStore, ProgressRadial } from '$lib/toast';
-	import type { SupabaseClient } from '@supabase/supabase-js';
+	import type { TypedSupabaseClient } from '$lib/supabaseClient';
 	import {
 		fetchUnsplashPhotos,
 		importUnsplashPhoto,
@@ -14,7 +14,7 @@
 		image: MediaImageRecord;
 	};
 
-	export let supabase: SupabaseClient | null;
+	export let supabase: TypedSupabaseClient | null;
 	export let perPage = 24;
 	export let autoLoad = true;
 	export let onImport: ((detail: ImportEventDetail) => void) | undefined;

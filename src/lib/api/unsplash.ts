@@ -1,4 +1,4 @@
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { TypedSupabaseClient } from '$lib/supabaseClient';
 import { uploadImageFile, updateImageMetadata, type MediaImageRecord } from '$lib/api/media';
 
 export type UnsplashUser = {
@@ -50,7 +50,9 @@ function toUniqueArray<T>(array: T[] | null | undefined) {
 	return Array.from(new Set(array));
 }
 
-export async function loadUnsplashConfig(supabase: SupabaseClient | null): Promise<UnsplashConfig> {
+export async function loadUnsplashConfig(
+	supabase: TypedSupabaseClient | null
+): Promise<UnsplashConfig> {
 	if (!supabase) {
 		return { accessKey: '', secretKey: '' };
 	}
@@ -194,7 +196,7 @@ function guessExtension(mimeType: string | undefined) {
 type ImportParams = {
 	photo: UnsplashPhoto;
 	accessKey: string;
-	supabase: SupabaseClient | null;
+	supabase: TypedSupabaseClient | null;
 };
 
 export async function importUnsplashPhoto({

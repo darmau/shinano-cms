@@ -11,7 +11,9 @@
 	import DeleteIcon from '$assets/icons/delete.svelte';
 	import { browser } from '$app/environment';
 	import { getSupabaseBrowserClient } from '$lib/supabaseClient';
-	import type { SupabaseClient } from '@supabase/supabase-js';
+	import type { TypedSupabaseClient } from '$lib/supabaseClient';
+	import type { TablesInsert } from '$lib/types/database';
+	import { toJsonColumn } from '$lib/functions/editorContent';
 	import type { Content } from '@tiptap/core';
 	import { splitHtmlByTopLevelNodes } from '$lib/functions/htmlChunk';
 	import type {
@@ -26,7 +28,7 @@
 
 	export let data: PageData;
 	export let isSaved: boolean = false;
-	const supabase: SupabaseClient | null = browser ? getSupabaseBrowserClient() : null;
+	const supabase: TypedSupabaseClient | null = browser ? getSupabaseBrowserClient() : null;
 	let imagesModelData: ImagesModelData = {
 		supabase,
 		prefix: data.prefix
@@ -56,11 +58,46 @@
 		? getDateFormat(photoContent.published_at, true)
 		: null;
 
+	/**
+	 * 整理成可写库的行。category 是 NOT NULL（P1-3），先拦一道，
+	 * 否则用户看到的是 PostgREST 的英文约束错误而不是"你还没选分类"。
+	 */
+	function buildPhotoPayload(): TablesInsert<'photo'> | null {
+		if (photoContent.category === null || photoContent.category === undefined) {
+			toastStore.trigger({
+				message: '请先选择分类。',
+				background: 'variant-filled-warning'
+			});
+			return null;
+		}
+
+		return {
+			lang: data.currentLanguage.id,
+			title: photoContent.title,
+			slug: photoContent.slug,
+			abstract: photoContent.abstract,
+			content_json: toJsonColumn(photoContent.content_json),
+			content_html: photoContent.content_html,
+			content_text: photoContent.content_text,
+			cover: photoContent.cover,
+			category: photoContent.category,
+			topic: photoContent.topic,
+			is_top: photoContent.is_top,
+			is_featured: photoContent.is_featured,
+			is_draft: photoContent.is_draft,
+			// updated_at 由数据库触发器 touch_updated_at() 维护
+			published_at: localTime ? new Date(localTime).toISOString() : null
+		};
+	}
+
 	// 保存摄影
 	async function savePhoto(): Promise<boolean | undefined> {
 		if (!supabase) {
 			return;
 		}
+
+		const payload = buildPhotoPayload();
+		if (!payload) return false;
 
 		let newPhotoId: number | null = null;
 
@@ -77,22 +114,7 @@
 
 			const { error: savePhotoError } = await supabase
 				.from('photo')
-				.update({
-					title: photoContent.title,
-					slug: photoContent.slug,
-					abstract: photoContent.abstract,
-					content_json: photoContent.content_json,
-					content_html: photoContent.content_html,
-					content_text: photoContent.content_text,
-					cover: photoContent.cover,
-					category: photoContent.category,
-					topic: photoContent.topic,
-					is_top: photoContent.is_top,
-					is_featured: photoContent.is_featured,
-					is_draft: photoContent.is_draft,
-					// updated_at 由数据库触发器 touch_updated_at() 维护
-					published_at: localTime ? new Date(localTime).toISOString() : null
-				})
+				.update(payload)
 				.eq('id', photoContent.id);
 
 			if (savePhotoError) {
@@ -127,23 +149,7 @@
 			// 全新的photo
 			const { data: newPhoto, error: savePhotoError } = await supabase
 				.from('photo')
-				.insert({
-					lang: data.currentLanguage.id,
-					title: photoContent.title,
-					slug: photoContent.slug,
-					abstract: photoContent.abstract,
-					content_json: photoContent.content_json,
-					content_html: photoContent.content_html,
-					content_text: photoContent.content_text,
-					cover: photoContent.cover,
-					category: photoContent.category,
-					topic: photoContent.topic,
-					is_top: photoContent.is_top,
-					is_featured: photoContent.is_featured,
-					is_draft: photoContent.is_draft,
-					// updated_at 由数据库列默认值 now() 填充
-					published_at: localTime ? new Date(localTime).toISOString() : null
-				})
+				.insert(payload)
 				.select();
 
 			if (savePhotoError) {

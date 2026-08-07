@@ -6,13 +6,22 @@
 	import { browser } from '$app/environment';
 	import { getSupabaseBrowserClient } from '$lib/supabaseClient';
 	import type { SelectedImage } from '$lib/types/images';
+	import type { TablesInsert } from '$lib/types/database';
 
 	export let data;
 	const supabase = browser ? getSupabaseBrowserClient() : null;
 
 	const toastStore = getToastStore();
 
-	const categoryData: Record<string, any> = {};
+	// 原本是 Record<string, any>，于是拼错列名、漏掉 NOT NULL 列都要等到运行时才知道
+	const categoryData: TablesInsert<'category'> = {
+		lang: data.languages[0]?.id ?? 1,
+		title: '',
+		slug: '',
+		description: '',
+		type: 'article',
+		cover: null
+	};
 
 	let isModalOpen = false;
 	let coverImage: SelectedImage | null = null;
@@ -107,9 +116,7 @@
 
 	<div class="space-y-6">
 		<div>
-			<label for="title" class="block text-sm font-medium leading-6 text-gray-900"
-				>标题</label
-			>
+			<label for="title" class="block text-sm font-medium leading-6 text-gray-900">标题</label>
 			<div class="mt-2">
 				<input
 					value={categoryData.title}
@@ -125,14 +132,12 @@
 			</div>
 		</div>
 		<div>
-			<label for="type" class="block text-sm font-medium leading-6 text-gray-900"
-				>类型</label
-			>
+			<label for="type" class="block text-sm font-medium leading-6 text-gray-900">类型</label>
 			<select
 				value={categoryData.type}
 				on:change={(event: Event) => {
 					const target = event.currentTarget as HTMLSelectElement;
-					categoryData.type = target.value;
+					categoryData.type = target.value as TablesInsert<'category'>['type'];
 				}}
 				id="type"
 				name="type"
@@ -161,8 +166,7 @@
 			<p class="mt-2 text-sm text-gray-500">注意在同一个语言下和类型下不得重复</p>
 		</div>
 		<div>
-			<label for="description" class="block text-sm font-medium leading-6 text-gray-900"
-				>描述</label
+			<label for="description" class="block text-sm font-medium leading-6 text-gray-900">描述</label
 			>
 			<div class="mt-2">
 				<textarea
@@ -179,14 +183,13 @@
 			</div>
 		</div>
 		<div>
-			<label for="language" class="block text-sm font-medium leading-6 text-gray-900"
-				>语言</label
-			>
+			<label for="language" class="block text-sm font-medium leading-6 text-gray-900">语言</label>
 			<select
 				value={categoryData.lang}
 				on:change={(event: Event) => {
 					const target = event.currentTarget as HTMLSelectElement;
-					categoryData.lang = target.value;
+					// select 的 value 永远是字符串，而 lang 是 bigint 外键
+					categoryData.lang = Number(target.value);
 				}}
 				id="language"
 				name="language"
@@ -225,7 +228,7 @@
 					value={categoryData.cover}
 					on:change={(event: Event) => {
 						const target = event.currentTarget as HTMLInputElement;
-						categoryData.cover = target.value;
+						categoryData.cover = target.value ? Number(target.value) : null;
 					}}
 				/>
 				{#if coverImage && Object.keys(coverImage).length > 0}

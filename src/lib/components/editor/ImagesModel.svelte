@@ -14,11 +14,12 @@
 	const PAGE_SIZE = 24;
 	const toastStore = getToastStore();
 
+	// 与 image 表对齐：这些列在库里都可空，本地类型写成必填只会在赋值处报错
 	type ImageRecord = {
 		id: number;
 		alt: string | null;
 		storage_key: string;
-		file_name?: string;
+		file_name?: string | null;
 		caption?: string | null;
 	};
 

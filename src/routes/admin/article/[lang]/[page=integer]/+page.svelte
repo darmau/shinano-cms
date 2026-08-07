@@ -6,7 +6,7 @@
 	import ArticleIcon from '$assets/icons/document-text.svelte';
 	import { browser } from '$app/environment';
 	import { getSupabaseBrowserClient } from '$lib/supabaseClient';
-	import type { SupabaseClient } from '@supabase/supabase-js';
+	import type { TypedSupabaseClient } from '$lib/supabaseClient';
 	import type { ArticleListPageData } from '$lib/types/article';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
@@ -15,7 +15,7 @@
 		allLanguages: Array<{ id: number; lang: string; locale: string }>;
 		currentLanguage: { id: number; lang: string; locale: string } | null;
 	};
-	const supabase: SupabaseClient | null = browser ? getSupabaseBrowserClient() : null;
+	const supabase: TypedSupabaseClient | null = browser ? getSupabaseBrowserClient() : null;
 
 	const toastStore = getToastStore();
 

@@ -172,7 +172,7 @@
 											class={`${
 												message.is_read ? 'font-normal text-gray-400' : 'font-bold text-gray-900'
 											} hidden px-3 py-4 text-sm lg:table-cell`}
-											>{message.message.slice(0, 12)}
+											>{(message.message ?? '').slice(0, 12)}
 										</td>
 										<td class="hidden px-3 py-4 text-sm text-gray-500 lg:table-cell"
 											>{message.contact_type}

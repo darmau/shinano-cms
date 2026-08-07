@@ -1,6 +1,7 @@
 // See https://kit.svelte.dev/docs/types#app
 // for information about these interfaces
-import type { Session, User } from '@supabase/supabase-js';
+import type { Session, SupabaseClient, User } from '@supabase/supabase-js';
+import type { Database } from '$lib/types/database';
 
 declare global {
 	namespace App {
@@ -11,7 +12,7 @@ declare global {
 			user?: User | null;
 			/** 由 hooks.server.ts 的 authGuard 在 /admin 与 /api 路由上解析并缓存 */
 			isAdmin?: boolean;
-			supabase: import('@supabase/supabase-js').SupabaseClient;
+			supabase: SupabaseClient<Database>;
 		}
 		interface PageData {
 			session: Session | null;

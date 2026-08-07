@@ -7,11 +7,11 @@
 	import getDateFormat from '$lib/functions/dateFormat';
 	import { browser } from '$app/environment';
 	import { getSupabaseBrowserClient } from '$lib/supabaseClient';
-	import type { SupabaseClient } from '@supabase/supabase-js';
+	import type { TypedSupabaseClient } from '$lib/supabaseClient';
 	import type { ThoughtListPageData } from '$lib/types/thought';
 
 	export let data: ThoughtListPageData;
-	const supabase: SupabaseClient | null = browser ? getSupabaseBrowserClient() : null;
+	const supabase: TypedSupabaseClient | null = browser ? getSupabaseBrowserClient() : null;
 
 	const toastStore = getToastStore();
 

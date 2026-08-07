@@ -1,9 +1,10 @@
 import type { PageServerLoad } from './$types';
 import { error } from '@sveltejs/kit';
 import { URL_PREFIX } from '$env/static/private';
+import { parseIdParam } from '$lib/server/params';
 
 export const load: PageServerLoad = async ({ params, locals: { supabase } }) => {
-	const categoryId = params.id;
+	const categoryId = parseIdParam(params.id, '分类');
 
 	const { data: categoryData, error: categoryError } = await supabase
 		.from('category')

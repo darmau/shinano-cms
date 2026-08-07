@@ -71,17 +71,24 @@
 		}
 
 		const formData = new FormData(event.target as HTMLFormElement);
-		const updatedImage = Object.fromEntries(formData.entries());
+		// FormData 的值可能是 File，直接丢给 supabase 会静默写进去一个 "[object File]"。
+		// 这里统一取文本，空字符串按 null 存（拍摄时间尤其重要：'' 不是合法的 timestamptz）
+		const field = (name: string): string | null => {
+			const value = formData.get(name);
+			if (typeof value !== 'string') return null;
+			const trimmed = value.trim();
+			return trimmed === '' ? null : trimmed;
+		};
 
 		const { error: updateError } = await supabase
 			.from('image')
 			.update({
-				file_name: updatedImage.file_name,
-				alt: updatedImage.alt,
-				folder: updatedImage.folder,
-				caption: updatedImage.caption,
-				location: updatedImage.location,
-				taken_at: updatedImage.taken_at
+				file_name: field('file_name'),
+				alt: field('alt'),
+				folder: field('folder'),
+				caption: field('caption'),
+				location: field('location'),
+				taken_at: field('taken_at')
 			})
 			.eq('id', imageData.id)
 			.select();

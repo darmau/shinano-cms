@@ -8,7 +8,8 @@
 	import { flip } from 'svelte/animate';
 	import { browser } from '$app/environment';
 	import { getSupabaseBrowserClient } from '$lib/supabaseClient';
-	import type { SupabaseClient } from '@supabase/supabase-js';
+	import { toJsonColumn } from '$lib/functions/editorContent';
+	import type { TypedSupabaseClient } from '$lib/supabaseClient';
 	import type { EditorContentUpdateDetail, ImagesModelData } from '$lib/types/editor';
 	import type { SelectedImage } from '$lib/types/photo';
 	import type {
@@ -19,7 +20,7 @@
 	} from '$lib/types/thought';
 
 	export let data: ThoughtEditPageData;
-	const supabase: SupabaseClient | null = browser ? getSupabaseBrowserClient() : null;
+	const supabase: TypedSupabaseClient | null = browser ? getSupabaseBrowserClient() : null;
 
 	let imagesModelData: ImagesModelData = {
 		supabase,
@@ -33,11 +34,11 @@
 
 	const toastStore = getToastStore();
 
-let thoughtContent: ThoughtContent = {
-	...data.thoughtContent,
-	images: [...(data.thoughtContent.images ?? [])],
-	push_to_gallery: data.thoughtContent.push_to_gallery ?? false
-};
+	let thoughtContent: ThoughtContent = {
+		...data.thoughtContent,
+		images: [...(data.thoughtContent.images ?? [])],
+		push_to_gallery: data.thoughtContent.push_to_gallery ?? false
+	};
 
 	let contentJSON: Record<string, unknown> = thoughtContent.content_json ?? {};
 	let contentHTML: string = thoughtContent.content_html;
@@ -130,16 +131,16 @@ let thoughtContent: ThoughtContent = {
 		draggingIndex = index;
 	}
 
-function dragEnd(): void {
-	draggingIndex = null;
-}
+	function dragEnd(): void {
+		draggingIndex = null;
+	}
 
-function togglePushToGallery(): void {
-	thoughtContent = {
-		...thoughtContent,
-		push_to_gallery: !thoughtContent.push_to_gallery
-	};
-}
+	function togglePushToGallery(): void {
+		thoughtContent = {
+			...thoughtContent,
+			push_to_gallery: !thoughtContent.push_to_gallery
+		};
+	}
 
 	async function saveThought(): Promise<void> {
 		if (!supabase || !thoughtContent.id) {
@@ -149,7 +150,7 @@ function togglePushToGallery(): void {
 		const { error: saveThoughtError } = await supabase
 			.from('thought')
 			.update({
-				content_json: thoughtContent.content_json,
+				content_json: toJsonColumn(thoughtContent.content_json),
 				content_html: thoughtContent.content_html,
 				content_text: thoughtContent.content_text,
 				push_to_gallery: thoughtContent.push_to_gallery
@@ -265,9 +266,7 @@ function togglePushToGallery(): void {
 
 		<!--图片-->
 		<div>
-			<label for="add-image" class="text-sm font-medium leading-6 text-gray-900"
-				>图片</label
-			>
+			<label for="add-image" class="text-sm font-medium leading-6 text-gray-900">图片</label>
 			<div class="relative mt-2 grid grid-cols-2 md:grid-cols-3 gap-4">
 				{#if thoughtContent.images.length < 12}
 					<button

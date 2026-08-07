@@ -2,6 +2,7 @@ import type { PageServerLoad } from './$types';
 import getDateFormat from '$lib/functions/dateFormat';
 import { URL_PREFIX } from '$env/static/private';
 import { error } from '@sveltejs/kit';
+import { parseIdParam } from '$lib/server/params';
 
 export const load: PageServerLoad = async ({ url, locals: { supabase } }) => {
 	const copyFromId = url.searchParams.get('from');
@@ -97,7 +98,7 @@ export const load: PageServerLoad = async ({ url, locals: { supabase } }) => {
 				cover (id, alt, storage_key)
 		  `
 				)
-				.eq('id', copyFromId)
+				.eq('id', parseIdParam(copyFromId ?? '', '源文章'))
 				.single()
 		]);
 		allLanguages = allLanguagesRes.data;

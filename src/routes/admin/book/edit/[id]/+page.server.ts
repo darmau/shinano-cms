@@ -1,9 +1,10 @@
 import type { PageServerLoad } from './$types';
 import { error } from '@sveltejs/kit';
 import { URL_PREFIX } from '$env/static/private';
+import { parseIdParam } from '$lib/server/params';
 
 export const load: PageServerLoad = async ({ params, locals: { supabase } }) => {
-	const bookId = params.id;
+	const bookId = parseIdParam(params.id, '书');
 
 	const { data: bookData, error: bookError } = await supabase
 		.from('book')

@@ -1,8 +1,9 @@
 import type { PageServerLoad } from './$types';
 import { error } from '@sveltejs/kit';
+import { parseIdParam } from '$lib/server/params';
 
 export const load: PageServerLoad = async ({ params, locals: { supabase } }) => {
-	const messageId = params.id;
+	const messageId = parseIdParam(params.id, '留言');
 
 	const { data: messageData, error: messageError } = await supabase
 		.from('message')

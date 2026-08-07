@@ -4,19 +4,19 @@
 	import { onMount } from 'svelte';
 	import '../app.css';
 	import { initializeStores, Toast } from '$lib/toast';
-	import { createBrowserClient } from '@supabase/ssr';
-	import type { SupabaseClient } from '@supabase/supabase-js';
-	import { PUBLIC_SUPABASE_ANON_KEY, PUBLIC_SUPABASE_URL } from '$env/static/public';
+	import { getSupabaseBrowserClient, type TypedSupabaseClient } from '$lib/supabaseClient';
 	import type { LayoutData } from './$types';
 
 	initializeStores();
 
 	export let data: LayoutData;
 	let { session, user } = data;
-	let supabase: SupabaseClient | undefined;
+	// 复用 $lib/supabaseClient 里的单例：此处原先自己又建了一个浏览器客户端，
+	// 于是同一个页面里跑着两个各自持有会话状态的实例
+	let supabase: TypedSupabaseClient | undefined;
 
 	if (browser) {
-		supabase = createBrowserClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY);
+		supabase = getSupabaseBrowserClient();
 	}
 
 	onMount(() => {

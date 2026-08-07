@@ -9,7 +9,7 @@
 	import { onMount } from 'svelte';
 	import { browser } from '$app/environment';
 	import { getSupabaseBrowserClient } from '$lib/supabaseClient';
-	import type { SupabaseClient } from '@supabase/supabase-js';
+	import type { TypedSupabaseClient } from '$lib/supabaseClient';
 	import type { Content, JSONContent } from '@tiptap/core';
 	import { splitHtmlByTopLevelNodes } from '$lib/functions/htmlChunk';
 	import type {
@@ -17,6 +17,7 @@
 		ArticleCoverImage,
 		ArticleEditorPageData
 	} from '$lib/types/article';
+	import type { TablesInsert } from '$lib/types/database';
 	import type {
 		EditorContentUpdateDetail,
 		EditorHandle,
@@ -36,7 +37,7 @@
 	export let isSaved: boolean = false;
 
 	const toastStore = getToastStore();
-	const supabase: SupabaseClient | null = browser ? getSupabaseBrowserClient() : null;
+	const supabase: TypedSupabaseClient | null = browser ? getSupabaseBrowserClient() : null;
 
 	const initialArticle = data.articleContent;
 
@@ -109,26 +110,50 @@
 	let newLanguageVersions = generateNewLanguageVersions();
 	$: newLanguageVersions = generateNewLanguageVersions();
 
+	/**
+	 * 把编辑器状态整理成可以写库的行。
+	 *
+	 * category 在数据库里是 NOT NULL（P1-3），所以这里必须先拦一道：否则用户看到的
+	 * 是一句 PostgREST 抛出来的英文约束错误，而不是"你还没选分类"。
+	 */
+	function buildArticlePayload(): TablesInsert<'article'> | null {
+		if (articleContent.category === null) {
+			toastStore.trigger({
+				message: '请先选择分类。',
+				background: 'variant-filled-warning'
+			});
+			return null;
+		}
+
+		return {
+			...articleContent,
+			category: articleContent.category,
+			// updated_at 由数据库触发器 touch_updated_at() 维护，客户端时钟不参与
+			cover: coverImage?.id ?? null,
+			published_at: localTime ? new Date(localTime).toISOString() : null,
+			topic: topics
+		};
+	}
+
 	async function saveArticle() {
 		if (!supabase) {
 			console.error(supabaseUnavailableMessage);
 			return;
 		}
 
-		// updated_at 由数据库触发器 touch_updated_at() 维护，客户端时钟不参与
 		articleContent.cover = coverImage?.id ?? null;
 		articleContent.published_at = localTime ? new Date(localTime).toISOString() : null;
 		articleContent.topic = topics;
+
+		const payload = buildArticlePayload();
+		if (!payload) return;
 
 		if (isSaved === true) {
 			if (!articleContent.id) {
 				console.error('Missing article id when attempting to save existing article.');
 				return;
 			}
-			const { error } = await supabase
-				.from('article')
-				.update(articleContent)
-				.eq('id', articleContent.id);
+			const { error } = await supabase.from('article').update(payload).eq('id', articleContent.id);
 			if (error) {
 				console.error(error);
 				toastStore.trigger({
@@ -146,7 +171,7 @@
 		} else {
 			const { data: createdArticle, error: saveError } = await supabase
 				.from('article')
-				.insert(articleContent)
+				.insert(payload)
 				.select();
 
 			if (saveError) {
@@ -155,7 +180,8 @@
 					message: saveError.message,
 					background: 'variant-filled-error'
 				});
-				isChanged = false;
+				// 保存失败时**不能**清掉 isChanged：清了之后"保存"按钮变灰、
+				// 离开页面的确认也不再弹，而这恰恰是内容还没落库的时刻
 			} else {
 				const newArticleId = createdArticle?.[0]?.id;
 				if (newArticleId) {
@@ -166,6 +192,7 @@
 					background: 'variant-filled-success'
 				});
 				isSaved = true;
+				isChanged = false;
 				if (newArticleId) {
 					await goto(`/admin/article/edit/${newArticleId}`);
 				}
@@ -229,9 +256,12 @@
 			localTime = null;
 		}
 
+		const publishPayload = buildArticlePayload();
+		if (!publishPayload) return;
+
 		const { error } = await supabase
 			.from('article')
-			.update(articleContent)
+			.update(publishPayload)
 			.eq('id', articleContent.id);
 		if (error) {
 			console.error(error);

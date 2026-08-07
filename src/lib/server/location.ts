@@ -1,4 +1,4 @@
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { TypedSupabaseClient } from '$lib/supabaseClient';
 import type { ConfigRow } from '$lib/types/config';
 
 export type LocationPayload = {
@@ -40,7 +40,7 @@ type AMapResponse = {
 	};
 };
 
-export async function loadLocationConfig(supabase: SupabaseClient) {
+export async function loadLocationConfig(supabase: TypedSupabaseClient) {
 	const { data, error } = await supabase
 		.from('config')
 		.select('key,value')
@@ -59,7 +59,7 @@ export async function loadLocationConfig(supabase: SupabaseClient) {
 
 export async function resolveLocationWithSupabase(
 	payload: LocationPayload,
-	supabase: SupabaseClient
+	supabase: TypedSupabaseClient
 ) {
 	const config = await loadLocationConfig(supabase);
 	return resolveLocation(payload, config);

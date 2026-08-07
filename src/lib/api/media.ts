@@ -1,4 +1,4 @@
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { TypedSupabaseClient } from '$lib/supabaseClient';
 
 export type MediaImageRecord = {
 	id: number;
@@ -59,7 +59,7 @@ export async function uploadImageFile({
 }
 
 export async function updateImageMetadata(
-	supabase: SupabaseClient | null,
+	supabase: TypedSupabaseClient | null,
 	imageId: number,
 	metadata: Partial<Pick<MediaImageRecord, 'alt' | 'caption'>>
 ): Promise<MediaImageRecord | null> {

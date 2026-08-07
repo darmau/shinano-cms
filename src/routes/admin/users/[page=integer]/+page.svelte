@@ -13,7 +13,7 @@
 	const toastStore = getToastStore();
 
 	// 封禁用户
-	async function blockUser(id: string) {
+	async function blockUser(id: number) {
 		if (!supabase) return;
 		const { error: blockError } = await supabase
 			.from('users')
@@ -36,7 +36,7 @@
 	}
 
 	// 解封用户
-	async function unBlockUser(id: string) {
+	async function unBlockUser(id: number) {
 		if (!supabase) return;
 		const { error: unBlockError } = await supabase
 			.from('users')
@@ -103,7 +103,7 @@
 									<td class="px-3 py-4 text-sm text-gray-500 line-clamp-2">{user.id} </td>
 									<td class="px-3 py-4 text-sm text-gray-500">{user.name} </td>
 									<td class="font-mono px-3 py-4 text-sm text-gray-500">{user.user_id}</td>
-									<td class="px-3 py-4 text-sm text-gray-500">{user.source}</td>
+									<td class="px-3 py-4 text-sm text-gray-500">{user.source ?? '-'}</td>
 									<td class="px-3 py-4 text-sm text-gray-500">{getDateFormat(user.created_at)}</td>
 									<td class="px-3 py-4 text-sm text-gray-500">{user.role}</td>
 
