@@ -11,3 +11,5 @@ vite.config.ts.timestamp-*
 .idea/*
 /.wrangler
 /.cloudflare
+test-results
+playwright-report
