@@ -17,6 +17,7 @@
 	import type { Content } from '@tiptap/core';
 	import { splitHtmlByTopLevelNodes } from '$lib/functions/htmlChunk';
 	import { callAction } from '$lib/api/actions';
+	import { savePhotoWithImages } from '$lib/api/photo';
 	import {
 		checkSlugAvailability,
 		requestAbstract,
@@ -29,7 +30,6 @@
 		SelectedImage,
 		PhotoContent,
 		PageData,
-		PhotoImageInsert,
 		Language
 	} from '$lib/types/photo';
 	import type { EditorContentUpdateDetail, EditorHandle, ImagesModelData } from '$lib/types/editor';
@@ -107,107 +107,50 @@
 		const payload = buildPhotoPayload();
 		if (!payload) return false;
 
-		let newPhotoId: number | null = null;
+		const isNew = !isSaved || !photoContent.id;
 
-		// 存储photo信息
-		if (isSaved === true) {
-			if (!photoContent.id) {
-				console.error('Missing photo id when saving existing photo');
-				toastStore.trigger({
-					message: 'Photo id is missing. Please refresh and try again.',
-					background: 'variant-filled-error'
-				});
-				return false;
-			}
-
-			const { error: savePhotoError } = await supabase
-				.from('photo')
-				.update(payload)
-				.eq('id', photoContent.id);
-
-			if (savePhotoError) {
-				console.error('Error happened when saved a existing photo: ', savePhotoError);
-				toastStore.trigger({
-					message: savePhotoError.message,
-					background: 'variant-filled-error'
-				});
-			} else {
-				toastStore.trigger({
-					message: 'Photo saved successfully.',
-					background: 'variant-filled-success'
-				});
-				isSaved = true;
-				isChanged = false;
-			}
-
-			// 删除photo_image表现有信息 photoContent.photos
-			const { error: deletePhotoImageError } = await supabase
-				.from('photo_image')
-				.delete()
-				.eq('photo_id', photoContent.id);
-
-			if (deletePhotoImageError) {
-				console.error('Delete existing photo relation', deletePhotoImageError);
-				toastStore.trigger({
-					message: deletePhotoImageError.message,
-					background: 'variant-filled-error'
-				});
-			}
-		} else {
-			// 全新的photo
-			const { data: newPhoto, error: savePhotoError } = await supabase
-				.from('photo')
-				.insert(payload)
-				.select();
-
-			if (savePhotoError) {
-				console.error('Error happened when saved a new photo', savePhotoError);
-				toastStore.trigger({
-					message: savePhotoError.message,
-					background: 'variant-filled-error'
-				});
-				isChanged = false;
-			} else {
-				const createdPhotoId = newPhoto?.[0]?.id;
-				if (createdPhotoId) {
-					newPhotoId = createdPhotoId;
-					photoContent.id = createdPhotoId;
-					toastStore.trigger({
-						message: 'Photo saved successfully.',
-						background: 'variant-filled-success'
-					});
-					isSaved = true;
-				}
-			}
+		if (!isNew && !photoContent.id) {
+			toastStore.trigger({
+				message: 'Photo id is missing. Please refresh and try again.',
+				background: 'variant-filled-error'
+			});
+			return false;
 		}
 
-		// bulk存入新的photo_image信息
-		const targetPhotoId = photoContent.id ?? newPhotoId;
+		// 相册与它的图片关系在数据库端的一个事务里一起写完。
+		// 此前是三次独立请求（改 photo → 删光 photo_image → 重新插入），
+		// 删成功而插失败会让图片和排序永久消失。
+		const result = await savePhotoWithImages(supabase, {
+			photo: payload,
+			images: photoContent.photos.map((photo) => ({
+				image_id: photo.image.id,
+				order: photo.order
+			})),
+			photoId: isNew ? null : photoContent.id
+		});
 
-		if (targetPhotoId == null) {
-			return true;
+		if (!result.ok) {
+			toastStore.trigger({
+				message: result.message,
+				background: 'variant-filled-error'
+			});
+			// 保存失败时不清 isChanged：否则保存按钮变灰、离开确认失效，
+			// 而这正是内容还没落库的时刻
+			return false;
 		}
 
-		const albumImages: PhotoImageInsert[] = photoContent.photos.map((photo) => ({
-			photo_id: targetPhotoId,
-			image_id: photo.image.id,
-			order: photo.order
-		}));
+		const wasNew = isNew;
+		photoContent.id = result.photoId;
+		isSaved = true;
+		isChanged = false;
 
-		if (albumImages.length) {
-			const { error: savePhotoImageError } = await supabase.from('photo_image').insert(albumImages);
+		toastStore.trigger({
+			message: '相册已保存。',
+			background: 'variant-filled-success'
+		});
 
-			if (savePhotoImageError) {
-				console.error('Save image relations failed', savePhotoImageError);
-				toastStore.trigger({
-					message: savePhotoImageError.message,
-					background: 'variant-filled-error'
-				});
-			}
-		}
-
-		if (newPhotoId) {
-			await goto(`/admin/photo/edit/${newPhotoId}`);
+		if (wasNew) {
+			await goto(`/admin/photo/edit/${result.photoId}`);
 		}
 
 		return true;
