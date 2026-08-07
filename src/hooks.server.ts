@@ -1,7 +1,9 @@
-import { redirect, type Handle } from '@sveltejs/kit';
+import { error, json, redirect, type Handle } from '@sveltejs/kit';
 import { createServerClient } from '@supabase/ssr';
 import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from '$env/static/public';
+import { env } from '$env/dynamic/private';
 import { sequence } from '@sveltejs/kit/hooks';
+import { resolveIsAdmin } from '$lib/server/auth';
 
 const supabase: Handle = async ({ event, resolve }) => {
 	const supabaseClient = createServerClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
@@ -37,7 +39,7 @@ const supabase: Handle = async ({ event, resolve }) => {
 			} = await supabaseClient.auth.getSession();
 
 			return { session, user };
-		} catch (error) {
+		} catch {
 			return { session: null, user: null };
 		}
 	};
@@ -54,21 +56,55 @@ const authGuard: Handle = async ({ event, resolve }) => {
 	event.locals.session = session ?? undefined;
 	event.locals.user = user ?? undefined;
 
+	const { pathname } = event.url;
+	const isApiRoute = pathname.startsWith('/api/');
+	// 邮件确认回调必须对未登录访问开放，否则注册与找回密码无法完成
+	const isPublicAuthRoute =
+		pathname.startsWith('/api/auth') || pathname.startsWith('/auth/confirm');
+
 	if (!event.locals.session) {
-		if (
-			event.url.pathname.startsWith('/auth/signup') ||
-			event.url.pathname.startsWith('/auth/confirm') ||
-			event.url.pathname.startsWith('/api/auth')
-		) {
+		if (isPublicAuthRoute) {
 			return resolve(event);
 		}
-		if (!event.url.pathname.startsWith('/auth/login')) {
+
+		if (pathname.startsWith('/auth/signup')) {
+			// 自助注册默认关闭：这是单人后台，首个管理员已经存在，而开放注册意味着
+			// 任何人都能拿到一个 session。需要重新引导账户时把 ALLOW_SIGNUP 设为 'true'。
+			if (env.ALLOW_SIGNUP !== 'true') {
+				return redirect(303, '/auth/login');
+			}
+			return resolve(event);
+		}
+
+		// API 调用方需要的是状态码。重定向到登录页会让 fetch 拿到一份 HTML，
+		// 调用方通常会把它当成成功响应解析。
+		if (isApiRoute) {
+			return json({ error: 'Unauthorized' }, { status: 401 });
+		}
+
+		if (!pathname.startsWith('/auth/login')) {
 			return redirect(303, '/auth/login');
 		}
-	} else if (
-		event.url.pathname.startsWith('/auth') &&
-		!event.url.pathname.startsWith('/auth/logout')
-	) {
+
+		return resolve(event);
+	}
+
+	// 有 session 不等于被授权。后台与所有非 auth 的 API 都要求管理员角色。
+	if (pathname.startsWith('/admin') || (isApiRoute && !isPublicAuthRoute)) {
+		event.locals.isAdmin = await resolveIsAdmin(event.locals.supabase);
+
+		if (!event.locals.isAdmin) {
+			if (isApiRoute) {
+				return json({ error: 'Forbidden' }, { status: 403 });
+			}
+			// 这里刻意不重定向：/auth/logout 的 load 会把 GET 请求送回 /admin，
+			// 重定向过去就成了死循环。而且角色解析是 fail closed 的，一次数据库抖动
+			// 不应该顺手把管理员的会话也清掉。
+			error(403, 'Forbidden');
+		}
+	}
+
+	if (pathname.startsWith('/auth') && !pathname.startsWith('/auth/logout')) {
 		return redirect(303, '/admin');
 	}
 
