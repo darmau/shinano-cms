@@ -1,7 +1,11 @@
 import { error, type RequestHandler } from '@sveltejs/kit';
 import { URL_PREFIX } from '$env/static/private';
+import { requireAdmin } from '$lib/server/auth';
+import { isValidStorageKey } from '$lib/server/media';
 
-type WorkersAI = { run: (model: string, input: unknown, options?: { gateway?: { id: string } }) => Promise<unknown> };
+type WorkersAI = {
+	run: (model: string, input: unknown, options?: { gateway?: { id: string } }) => Promise<unknown>;
+};
 type CfEnv = { AI?: WorkersAI } & Record<string, unknown>;
 type CfPlatformWithAI = { env?: CfEnv } | undefined;
 
@@ -12,14 +16,35 @@ const DEFAULT_PROMPT =
 const MAX_IMAGE_WIDTH = 512;
 
 export const POST: RequestHandler = async ({ request, locals, platform }) => {
+	await requireAdmin(locals);
+
 	const { storage_key, img_key } = await request.json();
 	const targetKey = typeof storage_key === 'string' ? storage_key : img_key;
 
-	if (!targetKey) {
+	// targetKey 会被拼进 /cdn-cgi/image/.../<source> 后由服务端 fetch。
+	// Cloudflare 的 image resizing 接受绝对 URL 作为源，`../` 也能改写路径，
+	// 所以未经校验的键就是一个 SSRF 原语。先卡格式，再确认它确实是我们自己的对象。
+	if (!isValidStorageKey(targetKey)) {
 		error(400, 'Invalid image key');
 	}
 
 	const supabase = locals.supabase;
+
+	const { data: imageRow, error: lookupError } = await supabase
+		.from('image')
+		.select('storage_key')
+		.eq('storage_key', targetKey)
+		.maybeSingle<{ storage_key: string }>();
+
+	if (lookupError) {
+		console.error(lookupError);
+		error(500, 'Failed to look up image');
+	}
+
+	if (!imageRow) {
+		error(404, 'Image not found');
+	}
+
 	const { data, error: supabaseError } = await supabase
 		.from('config')
 		.select('value')
@@ -42,7 +67,7 @@ export const POST: RequestHandler = async ({ request, locals, platform }) => {
 
 	// 使用 Cloudflare Image Resizing 来压缩图片，大幅降低内存使用
 	// 格式：https://domain.com/cdn-cgi/image/width=512,format=jpeg/image-key
-	const resizedImageUrl = `${URL_PREFIX}/cdn-cgi/image/width=${MAX_IMAGE_WIDTH},format=jpeg/${targetKey}`;
+	const resizedImageUrl = `${URL_PREFIX}/cdn-cgi/image/width=${MAX_IMAGE_WIDTH},format=jpeg/${imageRow.storage_key}`;
 
 	// 通过 fetch 获取压缩后的图片
 	let imageResponse: Response;
@@ -63,16 +88,16 @@ export const POST: RequestHandler = async ({ request, locals, platform }) => {
 	let aiResult: unknown;
 	try {
 		aiResult = await aiBinding.run(
-			"@cf/unum/uform-gen2-qwen-500m",
+			'@cf/unum/uform-gen2-qwen-500m',
 			{
 				image: byteArray,
 				prompt,
-				max_tokens: 512,
+				max_tokens: 512
 			},
 			{
 				gateway: {
-					id: "shinano"
-				},
+					id: 'shinano'
+				}
 			}
 		);
 	} catch (err) {
