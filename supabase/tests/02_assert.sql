@@ -71,3 +71,56 @@ begin
   end;
   raise notice 'book.rate CHECK blocks 9 (want true): %', blocked;
 end $$;
+
+-- ⑪ save_photo_with_images：原子性是这个函数存在的全部理由
+insert into image (file_name, alt) values ('b.jpg', 'b'), ('c.jpg', 'c');
+select public.save_photo_with_images(
+  jsonb_build_object('title','原子相册','slug','atomic','lang',1,'category',2,'is_draft',true),
+  '[{"image_id":1,"order":2},{"image_id":2,"order":1},{"image_id":1,"order":5}]'::jsonb
+) as ignored;
+select 'album save writes images' as check,
+       (select count(*)::text from photo_image where photo_id = (select id from photo where slug='atomic')) as got,
+       '2' as want;
+select 'duplicate image_id is deduped' as check,
+       (select "order"::text from photo_image
+        where photo_id=(select id from photo where slug='atomic') and image_id=1) as got,
+       '2' as want;
+
+-- 再存一次，图片换成一张：先删后插必须在同一个事务里
+select public.save_photo_with_images(
+  jsonb_build_object('title','改了标题','slug','atomic','lang',1,'category',2,'is_draft',false),
+  '[{"image_id":2,"order":1}]'::jsonb,
+  (select id from photo where slug='atomic')
+) as ignored;
+select 'album re-save replaces images' as check,
+       (select count(*)::text from photo_image where photo_id=(select id from photo where slug='atomic')) as got,
+       '1' as want;
+
+-- 关键断言：插入失败时，原有的图片与排序不能消失
+do $$
+declare after_count int; kept_title text;
+begin
+  begin
+    perform public.save_photo_with_images(
+      jsonb_build_object('title','不该生效','slug','atomic','lang',1,'category',2),
+      '[{"image_id":999999,"order":1}]'::jsonb,
+      (select id from photo where slug='atomic'));
+  exception when others then null;
+  end;
+  select count(*) into after_count from photo_image where photo_id=(select id from photo where slug='atomic');
+  select title into kept_title from photo where slug='atomic';
+  raise notice 'failed image insert rolls back — images kept (want 1): %, title (want 改了标题): %',
+    after_count, kept_title;
+end $$;
+
+-- 不存在 / 无权限的相册必须报错，而不是静默"保存成功"
+do $$
+declare blocked boolean := false;
+begin
+  begin
+    perform public.save_photo_with_images(
+      jsonb_build_object('title','x','slug','y','lang',1,'category',2), '[]'::jsonb, 999999);
+  exception when others then blocked := true;
+  end;
+  raise notice 'saving a missing album raises (want true): %', blocked;
+end $$;
