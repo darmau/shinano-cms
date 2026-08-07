@@ -44,7 +44,9 @@
 		...data.photoContent,
 		photos: [...(data.photoContent.photos ?? [])],
 		topic: [...(data.photoContent.topic ?? [])],
-		category: data.photoContent.category ?? null,
+		// category 在数据库里是 NOT NULL（见 20260807010000_p1_data_integrity.sql），
+		// 新建相册时默认选中第一个分类，免得保存时才撞上数据库报错
+		category: data.photoContent.category ?? data.categories?.[0]?.id ?? null,
 		cover: data.photoContent.cover ?? null,
 		published_at: data.photoContent.published_at ?? null
 	};
@@ -88,7 +90,7 @@
 					is_top: photoContent.is_top,
 					is_featured: photoContent.is_featured,
 					is_draft: photoContent.is_draft,
-					updated_at: new Date().toISOString(),
+					// updated_at 由数据库触发器 touch_updated_at() 维护
 					published_at: localTime ? new Date(localTime).toISOString() : null
 				})
 				.eq('id', photoContent.id);
@@ -139,7 +141,7 @@
 					is_top: photoContent.is_top,
 					is_featured: photoContent.is_featured,
 					is_draft: photoContent.is_draft,
-					updated_at: new Date().toISOString(),
+					// updated_at 由数据库列默认值 now() 填充
 					published_at: localTime ? new Date(localTime).toISOString() : null
 				})
 				.select();
@@ -666,9 +668,7 @@
 	<div class="space-y-8 md:col-span-3">
 		<!--标题-->
 		<div>
-			<label for="title" class="block text-sm font-medium leading-6 text-gray-900"
-				>标题</label
-			>
+			<label for="title" class="block text-sm font-medium leading-6 text-gray-900">标题</label>
 			<div class="mt-2">
 				<input
 					type="text"
@@ -737,9 +737,7 @@
 		<!--图片-->
 		<div>
 			<header class="flex justify-between items-center mb-4">
-				<label for="images" class="block text-sm font-medium leading-6 text-gray-900"
-					>照片</label
-				>
+				<label for="images" class="block text-sm font-medium leading-6 text-gray-900">照片</label>
 				{#if pictures.length > 0}
 					<button
 						on:click={() => {
@@ -819,9 +817,7 @@
 	<aside class="col-span-1 space-y-8">
 		<!--发布时间-->
 		<div>
-			<label for="publish-time" class="text-sm font-medium leading-6 text-gray-900"
-				>发布时间</label
-			>
+			<label for="publish-time" class="text-sm font-medium leading-6 text-gray-900">发布时间</label>
 			<input
 				type="datetime-local"
 				id="publish-time"
@@ -874,9 +870,7 @@
 		<!--分类-->
 		<div>
 			<header class="flex justify-between">
-				<label class="text-sm font-medium leading-6 text-gray-900" for="category"
-					>分类</label
-				>
+				<label class="text-sm font-medium leading-6 text-gray-900" for="category">分类</label>
 				<a href="/admin/category/new" target="_blank">
 					<AddIcon classList="h-4 w-4 text-gray-400 hover:text-cyan-600" />
 				</a>
@@ -899,9 +893,7 @@
 		<!--话题-->
 		<div>
 			<div class="flex justify-between">
-				<label for="abstract" class="block text-sm font-medium leading-6 text-gray-900"
-					>话题</label
-				>
+				<label for="abstract" class="block text-sm font-medium leading-6 text-gray-900">话题</label>
 				<button
 					type="button"
 					on:click={generateTags}
@@ -948,9 +940,7 @@
 		<!--摘要-->
 		<div>
 			<div class="flex justify-between">
-				<label for="abstract" class="block text-sm font-medium leading-6 text-gray-900"
-					>摘要</label
-				>
+				<label for="abstract" class="block text-sm font-medium leading-6 text-gray-900">摘要</label>
 				<button
 					type="button"
 					on:click={generateAbstract}

@@ -8,10 +8,10 @@
 	import getDateFormat from '$lib/functions/dateFormat';
 	import { onMount } from 'svelte';
 	import { browser } from '$app/environment';
-import { getSupabaseBrowserClient } from '$lib/supabaseClient';
+	import { getSupabaseBrowserClient } from '$lib/supabaseClient';
 	import type { SupabaseClient } from '@supabase/supabase-js';
 	import type { Content, JSONContent } from '@tiptap/core';
-import { splitHtmlByTopLevelNodes } from '$lib/functions/htmlChunk';
+	import { splitHtmlByTopLevelNodes } from '$lib/functions/htmlChunk';
 	import type {
 		ArticleContent,
 		ArticleCoverImage,
@@ -56,9 +56,10 @@ import { splitHtmlByTopLevelNodes } from '$lib/functions/htmlChunk';
 		lang: initialArticle.lang ?? data.currentLanguage.id,
 		topic: initialArticle.topic ?? [],
 		published_at: initialArticle.published_at ?? null,
-		category: initialArticle.category ?? null,
-		cover: initialArticle.cover?.id ?? null,
-		updated_at: initialArticle.updated_at
+		// category 在数据库里是 NOT NULL（见 20260807010000_p1_data_integrity.sql），
+		// 新建内容时默认选中第一个分类，免得保存时才撞上数据库报错
+		category: initialArticle.category ?? data.categories?.[0]?.id ?? null,
+		cover: initialArticle.cover?.id ?? null
 	};
 
 	let topics: string[] = [...articleContent.topic];
@@ -80,8 +81,8 @@ import { splitHtmlByTopLevelNodes } from '$lib/functions/htmlChunk';
 	let isGeneratingAbstract = false;
 	let isGeneratingTags = false;
 	let isTranslatingContent = false;
-let translationChunksTotal = 0;
-let translationChunksCompleted = 0;
+	let translationChunksTotal = 0;
+	let translationChunksCompleted = 0;
 	let editorComponent: EditorHandle | null = null;
 	let topicInput = '';
 
@@ -114,7 +115,7 @@ let translationChunksCompleted = 0;
 			return;
 		}
 
-		articleContent.updated_at = new Date().toISOString();
+		// updated_at 由数据库触发器 touch_updated_at() 维护，客户端时钟不参与
 		articleContent.cover = coverImage?.id ?? null;
 		articleContent.published_at = localTime ? new Date(localTime).toISOString() : null;
 		articleContent.topic = topics;
@@ -560,9 +561,7 @@ let translationChunksCompleted = 0;
 	<div class="space-y-8 xl:col-span-3">
 		<!--title-->
 		<div>
-				<label for="title" class="block text-sm font-medium leading-6 text-gray-900"
-					>标题</label
-				>
+			<label for="title" class="block text-sm font-medium leading-6 text-gray-900">标题</label>
 			<div class="mt-2">
 				<input
 					type="text"
@@ -617,9 +616,7 @@ let translationChunksCompleted = 0;
 
 		<!--subtitle-->
 		<div>
-			<label for="subtitle" class="block text-sm font-medium leading-6 text-gray-900"
-				>副标题</label
-			>
+			<label for="subtitle" class="block text-sm font-medium leading-6 text-gray-900">副标题</label>
 			<div class="mt-2">
 				<input
 					type="text"
@@ -657,9 +654,7 @@ let translationChunksCompleted = 0;
 	<aside class="col-span-1 space-y-8">
 		<!--发布时间-->
 		<div>
-			<label for="publish-time" class="text-sm font-medium leading-6 text-gray-900"
-				>发布时间</label
-			>
+			<label for="publish-time" class="text-sm font-medium leading-6 text-gray-900">发布时间</label>
 			<input
 				type="datetime-local"
 				class="mt-2 w-full rounded-md border-0 p-1.5 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-cyan-600 sm:text-sm sm:leading-6"
@@ -713,9 +708,7 @@ let translationChunksCompleted = 0;
 		<!--分类-->
 		<div>
 			<header class="flex justify-between">
-				<label class="text-sm font-medium leading-6 text-gray-900" for="category"
-					>分类</label
-				>
+				<label class="text-sm font-medium leading-6 text-gray-900" for="category">分类</label>
 				<a href="/admin/category/new" target="_blank">
 					<AddIcon classList="h-4 w-4 text-gray-400 hover:text-cyan-600" />
 				</a>
@@ -740,9 +733,7 @@ let translationChunksCompleted = 0;
 		<!--话题-->
 		<div>
 			<div class="flex justify-between">
-				<label for="abstract" class="block text-sm font-medium leading-6 text-gray-900"
-					>话题</label
-				>
+				<label for="abstract" class="block text-sm font-medium leading-6 text-gray-900">话题</label>
 				<button
 					type="button"
 					on:click={generateTags}
@@ -825,9 +816,7 @@ let translationChunksCompleted = 0;
 		<!--摘要-->
 		<div>
 			<div class="flex justify-between">
-				<label for="abstract" class="block text-sm font-medium leading-6 text-gray-900"
-					>摘要</label
-				>
+				<label for="abstract" class="block text-sm font-medium leading-6 text-gray-900">摘要</label>
 				<button
 					type="button"
 					on:click={generateAbstract}
@@ -897,9 +886,7 @@ let translationChunksCompleted = 0;
 					type="checkbox"
 					class="h-4 w-4 rounded border-gray-300 text-cyan-600 focus:ring-cyan-600"
 				/>
-				<label for="is_premium" class="font-medium text-gray-900 text-sm"
-					>登录后可见</label
-				>
+				<label for="is_premium" class="font-medium text-gray-900 text-sm">登录后可见</label>
 			</div>
 		</div>
 
