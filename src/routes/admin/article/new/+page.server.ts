@@ -101,48 +101,66 @@ export const load: PageServerLoad = async ({ url, locals: { supabase } }) => {
 				.eq('id', parseIdParam(copyFromId ?? '', '源文章'))
 				.single()
 		]);
+		if (allLanguagesRes.error) {
+			error(500, { message: allLanguagesRes.error.message });
+		}
+
 		allLanguages = allLanguagesRes.data;
-		currentLanguage = allLanguages?.find((lang) => lang.id === Number(targetLangId));
 
 		if (sourceError) {
 			console.error(sourceError);
 			error(sourceError.code === 'PGRST116' ? 404 : 500, { message: sourceError.message });
 		}
 
+		// 目标语言由 ?lang= 指定；缺省或指向一门不存在的语言时退回源文章的语言，
+		// 而不是靠 currentLanguage! 断言出一个运行时崩溃
+		currentLanguage =
+			allLanguages.find((lang) => lang.id === Number(targetLangId)) ??
+			allLanguages.find((lang) => lang.id === sourceArticle.lang);
+
+		if (!currentLanguage) {
+			error(500, { message: `语言 ${targetLangId ?? sourceArticle.lang} 在 language 表中不存在` });
+		}
+
 		articleContent = {
-			title: sourceArticle!.title,
-			subtitle: sourceArticle!.subtitle,
-			slug: sourceArticle!.slug,
-			abstract: sourceArticle!.abstract,
-			is_top: sourceArticle!.is_top,
-			is_draft: sourceArticle!.is_draft,
-			is_featured: sourceArticle!.is_featured,
-			is_premium: sourceArticle!.is_premium,
-			lang: currentLanguage!.id,
-			content_json: sourceArticle!.content_json,
-			content_html: sourceArticle!.content_html,
-			content_text: sourceArticle!.content_text,
-			cover: sourceArticle!.cover,
-			topic: sourceArticle!.topic,
-			category: sourceArticle!.category,
-			published_at: sourceArticle!.published_at
+			title: sourceArticle.title,
+			subtitle: sourceArticle.subtitle,
+			slug: sourceArticle.slug,
+			abstract: sourceArticle.abstract,
+			is_top: sourceArticle.is_top,
+			is_draft: sourceArticle.is_draft,
+			is_featured: sourceArticle.is_featured,
+			is_premium: sourceArticle.is_premium,
+			lang: currentLanguage.id,
+			content_json: sourceArticle.content_json,
+			content_html: sourceArticle.content_html,
+			content_text: sourceArticle.content_text,
+			cover: sourceArticle.cover,
+			topic: sourceArticle.topic,
+			category: sourceArticle.category,
+			published_at: sourceArticle.published_at
 		};
 
 		// categories 与 otherVersions 都只依赖 currentLanguage，可并行
-		[categories, otherVersions] = await Promise.all([
+		const [categoriesRes, versionsRes] = await Promise.all([
 			supabase
 				.from('category')
 				.select('id, title, slug')
-				.eq('lang', currentLanguage!.id)
-				.eq('type', 'article')
-				.then((res) => res.data),
+				.eq('lang', currentLanguage.id)
+				.eq('type', 'article'),
 			supabase
 				.from('article')
 				.select('id, lang (id, lang, locale)')
 				.eq('slug', articleContent.slug)
-				.neq('lang', currentLanguage!.id)
-				.then((res) => res.data)
+				.neq('lang', currentLanguage.id)
 		]);
+
+		if (categoriesRes.error) {
+			error(500, { message: categoriesRes.error.message });
+		}
+
+		categories = categoriesRes.data;
+		otherVersions = versionsRes.data;
 	}
 
 	return {

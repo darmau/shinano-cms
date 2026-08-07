@@ -5,6 +5,7 @@ import { env } from '$env/dynamic/private';
 import { sequence } from '@sveltejs/kit/hooks';
 import { resolveIsAdmin } from '$lib/server/auth';
 import type { Database } from '$lib/types/database';
+import type { Session, User } from '@supabase/supabase-js';
 
 const supabase: Handle = async ({ event, resolve }) => {
 	const supabaseClient = createServerClient<Database>(
@@ -24,15 +25,25 @@ const supabase: Handle = async ({ event, resolve }) => {
 
 	event.locals.supabase = supabaseClient;
 
-	event.locals.safeGetSession = async () => {
+	// 每个请求只解析一次。此前 authGuard、根 layout 和 admin/+layout.server 各调一次
+	// safeGetSession，也就是每次页面加载都有三趟 getUser() 网络往返。
+	let sessionPromise: Promise<{ session: Session | null; user: User | null }> | null = null;
+
+	const resolveSession = async () => {
 		try {
 			const {
 				data: { user },
-				error
+				error: userError
 			} = await supabaseClient.auth.getUser();
 
-			if (error) {
-				throw error;
+			if (userError) {
+				// 未登录（没 cookie / token 过期）是正常状态，不值得记；
+				// 其余错误意味着 Supabase 侧出了问题，静默吞掉的话表现为
+				// 无限跳回登录页且日志里什么都没有。
+				if (userError.status !== 401 && userError.status !== 403) {
+					console.error('[auth] getUser failed:', userError.message);
+				}
+				return { session: null, user: null };
 			}
 
 			if (!user) {
@@ -44,9 +55,15 @@ const supabase: Handle = async ({ event, resolve }) => {
 			} = await supabaseClient.auth.getSession();
 
 			return { session, user };
-		} catch {
+		} catch (err) {
+			console.error('[auth] session resolution threw:', err);
 			return { session: null, user: null };
 		}
+	};
+
+	event.locals.safeGetSession = () => {
+		sessionPromise ??= resolveSession();
+		return sessionPromise;
 	};
 
 	return resolve(event, {
