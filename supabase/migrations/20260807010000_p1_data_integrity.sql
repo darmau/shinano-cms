@@ -139,6 +139,19 @@ $$;
 --
 -- 后果具体而致命：/admin/article/new 的 .eq('is_default', true).single() 会因为
 -- 零行而抛错，创建文章的入口直接崩掉。
+--
+-- 另外两处一并修掉（都是在本地 Postgres 上实测出来的）：
+--
+--   · 原函数体设了 search_path = '' 却写 `UPDATE language`（不带 schema），
+--     这个分支只要执行就会报 "relation \"language\" does not exist"。
+--
+--   · 补选下一个默认语言这件事必须放在 AFTER DELETE 而不是 BEFORE DELETE。
+--     在 BEFORE 里改另一行会递归触发本触发器的 UPDATE 分支，那个分支又要去把
+--     "其他 is_default = true 的行"置 false —— 而此刻唯一符合条件的正是那条
+--     马上要被删除的行，于是 Postgres 直接报
+--     "tuple to be deleted was already modified by an operation triggered by
+--     the current command"，删除语言这个操作整个失败。
+--     放到 AFTER 之后行已经不在表里，选下一个默认语言时天然排除了它。
 -- ---------------------------------------------------------------------------
 
 create or replace function public.manage_default_language()
@@ -148,31 +161,35 @@ security invoker
 set search_path = ''
 as $$
 begin
-  if (tg_op = 'INSERT' or tg_op = 'UPDATE') and new.is_default is true then
-    update public.language set is_default = false where id <> new.id and is_default is true;
+  if tg_op = 'INSERT' or tg_op = 'UPDATE' then
+    if new.is_default is true then
+      update public.language set is_default = false
+      where id <> new.id and is_default is true;
+    end if;
     return new;
   end if;
 
-  if tg_op = 'DELETE' and old.is_default is true then
-    -- 关键修复：排除正在被删除的行。若这是最后一门语言，则不做任何事。
+  -- AFTER DELETE：被删的行已经不在表里了
+  if old.is_default is true then
     update public.language
     set is_default = true
-    where id = (
-      select id from public.language
-      where id <> old.id
-      order by id asc
-      limit 1
-    );
-    return old;
+    where id = (select id from public.language order by id asc limit 1);
   end if;
 
-  if tg_op = 'DELETE' then
-    return old;
-  end if;
-
-  return new;
+  return null;  -- AFTER 触发器的返回值会被忽略
 end;
 $$;
+
+drop trigger if exists manage_default_language on public.language;
+drop trigger if exists manage_default_language_after_delete on public.language;
+
+create trigger manage_default_language
+  before insert or update on public.language
+  for each row execute function public.manage_default_language();
+
+create trigger manage_default_language_after_delete
+  after delete on public.language
+  for each row execute function public.manage_default_language();
 
 
 -- ---------------------------------------------------------------------------
