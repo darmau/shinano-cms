@@ -515,12 +515,26 @@ FOREIGN KEY ("to_photo") REFERENCES photo ("id") ON UPDATE CASCADE ON DELETE CAS
   错误页的 HTML 写进 slug 输入框。
 - 文章与相册的删除**此前完全没有确认**（而且没有回收站）。
 
-### 你需要做的
+### 迁移已全部应用（2026-08-07）
 
-```bash
-pnpm db:push     # 应用 20260807040000（相册原子保存）——不应用的话相册保存会失败
-pnpm db:types    # 重新生成类型，然后 lib/api/photo.ts 里那个临时 cast 就能删了
-```
+`20260807040000` 已推送到生产库，类型已重新生成。
+
+一个值得记住的坑：远端的 `supabase_migrations.schema_migrations` 当时是**空的**——
+P0 与 P1 是在 SQL Editor 里手工执行的，CLI 并不知道。这种状态下直接 `db push`
+会从 P0 开始重跑，而 P0 不幂等（`create policy` 撞上已存在的策略），整个 push 会失败。
+
+正确做法是先核实那四个迁移确实已经生效（九个新索引都在、该删的都不在、
+`message.contact_type` 已 NOT NULL、`users.current_ip` 已是 inet），再用
+`supabase migration repair --status applied <version>...` 补登记，
+之后 `db push` 就只会应用真正还没跑过的那一个。
+
+**今后一律用 `pnpm db:push`**，不要再在 SQL Editor 里手工执行迁移——
+否则历史记录又会和实际状态脱节，下一次就得重新做一遍这套核对。
+
+### P2-3 的验证方式
+
+去后台随便打开一个相册，改动图片顺序后保存，确认图片没有丢、顺序正确。
+保存现在是一次 RPC 调用，中途失败不会再留下"图片被删光但没插回去"的状态。
 
 ### 刻意未做的部分
 
