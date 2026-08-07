@@ -1294,6 +1294,10 @@ export type Database = {
 			};
 			postgis_version: { Args: never; Returns: string };
 			postgis_wagyu_version: { Args: never; Returns: string };
+			save_photo_with_images: {
+				Args: { p_images?: Json; p_photo: Json; p_photo_id?: number };
+				Returns: number;
+			};
 			st_3dclosestpoint: {
 				Args: { geom1: unknown; geom2: unknown };
 				Returns: unknown;
