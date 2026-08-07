@@ -338,14 +338,14 @@ imageResponse = await fetch(resizedImageUrl);
 四个迁移文件已在本地 Postgres 16 上**完整重放并断言通过**（`./supabase/tests/run.sh`），
 代码改动通过 `svelte-check`（0 错误）、24 项单元测试与 `pnpm build`。
 
-| 项                        | 状态           | 落点                                                                                          |
-| ------------------------- | -------------- | --------------------------------------------------------------------------------------------- |
-| P1-1 init.sql 尾逗号      | ✅ 已修        | 上一轮完成                                                                                    |
-| P1-2 版本化迁移工作流     | ✅ 代码已就绪  | supabase CLI 进 devDependency、`db:*` 脚本、`supabase/README.md`、init.sql 降级为 `legacy/`   |
-| P1-2 本地重放测试         | ✅ 新增        | `supabase/tests/run.sh`（一次性容器里重放全部迁移并断言行为）                                 |
-| P1-3 数据完整性           | ⏳ 待应用      | `20260807010000_p1_data_integrity.sql` + 两个编辑器不再自己发 `updated_at`                    |
-| P1-4 索引优化             | ⏳ 待应用      | `20260807020000_p1_indexes.sql`                                                               |
-| P1-5 类型与函数清理       | ⏳ 待应用      | `20260807030000_p1_types_and_cleanup.sql`                                                     |
+| 项                    | 状态          | 落点                                                                                        |
+| --------------------- | ------------- | ------------------------------------------------------------------------------------------- |
+| P1-1 init.sql 尾逗号  | ✅ 已修       | 上一轮完成                                                                                  |
+| P1-2 版本化迁移工作流 | ✅ 代码已就绪 | supabase CLI 进 devDependency、`db:*` 脚本、`supabase/README.md`、init.sql 降级为 `legacy/` |
+| P1-2 本地重放测试     | ✅ 新增       | `supabase/tests/run.sh`（一次性容器里重放全部迁移并断言行为）                               |
+| P1-3 数据完整性       | ⏳ 待应用     | `20260807010000_p1_data_integrity.sql` + 两个编辑器不再自己发 `updated_at`                  |
+| P1-4 索引优化         | ⏳ 待应用     | `20260807020000_p1_indexes.sql`                                                             |
+| P1-5 类型与函数清理   | ⏳ 待应用     | `20260807030000_p1_types_and_cleanup.sql`                                                   |
 
 ### 🆕 本轮新发现【HIGH】新增语言在生产库里必然失败
 
@@ -477,11 +477,70 @@ FOREIGN KEY ("to_photo") REFERENCES photo ("id") ON UPDATE CASCADE ON DELETE CAS
 
 ---
 
+## P2 执行状态：✅ 主体完成（2026-08-07）
+
+代码改动通过 `svelte-check`（0 错误）、29 项单元测试与 `pnpm build`；
+新增的数据库函数已用 `./supabase/tests/run.sh` 在本地 Postgres 上验证。
+
+| 项                         | 状态              | 落点                                                                                     |
+| -------------------------- | ----------------- | ---------------------------------------------------------------------------------------- |
+| P2-1 生成数据库类型        | ✅ 完成           | `src/lib/types/database.ts`；三处客户端加泛型；删掉约 200 行手写规范化器                 |
+| P2-2 危险写操作移回服务端  | ✅ 完成           | `lib/server/actions.ts` + 各列表页 form actions；删除/审核/角色改动全部服务端            |
+| P2-3 多步写入加事务        | ⏳ 待 `db:push`   | `20260807040000_p2_save_photo_atomically.sql` + `lib/api/photo.ts`                       |
+| P2-4 消除重复代码          | ✅ 分页与 AI 管道 | `lib/server/pagination.ts`（8 处 → 1）、`lib/functions/aiActions.ts`（约 300 行 → 1 份） |
+| P2-6 错误处理统一          | ✅ 完成           | `hooks.server.ts` 每请求缓存 + 记录非 auth 错误；删掉 `!` 断言与被吞掉的 error           |
+| P2-5 迁移到 Svelte 5 runes | ⛔ 未做（见下）   | —                                                                                        |
+
+### 类型化立刻暴露的 52 处真实不一致（都已修）
+
+`supabase gen types` 不是形式主义。加上泛型的当天就编译失败了 52 处，其中包括：
+
+- 六个 load 函数把路由字符串直接传给 bigint 主键。`/admin/article/edit/abc` 换来的是
+  一个 bigint 解析失败的 500，而不是 404。
+- `category/new` 整个 payload 是 `Record<string, any>`，`lang` 一直是以字符串发出去的。
+- `EditImage` 把 `FormDataEntryValue`（可能是 File）直接写进数据库，并且把 `''`
+  写进 `taken_at` —— 那不是合法的 timestamptz。
+- 两个编辑器都可能发出 `category: null`，而 P1-3 刚把它设成 NOT NULL。
+
+### 顺手修掉的既有 bug（都在改动路径上）
+
+- `deleteBooks` / `deleteMessages` 用 try/catch 包 supabase 调用，而 supabase-js
+  是**返回**错误不是抛错 —— catch 是死代码，批量删除失败时提示的是"成功删除"。
+- 所有删除都不看实际删掉了几行。RLS 拒绝在 PostgREST 里不是错误，是零行受影响，
+  于是越权删除看起来完全成功。
+- 屏蔽评论只改 `is_blocked` 不改 `is_public`，一条评论可以同时是"已屏蔽"和"公开"。
+- 分页的 path 截断用页码字符串在整个路径里做首次匹配，第 1 页会截错。
+- `Pagination` 首页的"上一页"链到第 0 页，末页的"下一页"越界。
+- AI 端点全部 `.then(res => res.text())` 不看 `res.ok`，500 时会把 SvelteKit
+  错误页的 HTML 写进 slug 输入框。
+- 文章与相册的删除**此前完全没有确认**（而且没有回收站）。
+
+### 你需要做的
+
+```bash
+pnpm db:push     # 应用 20260807040000（相册原子保存）——不应用的话相册保存会失败
+pnpm db:types    # 重新生成类型，然后 lib/api/photo.ts 里那个临时 cast 就能删了
+```
+
+### 刻意未做的部分
+
+- **P2-5（Svelte 5 runes）**：103 个文件用 `export let`。计划里自己写着"建议在
+  P2-4 组件瘦身之后再做，在 1000 行组件上做风险大"——而组件瘦身还没做，
+  所以顺序还没轮到它。这是纯机械但面积极大的改动，值得单独一轮。
+- **P2-4 的组件拆分**（`ContentMetaPanel`、new/edit 路由合并）：这一轮做的是
+  纯逻辑去重（分页、AI 管道），拆 UI 组件会和 P3 的编辑器改动（自动保存、
+  乐观锁、预览）撞在同一批文件上，一起做返工更少。
+- **P2-2 的剩余写操作**：设置页 upsert、书/分类的新建编辑、想法编辑、图片元数据。
+  这些不具破坏性，按同一套 `lib/server/actions.ts` + `lib/api/actions.ts` 的模式
+  接着搬即可，路子已经铺好。
+
+---
+
 ## P2 — 架构重构
 
 > 这一层没有安全紧迫性，但它决定了 P0 类问题会不会再次发生。建议按 P2-1 → P2-5 顺序，因为后面的重构依赖前面的类型基础。
 
-### P2-1 生成数据库类型（投入产出比最高，先做）
+### P2-1 生成数据库类型（投入产出比最高，先做）—— ✅ 已完成（2026-08-07）
 
 `src/app.d.ts:12` 把 locals 标成裸 `SupabaseClient` 而非 `SupabaseClient<Database>`，且没有 `supabase gen types` 产物。后果是每个 load 函数手写运行时规范化器：`article/[lang]/[page]/+page.server.ts:11-76` 是 65 行 `typeof x !== 'number'` 守卫，`photo/[lang]/[page]/+page.server.ts:12-121` 是另外 110 行几乎相同的守卫，`comment/[page]/+page.svelte:11-30` 又内联重声明了一遍行类型。
 
@@ -491,7 +550,7 @@ supabase gen types typescript --linked > src/lib/types/database.ts
 
 然后在 `app.d.ts` 和 `hooks.server.ts` 一次性给 client 加泛型，**删掉约 200 行手写规范化代码** —— 查询结果从源头就有类型。
 
-### P2-2 把写操作移回服务端
+### P2-2 把写操作移回服务端 —— ✅ 危险操作已完成，其余待搬（2026-08-07）
 
 当前：读走 `+page.server.ts` 的 `locals.supabase`（正确），但**全部 45 处 `.insert/.update/.delete` 分散在 22 个 `.svelte` 文件里**，直连浏览器端 Supabase。全 repo 唯一的 form actions 是 auth 三件套。
 
@@ -501,13 +560,13 @@ supabase gen types typescript --linked > src/lib/types/database.ts
 
 **方案**：每个实体建 form actions（或 remote functions），走 `locals.supabase`，校验失败返回 `fail(400, ...)`。浏览器端 Supabase 只保留给 realtime 和上传。优先迁移危险操作：删除、发布、评论审核。
 
-### P2-3 多步写入加事务
+### P2-3 多步写入加事务 —— ⏳ 迁移与代码就绪，待 `pnpm db:push`
 
 `PhotoEditor.svelte:76-186` 保存相册的流程是：update `photo` → **删光全部 `photo_image` 行**（`:112-119`）→ 重新插入（`:182`），三次独立的浏览器调用。删除成功后若插入失败，相册的图片与排序**永久丢失**。thought 保存有同类风险。
 
 **方案**：写一个 Postgres 函数 `save_photo_with_images(photo_data jsonb, images jsonb)` 用 `supabase.rpc()` 调用，让"先删后插"在单个事务内原子完成。
 
-### P2-4 消除重复代码
+### P2-4 消除重复代码 —— ✅ 分页与 AI 管道已抽出；组件拆分留到 P3 一起做
 
 | 重复                 | 位置                                                                                                                                                            | 方案                                                                                                                                                                                                                                                                                               |
 | -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -519,7 +578,7 @@ supabase gen types typescript --linked > src/lib/types/database.ts
 **巨型组件行数**（拆分目标：编辑器降到 300 行内）：
 `PhotoEditor.svelte` 1029 ｜ `ArticleEditor.svelte` 926 ｜ `editor/Tiptap.svelte` 729 ｜ `image/ImageGrid.svelte` 448 ｜ `image/AIImageGenerator.svelte` 361 ｜ `editor/ImagesModel.svelte` 354
 
-### P2-5 迁移到 Svelte 5 runes
+### P2-5 迁移到 Svelte 5 runes —— ⛔ 本轮未做（等组件瘦身之后）
 
 0 个文件使用 runes，103 个文件用 `export let`，到处是 `$:`。`svelte.config.js:8` 甚至钉死了 `runes: undefined` 同时又开启 `compilerOptions.experimental.async` —— 最前沿的开关配三年前的写法。
 
@@ -527,7 +586,7 @@ legacy 模式造成的实际别扭：`thought/edit/[id]/+page.svelte:24-32` 先�
 
 **建议在 P2-4 组件瘦身之后再做** —— 机械工作，但在 1000 行组件上做风险大。完成后打开 `runes: true` 揪出遗留写法。
 
-### P2-6 错误处理统一
+### P2-6 错误处理统一 —— ✅ 已完成（2026-08-07）
 
 - `article/[lang]/[page]/+page.server.ts:81` 的 `throw error(303, 'Unauthorized')` —— **303 不是错误状态码**，SvelteKit 的 `error()` 期望 4xx/5xx。应为 `redirect(303, '/auth/login')`；而且 `hooks.server.ts:52-76` 已守卫所有非 auth 路由，这行本就多余。其他 admin load 都不重复检查 session，故此处既错又不一致。
 - count 查询的错误被静默吞掉（`thought/[page]/+page.server.ts:9-10` 解构 `{ count }` 不检查 error，而数据查询的 error 却处理了）；`article/[lang]:123-125` 的 `languagesError` 只 `console.error`，页面照常渲染出空的语言切换器。
