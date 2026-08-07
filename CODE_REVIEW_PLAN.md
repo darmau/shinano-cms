@@ -333,6 +333,63 @@ imageResponse = await fetch(resizedImageUrl);
 
 ---
 
+## P1 执行状态：✅ 代码与迁移已就绪，等待应用到生产库（2026-08-07）
+
+四个迁移文件已在本地 Postgres 16 上**完整重放并断言通过**（`./supabase/tests/run.sh`），
+代码改动通过 `svelte-check`（0 错误）、24 项单元测试与 `pnpm build`。
+
+| 项                        | 状态           | 落点                                                                                          |
+| ------------------------- | -------------- | --------------------------------------------------------------------------------------------- |
+| P1-1 init.sql 尾逗号      | ✅ 已修        | 上一轮完成                                                                                    |
+| P1-2 版本化迁移工作流     | ✅ 代码已就绪  | supabase CLI 进 devDependency、`db:*` 脚本、`supabase/README.md`、init.sql 降级为 `legacy/`   |
+| P1-2 本地重放测试         | ✅ 新增        | `supabase/tests/run.sh`（一次性容器里重放全部迁移并断言行为）                                 |
+| P1-3 数据完整性           | ⏳ 待应用      | `20260807010000_p1_data_integrity.sql` + 两个编辑器不再自己发 `updated_at`                    |
+| P1-4 索引优化             | ⏳ 待应用      | `20260807020000_p1_indexes.sql`                                                               |
+| P1-5 类型与函数清理       | ⏳ 待应用      | `20260807030000_p1_types_and_cleanup.sql`                                                     |
+
+### 🆕 本轮新发现【HIGH】新增语言在生产库里必然失败
+
+`insert_default_categories()` 设了 `search_path = ''` 却写 `INSERT INTO category`（不带 schema），
+必然抛 `relation "category" does not exist`。它挂在 `language` 表的 AFTER INSERT 上——
+**也就是说"新增一门语言"这个操作现在是坏的**，而多语言正是这个 CMS 的核心功能。
+同类问题在 `manage_default_language()` 里也有（`UPDATE language`）。两处都已在迁移中限定为 `public.`。
+
+这个问题原审查没发现，是本地重放时一跑就炸出来的——它也顺带证明了 P1-2 的价值：
+在能重放之前，这种"只在特定分支才触发"的错误只能等用户去踩。
+
+同样由本地重放抓到的还有：补选下一个默认语言的逻辑必须放在 AFTER DELETE，
+写在 BEFORE DELETE 会因为递归触发而报 `tuple to be deleted was already modified`，
+表现为"删除语言永远失败"。
+
+### 应用步骤
+
+```bash
+./supabase/tests/run.sh          # 先本地重放一遍，确认全绿
+pnpm exec supabase login         # 需要你在浏览器里授权
+pnpm db:link --project-ref <ref>
+pnpm db:pull                     # ★ 拿到生产库真实基线，这是 P1-2 的关键一步
+pnpm db:push                     # 应用三个 P1 迁移
+```
+
+不想装 CLI 的话，三个迁移文件都可以直接粘进 SQL Editor 执行（自带事务、重复执行安全），
+但那样 `supabase_migrations.schema_migrations` 不会有记录，补登记方式见 `supabase/README.md`。
+
+### 应用后需要你确认的事项
+
+1. **看迁移输出里的 WARNING**。P1-3 对存在 NULL 的列不会强加 NOT NULL，而是列出来跳过——
+   清理完那些行再跑一次同一个文件即可补上。这类行在后台是看不见的（`toArticleListItem`
+   会静默丢弃 title/slug 为 null 的行），只能在 SQL Editor 里处理。
+2. **P1-5.1 的 JSONB 转换若报 WARNING**，说明该列被某个视图依赖（生产库有快照文件里
+   没有的 `random_{en,jp,zh}_photos`）。需要先 `drop view`、转换、再重建视图。
+3. **`article.category` 变成 NOT NULL 之后**，任何绕过后台直接写 article 的脚本都要带分类。
+
+### 之后的顺序
+
+P2-1（生成 DB 类型，`pnpm db:types`，link 完就能跑）→ P2-2（写操作移回服务端）
+→ P2-2 完成后才能给 cookie 加 `httpOnly`。
+
+---
+
 ## P1 — 数据完整性与迁移工作流
 
 ### P1-1 【CRITICAL】`init.sql` 无法执行，schema 已与生产库漂移 —— ✅ 尾逗号已修（2026-08-07）
@@ -348,7 +405,13 @@ FOREIGN KEY ("to_photo") REFERENCES photo ("id") ON UPDATE CASCADE ON DELETE CAS
 
 **修复**：删掉尾逗号，然后立刻做 P1-2。
 
-### P1-2 建立版本化迁移工作流（这是防止问题复发的关键）
+### P1-2 建立版本化迁移工作流（这是防止问题复发的关键）—— ✅ 已就绪（2026-08-07）
+
+> 已完成：CLI 进 devDependency + `db:link/pull/diff/push/reset/types` 脚本、
+> `supabase/config.toml`、`supabase/README.md`（含无 CLI 时的降级方案）、
+> `src/migration/init.sql` → `supabase/legacy/init_snapshot.sql`、
+> `supabase/tests/run.sh` 本地重放测试。
+> **剩下 `supabase login` / `db link` / `db pull` 三步需要你的凭据**，见上方"应用步骤"。
 
 当前是单个 1267 行、放在非标准路径、手工编辑的快照文件，且里面还残留死调试代码（`init.sql:1248-1268` 的测试 SELECT，引用了不存在的语言代码 `'zh'/'en'/'jp'`，而种子数据插的是 `'zh-CN'`）。
 
@@ -361,7 +424,7 @@ FOREIGN KEY ("to_photo") REFERENCES photo ("id") ON UPDATE CASCADE ON DELETE CAS
 5. `src/migration/init.sql` 降级为文档或直接删除
 6. P0 的所有 SQL 修复都应作为**独立的、可审计的迁移文件**提交，而不是再次手改 init.sql
 
-### P1-3 数据完整性修复
+### P1-3 数据完整性修复 —— ⏳ 迁移已写好待应用（`20260807010000_p1_data_integrity.sql`）
 
 | 问题                          | 位置                                                                                                                        | 修复                                                                                                                                                                                                                        |
 | ----------------------------- | --------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -372,7 +435,7 @@ FOREIGN KEY ("to_photo") REFERENCES photo ("id") ON UPDATE CASCADE ON DELETE CAS
 | `updated_at` 由浏览器时钟决定 | 无触发器；`ArticleEditor.svelte:117`、`PhotoEditor.svelte:91,142`                                                           | 后台列表按 `updated_at` 排序，客户端时钟偏移会打乱顺序；任何忘记赋值的写路径会留下陈旧值。启用 `moddatetime` 扩展加触发器（article/photo/thought），删掉客户端赋值                                                          |
 | 正文内嵌图片无引用追踪        | 无 `image_usage` 表                                                                                                         | 封面 FK 是 `ON DELETE SET NULL`（`init.sql:70,112,189`）会静默消失；正文 `content_html` 里的图片**完全无 FK**，删除后已发布文章直接 404。见 P3-4                                                                            |
 
-### P1-4 索引优化
+### P1-4 索引优化 —— ⏳ 迁移已写好待应用（`20260807020000_p1_indexes.sql`）
 
 | 操作                                                                                                       | 原因                                                                                          |
 | ---------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
@@ -384,7 +447,18 @@ FOREIGN KEY ("to_photo") REFERENCES photo ("id") ON UPDATE CASCADE ON DELETE CAS
 | **删除** `thought_image(thought_id)`、`photo_image(photo_id)`                                              | 与主键前导列重复，纯负担                                                                      |
 | **删除** `is_draft` 布尔索引（`init.sql:129,206`）、`image("date")`（`:55`）、`category("title")`（`:74`） | 选择性极低或应用从不查询；`published_at` 的部分索引已覆盖有用场景                             |
 
-### P1-5 类型与杂项清理
+### P1-5 类型与杂项清理 —— ⏳ 迁移已写好待应用（`20260807030000_p1_types_and_cleanup.sql`）
+
+> 已覆盖：JSONB 转换、`current_ip` → INET、`is_admin`/`user_is_blocked` 改 SQL STABLE
+> 并把策略里的调用包成 `(select ...)`、`get_article_count_by_year` 加 `is_draft = false`、
+> `book.rate` CHECK、`message.contact_type` 默认值与 NOT NULL、`stats.date` 默认 `CURRENT_DATE`、
+> `storage_key` 默认改 `gen_random_uuid()`、以及新发现的 `insert_default_categories()` 限定修复。
+>
+> **刻意未做**（迁移文件末尾有完整理由）：`photo_image."order"` 改名（与 P2-3 同一条写入路径，
+> 一起做只需改一次调用方）、删 `image.date`（`/api/image` 仍在写它）、`contact_type` 的取值集合
+> （产品决策，猜错会让访客留言失败）、`config` 迁 Vault、合并重复 SELECT 策略（无 RLS 测试前不动 RLS）。
+> 另：`src/routes/admin/video/+page.svelte` 确认是 1 行占位页，未被导航引用，也没有对应的表——
+> 要删还是要做，是产品决策。
 
 - `content_json`/`exif`/`ip_info` 从 `JSON` 改为 `JSONB`（`get_photo_map_geojson` 目前每行重新解析文档）。`content_json` 是写多读少的 Tiptap 状态，优先级最低。
 - `image.date TEXT` 与 `taken_at TIMESTAMPTZ` 重复 —— 保留一个有类型的。
