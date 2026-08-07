@@ -3,6 +3,8 @@ import exifr from 'exifr';
 import getDateFormat from '$lib/functions/dateFormat';
 import { deleteFromR2, getR2Bucket, type CfPlatform, uploadToR2 } from '$lib/server/r2';
 import { resolveLocationWithSupabase } from '$lib/server/location';
+import { requireAdmin } from '$lib/server/auth';
+import { MAX_UPLOAD_BYTES, assertStorageKeys, isAllowedUploadType } from '$lib/server/media';
 
 type ExifMetadata = Record<string, unknown>;
 
@@ -222,7 +224,10 @@ function extractGpsPoint(exif: ExifMetadata | null | undefined): GeoJsonPoint | 
 	};
 }
 
-export const POST: RequestHandler = async ({ request, locals: { supabase }, platform }) => {
+export const POST: RequestHandler = async ({ request, locals, platform }) => {
+	await requireAdmin(locals);
+
+	const { supabase } = locals;
 	const formData = await request.formData();
 	const file = formData.get('file');
 	const width = toOptionalString(formData.get('width'));
@@ -230,6 +235,14 @@ export const POST: RequestHandler = async ({ request, locals: { supabase }, plat
 
 	if (!(file instanceof File)) {
 		error(400, 'Bad request: Missing `file`');
+	}
+
+	if (!isAllowedUploadType(file.type)) {
+		error(415, `Unsupported media type: ${file.type || 'unknown'}`);
+	}
+
+	if (file.size > MAX_UPLOAD_BYTES) {
+		error(413, `File too large: ${file.size} bytes (max ${MAX_UPLOAD_BYTES})`);
 	}
 
 	const bucket = getR2Bucket(platform as CfPlatform);
@@ -289,6 +302,10 @@ export const POST: RequestHandler = async ({ request, locals: { supabase }, plat
 
 	if (saveDataError) {
 		console.error(saveDataError);
+		// 对象已经写进 R2 了，入库失败就把它删掉，否则桶里会留下永远无人引用的孤儿文件
+		await deleteFromR2(bucket, [storageKey]).catch((cleanupError) => {
+			console.error('Failed to roll back orphaned R2 object', storageKey, cleanupError);
+		});
 		error(502, 'Error saving data');
 	}
 
@@ -298,32 +315,41 @@ export const POST: RequestHandler = async ({ request, locals: { supabase }, plat
 	});
 };
 
-export const DELETE: RequestHandler = async ({ request, locals: { supabase }, platform }) => {
-	const { keys }: { keys: string[] } = await request.json();
+export const DELETE: RequestHandler = async ({ request, locals, platform }) => {
+	await requireAdmin(locals);
 
-	if (!Array.isArray(keys) || keys.length === 0) {
-		error(400, 'Bad request: Missing `keys`');
-	}
+	const { supabase } = locals;
+	const payload = await request.json().catch(() => null);
+	const keys = assertStorageKeys(payload?.keys);
 
 	const bucket = getR2Bucket(platform as CfPlatform);
 	if (!bucket) {
 		error(500, 'R2 bucket binding is not configured');
 	}
 
-	await deleteFromR2(bucket, keys);
-
-	const { error: deleteDataError } = await supabase
+	// 先删数据库再删 R2。反过来的话，一个被 RLS 拒绝的请求会先把对象真实销毁，
+	// 然后才返回错误 —— 文件没了，记录还在。
+	const { data: deletedRows, error: deleteDataError } = await supabase
 		.from('image')
 		.delete()
 		.in('storage_key', keys)
-		.select();
+		.select('storage_key');
 
 	if (deleteDataError) {
 		console.error(deleteDataError);
 		error(502, 'Error deleting data');
 	}
 
-	return new Response(`Successfully deleted ${keys.length} images`, {
+	// 只删数据库确实删掉了的那些对象
+	const deletedKeys = (deletedRows ?? [])
+		.map((row) => (row as { storage_key: string }).storage_key)
+		.filter((key): key is string => typeof key === 'string');
+
+	if (deletedKeys.length) {
+		await deleteFromR2(bucket, deletedKeys);
+	}
+
+	return new Response(`Successfully deleted ${deletedKeys.length} images`, {
 		headers: { 'Content-Type': 'text/plain' }
 	});
 };
