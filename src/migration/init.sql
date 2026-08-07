@@ -1,3 +1,13 @@
+-- ⚠️ 本文件是手工维护的初始快照，已经与生产库产生漂移，不要当作权威 schema。
+--    在 2026-08-07 之前它甚至无法完整执行（comment 表定义有一个尾逗号语法错误，
+--    导致其后的所有表、触发器和 RLS 策略都不会创建）。
+--
+--    此后的所有变更以 supabase/migrations/ 下的版本化迁移为准。本文件中的
+--    users / comment 相关 RLS 策略已被 20260807000000_p0_security_fixes.sql 取代，
+--    此处保留的是历史原貌。
+--
+--    重建权威 schema 的步骤见 CODE_REVIEW_PLAN.md 的 P1-2。
+
 CREATE EXTENSION IF NOT EXISTS postgis;
 
 CREATE TYPE ROLE AS ENUM('admin', 'reader', 'banned');
@@ -263,7 +273,7 @@ CREATE TABLE
     FOREIGN KEY ("reply_to") REFERENCES comment ("id") ON UPDATE CASCADE ON DELETE SET NULL,
     FOREIGN KEY ("to_article") REFERENCES article ("id") ON UPDATE CASCADE ON DELETE CASCADE,
     FOREIGN KEY ("to_thought") REFERENCES thought ("id") ON UPDATE CASCADE ON DELETE CASCADE,
-    FOREIGN KEY ("to_photo") REFERENCES photo ("id") ON UPDATE CASCADE ON DELETE CASCADE,
+    FOREIGN KEY ("to_photo") REFERENCES photo ("id") ON UPDATE CASCADE ON DELETE CASCADE
   );
 
 CREATE INDEX ON comment ("user_id");
