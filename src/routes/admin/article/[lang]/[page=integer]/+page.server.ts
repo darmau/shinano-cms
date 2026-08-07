@@ -3,6 +3,7 @@ import { error } from '@sveltejs/kit';
 import type { ArticleListItem, ArticleListPageData } from '$lib/types/article';
 import type { Language } from '$lib/types/photo';
 import type { PageServerLoad } from './$types';
+import { getPagination } from '$lib/server/pagination';
 
 // 这里原本有 65 行手写的运行时规范化器（逐个字段 typeof 校验后重新组装）。
 // 客户端加上 Database 泛型之后，select 的返回值从源头就有类型，那些校验既多余
@@ -14,8 +15,7 @@ export const load: PageServerLoad = async ({
 	params: { lang, page },
 	locals: { supabase }
 }) => {
-	const pageNumber = Number(page);
-	const limit = url.searchParams.get('limit') ? Number(url.searchParams.get('limit')) : 12;
+	const { page: pageNumber, limit, from, to, path } = getPagination(url, page);
 
 	const { count, error: countError } = await supabase
 		.from('article')
@@ -32,14 +32,12 @@ export const load: PageServerLoad = async ({
 			`id, title, subtitle, lang (id, locale), slug, category (id, title), is_draft, is_featured, is_top, is_premium, language!inner (lang)`
 		)
 		.eq('language.lang', lang)
-		.range((pageNumber - 1) * limit, pageNumber * limit - 1)
+		.range(from, to)
 		.order('updated_at', { ascending: false });
 
 	if (fetchError) {
 		throw error(500, { message: fetchError.message });
 	}
-
-	const path = url.pathname.substring(0, url.pathname.indexOf(page) - 1);
 
 	const articleList: ArticleListItem[] = (articles ?? []).map((article) => ({
 		id: article.id,

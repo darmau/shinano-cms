@@ -33,15 +33,18 @@
 	}
 
 	$: pages = generatePages(count, limit, page);
+	$: totalPages = Math.max(1, Math.ceil(count / limit));
+	// 首页的"上一页"原本链到第 0 页，末页的"下一页"链到越界页码
+	$: previousPage = Math.max(1, page - 1);
+	$: nextPage = Math.min(totalPages, page + 1);
 
 	$: targetPage = page;
 
 	function jumpToPage(event: KeyboardEvent) {
 		if (event.key === 'Enter' && targetPage) {
-			// 使用SvelteKit的goto函数跳转页面
 			if (browser) {
-				console.log(targetPage);
-				goto(`${path}/${targetPage}?limit=${limit}`);
+				const clamped = Math.min(Math.max(1, Number(targetPage) || 1), totalPages);
+				goto(`${path}/${clamped}?limit=${limit}`);
 			}
 		}
 	}
@@ -75,7 +78,7 @@
 
 		<nav class="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
 			<a
-				href={`${path}/${page - 1}?limit=${limit}`}
+				href={`${path}/${previousPage}?limit=${limit}`}
 				class="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0"
 			>
 				<span class="sr-only">Previous</span>
@@ -104,7 +107,7 @@
 				{/if}
 			{/each}
 			<a
-				href={`${path}/${page + 1}?limit=${limit}`}
+				href={`${path}/${nextPage}?limit=${limit}`}
 				class="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0"
 			>
 				<span class="sr-only">Next</span>

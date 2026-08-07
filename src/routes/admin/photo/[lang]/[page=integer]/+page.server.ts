@@ -1,4 +1,5 @@
 import type { PageServerLoad } from './$types';
+import { getPagination } from '$lib/server/pagination';
 import { error } from '@sveltejs/kit';
 import { URL_PREFIX } from '$env/static/private';
 import type { Language, PhotoListItem, PhotoListPageData } from '$lib/types/photo';
@@ -10,8 +11,7 @@ export const load: PageServerLoad = async ({
 	params: { lang, page },
 	locals: { supabase }
 }) => {
-	const pageNumber = Number(page);
-	const limit = url.searchParams.get('limit') ? Number(url.searchParams.get('limit')) : 12;
+	const { page: pageNumber, limit, from, to, path } = getPagination(url, page);
 
 	// 获取photo表中当前语言的数据条目数
 	const { count, error: countError } = await supabase
@@ -42,14 +42,12 @@ export const load: PageServerLoad = async ({
 	  `
 		)
 		.eq('language.lang', lang)
-		.range((pageNumber - 1) * limit, pageNumber * limit - 1)
+		.range(from, to)
 		.order('updated_at', { ascending: false });
 
 	if (fetchError) {
 		throw error(500, { message: fetchError.message });
 	}
-
-	const path = url.pathname.substring(0, url.pathname.indexOf(page) - 1);
 
 	const photosList: PhotoListItem[] = (photos ?? []).map((photo) => ({
 		id: photo.id,

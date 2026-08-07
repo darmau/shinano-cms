@@ -1,13 +1,13 @@
 import type { PageServerLoad } from './$types';
 import { error } from '@sveltejs/kit';
 import { URL_PREFIX } from '$env/static/private';
+import { getPagination } from '$lib/server/pagination';
 
 export const load: PageServerLoad = async ({ url, params: { page }, locals: { supabase } }) => {
-	const pageNumber = Number(page);
-	const limit = url.searchParams.get('limit') ? Number(url.searchParams.get('limit')) : 24;
+	const { page: pageNumber, limit, from, to, path } = getPagination(url, page, 24);
 
-	const [{ count }, { data: books, error: fetchError }] = await Promise.all([
-		supabase.from('book').select('id', { count: 'exact' }),
+	const [{ count, error: countError }, { data: books, error: fetchError }] = await Promise.all([
+		supabase.from('book').select('id', { count: 'exact', head: true }),
 		supabase
 			.from('book')
 			.select(
@@ -19,7 +19,7 @@ export const load: PageServerLoad = async ({ url, params: { page }, locals: { su
 	  cover (id, alt, storage_key)
 	`
 			)
-			.range((pageNumber - 1) * limit, pageNumber * limit - 1)
+			.range(from, to)
 			.order('created_at', { ascending: false })
 	]);
 
@@ -28,7 +28,9 @@ export const load: PageServerLoad = async ({ url, params: { page }, locals: { su
 		error(500, { message: fetchError.message });
 	}
 
-	const path = url.pathname.substring(0, url.pathname.indexOf(page) - 1);
+	if (countError) {
+		error(500, { message: countError.message });
+	}
 
 	return {
 		page: pageNumber,

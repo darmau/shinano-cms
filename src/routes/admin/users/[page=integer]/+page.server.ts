@@ -1,17 +1,17 @@
 import type { PageServerLoad } from './$types';
 import { error } from '@sveltejs/kit';
+import { getPagination } from '$lib/server/pagination';
 
 export const load: PageServerLoad = async ({ url, params: { page }, locals: { supabase } }) => {
-	const pageNumber = Number(page);
-	const limit = url.searchParams.get('limit') ? Number(url.searchParams.get('limit')) : 16;
+	const { page: pageNumber, limit, from, to, path } = getPagination(url, page);
 
-	const [{ data: users, error: fetchError }, { count }] = await Promise.all([
+	const [{ data: users, error: fetchError }, { count, error: countError }] = await Promise.all([
 		supabase
 			.from('users')
 			.select('id, name, user_id, source, created_at, role')
-			.range((pageNumber - 1) * limit, pageNumber * limit - 1)
+			.range(from, to)
 			.order('created_at', { ascending: false }),
-		supabase.from('users').select('id', { count: 'exact' })
+		supabase.from('users').select('id', { count: 'exact', head: true })
 	]);
 
 	if (fetchError) {
@@ -19,14 +19,15 @@ export const load: PageServerLoad = async ({ url, params: { page }, locals: { su
 		error(500, { message: fetchError.message });
 	}
 
-	// 获取url中域名开始到page之间的字符串
-	const path = url.pathname.substring(0, url.pathname.indexOf(page) - 1);
+	if (countError) {
+		error(500, { message: countError.message });
+	}
 
 	return {
 		page: pageNumber,
-		users: users,
+		users,
 		count: count ?? 0,
-		limit: limit,
-		path: path
+		limit,
+		path
 	};
 };

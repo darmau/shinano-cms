@@ -12,6 +12,13 @@
 	import type { TypedSupabaseClient } from '$lib/supabaseClient';
 	import type { Content, JSONContent } from '@tiptap/core';
 	import { splitHtmlByTopLevelNodes } from '$lib/functions/htmlChunk';
+	import {
+		checkSlugAvailability,
+		requestAbstract,
+		requestSlug,
+		requestTags,
+		requestTranslation
+	} from '$lib/functions/aiActions';
 	import type {
 		ArticleContent,
 		ArticleCoverImage,
@@ -24,14 +31,6 @@
 		ImagesModelData,
 		SelectedImage
 	} from '$lib/types/editor';
-
-	type SlugCheckResponse = {
-		error?: string;
-	};
-
-	type TagsResponse = {
-		tags?: string[];
-	};
 
 	export let data: ArticleEditorPageData;
 	export let isSaved: boolean = false;
@@ -314,28 +313,25 @@
 	async function checkSlug(slug: string) {
 		isCheckingSlug = true;
 
-		const response: SlugCheckResponse = await fetch('/api/slug-check', {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json'
-			},
-			body: JSON.stringify({
+		try {
+			const result = await checkSlugAvailability({
 				type: 'article',
 				langId: data.currentLanguage.id,
 				slug,
 				contentId: articleContent.id ?? null
-			})
-		}).then((res) => res.json());
-
-		isCheckingSlug = false;
-		if (response.error) {
-			toastStore.trigger({
-				message: response.error,
-				background: 'variant-filled-error'
 			});
-			slugExists = true;
-		} else {
-			slugExists = false;
+
+			slugExists = !result.available;
+			if (!result.available && result.message) {
+				toastStore.trigger({
+					message: result.message,
+					background: 'variant-filled-error'
+				});
+			}
+		} catch (err) {
+			console.error('Failed to check slug', err);
+		} finally {
+			isCheckingSlug = false;
 		}
 	}
 
@@ -356,13 +352,7 @@
 
 		isGeneratingSlug = true;
 		try {
-			articleContent.slug = await fetch('/api/slug', {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json'
-				},
-				body: JSON.stringify({ title })
-			}).then((res) => res.text());
+			articleContent.slug = await requestSlug(title);
 			isChanged = true;
 		} catch (err) {
 			console.error('Failed to generate slug', err);
@@ -392,13 +382,7 @@
 
 		isGeneratingAbstract = true;
 		try {
-			articleContent.abstract = await fetch('/api/abstract', {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json'
-				},
-				body: JSON.stringify({ content })
-			}).then((res) => res.text());
+			articleContent.abstract = await requestAbstract(content);
 			isChanged = true;
 		} catch (err) {
 			console.error('Failed to generate abstract', err);
@@ -444,14 +428,7 @@
 
 		isGeneratingTags = true;
 		try {
-			const result: TagsResponse = await fetch('/api/tags', {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json'
-				},
-				body: JSON.stringify({ content })
-			}).then((res) => res.json());
-			topics = result.tags ?? [];
+			topics = await requestTags(content);
 			articleContent.topic = topics;
 			isChanged = true;
 		} catch (err) {
@@ -500,24 +477,8 @@
 
 		const translatedChunks = new Array<string>(chunks.length).fill('');
 
-		const translateChunk = async (chunk: string) => {
-			const response = await fetch('/api/translation', {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json'
-				},
-				body: JSON.stringify({
-					lang: data.currentLanguage.locale,
-					content: chunk
-				})
-			});
-
-			if (!response.ok) {
-				throw new Error(`Translation API responded with status ${response.status}`);
-			}
-
-			return response.text();
-		};
+		const translateChunk = (chunk: string) =>
+			requestTranslation({ lang: data.currentLanguage.locale, content: chunk });
 
 		try {
 			for (let index = 0; index < chunks.length; index += 1) {
