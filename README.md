@@ -15,12 +15,12 @@ Shinano CMS is an internal SvelteKit admin console for managing multilingual art
 - `src/routes/admin/*` – authenticated admin pages per content type (article, book, media, comments, settings, users, etc.).
 - `src/routes/api/*` – server endpoints that proxy to Cloudflare Workers or Supabase helpers (slug checks, alt text, kv, tags).
 - `src/lib` – shared UI components (e.g., `ArticleEditor`), Supabase browser client, stores, and helper utilities such as i18n.
-- `src/migration/init.sql` – canonical Supabase schema (tables, enums, indexes) for Shinano content.
+- `supabase/migrations/*` – versioned database migrations (the canonical schema source; see `supabase/README.md`).
 - `static` – assets served verbatim by SvelteKit.
 
 ## Requirements
 
-- Node.js 20+ (see `.nvmrc` for the pinned version).
+- Node.js 22+ (see `.nvmrc` for the pinned version and `engines` in `package.json`).
 - `pnpm` (recommended via `corepack enable`) or npm.
 - A Supabase project with database access and a storage bucket for uploaded media.
 - A Cloudflare Worker (or similar HTTP service) that accepts tagging/translation/image requests.
@@ -43,24 +43,27 @@ Shinano CMS is an internal SvelteKit admin console for managing multilingual art
    | `PUBLIC_SUPABASE_ANON_KEY` | public | Supabase anon key used by the browser client.                |
    | `URL_PREFIX`               | server | Base URL used when rendering media links inside the admin.   |
    | `BASE_URL`                 | server | Public-facing site URL used when linking out from comments.  |
-   | `WORKERS_URL`              | server | Origin for Cloudflare Worker endpoints consumed by `/api/*`. |
-   | `WORKERS_TOKEN`            | server | Authorization token forwarded to the Worker.                 |
 
 3. **Database**
-   - Provision a Supabase project and enable the `uuid-ossp` extension (required for UUID helpers).
-   - Run `src/migration/init.sql` in the Supabase SQL editor or with `psql`:
+   - Provision a Supabase project, then link it and apply the migrations:
      ```bash
-     psql "$SUPABASE_DB_URL" -f src/migration/init.sql
+     pnpm exec supabase login
+     pnpm db:link --project-ref <project-ref>
+     pnpm db:push
      ```
+   - The full workflow (baselining an existing project, generating new migrations, applying
+     them without the CLI) is documented in `supabase/README.md`.
    - Optionally seed media buckets that match the `image` table records or update the admin to create them on demand.
 
 4. **Supabase Auth**
    - Create at least one admin user in Supabase Auth.
    - Map the Supabase `auth.users.id` to the `users` table with role `admin` so that `/admin` routes stay accessible.
 
-5. **Cloudflare Worker**
-   - Deploy a Worker that exposes the paths consumed inside `src/routes/api` (e.g., `/slug`, `/img-alt`, `/tags`, `/translation`, `/abstract`).
-   - Issue an API token and configure `WORKERS_URL` / `WORKERS_TOKEN`.
+5. **Cloudflare bindings**
+   - The AI-assisted endpoints under `src/routes/api` run inside the same Worker as the app and
+     use the `AI` and `STORAGE` bindings declared in `wrangler.jsonc` — no separate Worker or token.
+   - Model names, prompts, and third-party API keys live in the `config` table and are edited
+     under `/admin/setting`.
 
 ## Development Workflow
 

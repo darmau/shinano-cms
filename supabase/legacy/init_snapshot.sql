@@ -1,12 +1,16 @@
--- ⚠️ 本文件是手工维护的初始快照，已经与生产库产生漂移，不要当作权威 schema。
+-- ⚠️ 历史快照，仅供考古。不要执行，不要编辑。
+--
+--    这是 supabase/migrations/ 建立之前手工维护的 init.sql（原路径 src/migration/init.sql）。
+--    它与生产库存在实测确认的漂移：
+--      · 声明了 comment.upvote / comment.downvote，而生产库没有这两列
+--      · 声明 gallery_feed 需要改 security_invoker，而生产库里早已是 invoker
+--      · 生产库存在 random_{en,jp,zh}_photos 三个视图，本文件完全没有
 --    在 2026-08-07 之前它甚至无法完整执行（comment 表定义有一个尾逗号语法错误，
 --    导致其后的所有表、触发器和 RLS 策略都不会创建）。
 --
---    此后的所有变更以 supabase/migrations/ 下的版本化迁移为准。本文件中的
---    users / comment 相关 RLS 策略已被 20260807000000_p0_security_fixes.sql 取代，
---    此处保留的是历史原貌。
---
---    重建权威 schema 的步骤见 CODE_REVIEW_PLAN.md 的 P1-2。
+--    权威 schema = supabase/migrations/ 下的版本化迁移。工作流见 supabase/README.md。
+--    本文件中的 users / comment 相关 RLS 策略已被 20260807000000_p0_security_fixes.sql
+--    取代，此处保留的是历史原貌。
 
 CREATE EXTENSION IF NOT EXISTS postgis;
 
