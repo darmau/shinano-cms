@@ -17,6 +17,7 @@
 | `migrations/`               | 版本化迁移，按文件名时间戳顺序执行。**只增不改**                |
 | `config.toml`               | Supabase CLI 配置（本地开发容器、Auth、Storage 等）             |
 | `inspect_schema.sql`        | 只读探查脚本，粘进 SQL Editor 就能拿到生产库的真实形态          |
+| `tests/run.sh`              | 在一次性本地 Postgres 里重放全部迁移并断言行为（只需 Docker）   |
 | `legacy/init_snapshot.sql`  | 历史快照，仅供考古。**不要执行**                                |
 
 CLI 已作为 devDependency 安装，所有命令都通过 `pnpm` 调用，无需全局安装。
@@ -37,6 +38,25 @@ pnpm db:pull                             # 把生产库真实状态基线化到 
 
 > `db:pull` 会把已有的迁移文件视为"已应用"并写入远端的 `supabase_migrations.schema_migrations`
 > 表。如果 `migrations/` 里的某个文件其实还没在生产库跑过，先跑它，再 pull。
+
+## 应用到生产库之前：本地重放
+
+```bash
+./supabase/tests/run.sh
+```
+
+它起一个一次性的 Postgres 容器，用 `legacy/init_snapshot.sql` 建出近似生产库的
+schema（含已确认的漂移：comment 没有 upvote/downvote），按顺序重放
+`migrations/` 下的全部文件，然后断言这些迁移真正想保证的行为——
+删掉默认语言之后系统仍有默认语言、访客点表情不会让文章在后台列表里跳位、
+首个注册用户是 admin 第二个是 reader，等等。
+
+这不是形式主义：P1-3 最初把"补选下一个默认语言"写在 BEFORE DELETE 里，
+在本地一跑就报 `tuple to be deleted was already modified`——如果直接推到生产库，
+表现会是"删除语言这个操作永远失败"，而且没人知道为什么。
+
+拿到 `db pull` 的基线之后，把 `run.sh` 里的 `SCHEMA_SOURCE` 换成
+`migrations/<时间戳>_remote_schema.sql`，这套测试才算真正对着生产库形态跑。
 
 ## 日常变更
 
