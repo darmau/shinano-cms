@@ -14,6 +14,13 @@
 --    information_schema 确认列存在、再决定做什么。缺列只会跳过并 raise notice，
 --    不会让整个迁移失败。
 --
+-- ⚠️ 本文件用 create or replace 整体替换了四个函数（manage_default_language、
+--    sync_new_user、update_published_time、以及 P1-5 里的 insert_default_categories）。
+--    替换的基准是 legacy/init_snapshot.sql 里的函数体。如果生产库里这几个函数
+--    曾被直接改过（快照文件已经在别处漂移过），那些改动会被覆盖掉。
+--    应用前可以先跑 inspect_schema.sql 的第 8 段（pg_get_functiondef）比对一下——
+--    这也正是"没有可信 schema 记录之前一切都是猜"的具体体现。
+--
 -- ⚠️ 关于 SET NOT NULL：如果某列现存 NULL 值，本迁移**不会**强行加约束，
 --    而是跳过该列并在末尾列出。这是刻意的——在不知道那些行该填什么的情况下
 --    编造数据比留着 NULL 更糟。清理完数据后重新执行本文件即可补上。
