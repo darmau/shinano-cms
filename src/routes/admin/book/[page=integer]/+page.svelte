@@ -4,9 +4,7 @@
 	import Pagination from '$components/Pagination.svelte';
 	import getDateFormat from '$lib/functions/dateFormat';
 	import ArticleIcon from '$assets/icons/document-text.svelte';
-	import { invalidateAll } from '$app/navigation';
-	import { browser } from '$app/environment';
-	import { getSupabaseBrowserClient } from '$lib/supabaseClient';
+	import { callAction } from '$lib/api/actions';
 
 	type BookRow = {
 		id: number;
@@ -24,7 +22,6 @@
 		limit: number;
 		path: string;
 	};
-	const supabase = browser ? getSupabaseBrowserClient() : null;
 
 	const toastStore = getToastStore();
 
@@ -32,45 +29,43 @@
 	let deletable = true;
 
 	// 删除选中书籍
-	async function deleteBooks() {
-		try {
-			await supabase?.from('book').delete().in('id', selectedBookList);
+	// 批量删除
+	async function deleteBooks(): Promise<void> {
+		if (!selectedBookList.length) {
+			return;
+		}
+
+		if (!confirm(`确认删除选中的 ${selectedBookList.length} 项图书吗？此操作不可撤销。`)) {
+			return;
+		}
+
+		const result = await callAction('?/delete', { id: selectedBookList });
+
+		if (result.ok) {
 			selectedBookList = [];
 			deletable = true;
-			await invalidateAll();
-			toastStore.trigger({
-				message: `成功删除图书。`,
-				hideDismiss: true,
-				background: 'variant-filled-success'
-			});
-		} catch (error) {
-			console.error('删除图书时出错:', error);
-			toastStore.trigger({
-				message: error instanceof Error ? error.message : '删除图书失败',
-				hideDismiss: true,
-				background: 'variant-filled-error'
-			});
 		}
+
+		toastStore.trigger({
+			message: result.ok ? '成功删除图书。' : result.message,
+			hideDismiss: true,
+			background: result.ok ? 'variant-filled-success' : 'variant-filled-error'
+		});
 	}
 
-	// 直接删除书籍
-	async function deleteBook(id: number) {
-		if (!supabase) return;
-		const { error: deleteError } = await supabase.from('book').delete().eq('id', id);
-		if (deleteError) {
-			toastStore.trigger({
-				message: deleteError.message,
-				hideDismiss: true,
-				background: 'variant-filled-error'
-			});
-		} else {
-			toastStore.trigger({
-				message: `成功删除书籍`,
-				hideDismiss: true,
-				background: 'variant-filled-success'
-			});
+	// 单条删除
+	async function deleteBook(id: number): Promise<void> {
+		if (!confirm('确认删除这项图书吗？此操作不可撤销。')) {
+			return;
 		}
-		await invalidateAll();
+
+		const result = await callAction('?/delete', { id });
+
+		toastStore.trigger({
+			message: result.ok ? '成功删除图书' : result.message,
+			hideDismiss: true,
+			background: result.ok ? 'variant-filled-success' : 'variant-filled-error'
+		});
 	}
 
 	// 选中所有书籍并添加到selectedBookList
@@ -184,7 +179,8 @@
 										</td>
 										<td class="px-3 py-4 text-sm text-gray-500 line-clamp-2">{book.title} </td>
 										<td class="font-mono px-3 py-4 text-sm text-gray-500">{book.rate} </td>
-										<td class="px-3 py-4 text-sm text-gray-500">{book.date ? getDateFormat(book.date, true) : ''}</td
+										<td class="px-3 py-4 text-sm text-gray-500"
+											>{book.date ? getDateFormat(book.date, true) : ''}</td
 										>
 
 										<td

@@ -3,13 +3,10 @@
 	import Pagination from '$components/Pagination.svelte';
 	import getDateFormat from '$lib/functions/dateFormat';
 	import { getToastStore } from '$lib/toast';
-	import { invalidateAll } from '$app/navigation';
 	import ArticleIcon from '$assets/icons/document-text.svelte';
-	import { browser } from '$app/environment';
-	import { getSupabaseBrowserClient } from '$lib/supabaseClient';
+	import { callAction } from '$lib/api/actions';
 
 	export let data;
-	const supabase = browser ? getSupabaseBrowserClient() : null;
 
 	const toastStore = getToastStore();
 
@@ -17,45 +14,43 @@
 	let deletable = true;
 
 	// 删除选中消息
-	async function deleteMessages() {
-		try {
-			await supabase?.from('message').delete().in('id', selectedMessageList);
+	// 批量删除
+	async function deleteMessages(): Promise<void> {
+		if (!selectedMessageList.length) {
+			return;
+		}
+
+		if (!confirm(`确认删除选中的 ${selectedMessageList.length} 项留言吗？此操作不可撤销。`)) {
+			return;
+		}
+
+		const result = await callAction('?/delete', { id: selectedMessageList });
+
+		if (result.ok) {
 			selectedMessageList = [];
 			deletable = true;
-			await invalidateAll();
-			toastStore.trigger({
-				message: `成功删除消息。`,
-				hideDismiss: true,
-				background: 'variant-filled-success'
-			});
-		} catch (error) {
-			console.error('删除消息时出错:', error);
-			toastStore.trigger({
-				message: error instanceof Error ? error.message : '删除消息失败',
-				hideDismiss: true,
-				background: 'variant-filled-error'
-			});
 		}
+
+		toastStore.trigger({
+			message: result.ok ? '成功删除留言。' : result.message,
+			hideDismiss: true,
+			background: result.ok ? 'variant-filled-success' : 'variant-filled-error'
+		});
 	}
 
-	// 直接删除消息
-	async function deleteMessage(id: number) {
-		if (!supabase) return;
-		const { error: deleteError } = await supabase.from('message').delete().eq('id', id);
-		if (deleteError) {
-			toastStore.trigger({
-				message: deleteError.message,
-				hideDismiss: true,
-				background: 'variant-filled-error'
-			});
-		} else {
-			toastStore.trigger({
-				message: `成功删除消息`,
-				hideDismiss: true,
-				background: 'variant-filled-success'
-			});
+	// 单条删除
+	async function deleteMessage(id: number): Promise<void> {
+		if (!confirm('确认删除这项留言吗？此操作不可撤销。')) {
+			return;
 		}
-		await invalidateAll();
+
+		const result = await callAction('?/delete', { id });
+
+		toastStore.trigger({
+			message: result.ok ? '成功删除留言' : result.message,
+			hideDismiss: true,
+			background: result.ok ? 'variant-filled-success' : 'variant-filled-error'
+		});
 	}
 
 	// 选中所有消息并添加到selectedMessagesList

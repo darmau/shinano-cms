@@ -1,6 +1,7 @@
-import type { PageServerLoad } from './$types';
+import type { Actions, PageServerLoad } from './$types';
 import { getPagination } from '$lib/server/pagination';
-import { error } from '@sveltejs/kit';
+import { deleteRows, parseIds } from '$lib/server/actions';
+import { error, fail } from '@sveltejs/kit';
 import { URL_PREFIX } from '$env/static/private';
 import type { Language, PhotoListItem, PhotoListPageData } from '$lib/types/photo';
 
@@ -87,4 +88,17 @@ export const load: PageServerLoad = async ({
 		allLanguages: Language[];
 		currentLanguage: Language | null;
 	};
+};
+
+export const actions: Actions = {
+	// 删除：id 可以出现多次，批量删除与单条删除走同一个 action
+	delete: async ({ request, locals: { supabase } }) => {
+		const ids = parseIds(await request.formData());
+
+		if (!ids) {
+			return fail(400, { message: '请求缺少有效的 id。' });
+		}
+
+		return deleteRows(supabase, 'photo', ids, '相册');
+	}
 };

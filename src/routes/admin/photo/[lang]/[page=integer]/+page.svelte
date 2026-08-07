@@ -1,12 +1,9 @@
 <script lang="ts">
 	import Pagination from '$components/Pagination.svelte';
 	import PageTitle from '$components/PageTitle.svelte';
-	import { invalidateAll } from '$app/navigation';
 	import { getToastStore } from '$lib/toast';
 	import ArticleIcon from '$assets/icons/document-text.svelte';
-	import { browser } from '$app/environment';
-	import { getSupabaseBrowserClient } from '$lib/supabaseClient';
-	import type { TypedSupabaseClient } from '$lib/supabaseClient';
+	import { callAction } from '$lib/api/actions';
 	import type { PhotoListPageData } from '$lib/types/photo';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
@@ -15,7 +12,6 @@
 		allLanguages: Array<{ id: number; lang: string; locale: string }>;
 		currentLanguage: { id: number; lang: string; locale: string } | null;
 	};
-	const supabase: TypedSupabaseClient | null = browser ? getSupabaseBrowserClient() : null;
 
 	const toastStore = getToastStore();
 
@@ -23,54 +19,40 @@
 	let deletable = true;
 
 	async function deletePhotos(): Promise<void> {
-		if (!supabase || !selectedPhotosList.length) {
+		if (!selectedPhotosList.length) {
 			return;
 		}
 
-		try {
-			const { error } = await supabase.from('photo').delete().in('id', selectedPhotosList);
-			if (error) {
-				throw error;
-			}
+		if (!confirm(`确认删除选中的 ${selectedPhotosList.length} 项相册吗？此操作不可撤销。`)) {
+			return;
+		}
+
+		const result = await callAction('?/delete', { id: selectedPhotosList });
+
+		if (result.ok) {
 			selectedPhotosList = [];
 			deletable = true;
-			await invalidateAll();
-			toastStore.trigger({
-				message: '成功删除摄影。',
-				hideDismiss: true,
-				background: 'variant-filled-success'
-			});
-		} catch (err) {
-			console.error('删除摄影时出错:', err);
-			const message = err instanceof Error ? err.message : '删除摄影失败。';
-			toastStore.trigger({
-				message,
-				hideDismiss: true,
-				background: 'variant-filled-error'
-			});
 		}
+
+		toastStore.trigger({
+			message: result.ok ? '成功删除相册。' : result.message,
+			hideDismiss: true,
+			background: result.ok ? 'variant-filled-success' : 'variant-filled-error'
+		});
 	}
 
 	async function deletePhoto(id: number): Promise<void> {
-		if (!supabase) {
+		if (!confirm(`确认删除这相册吗？此操作不可撤销。`)) {
 			return;
 		}
 
-		const { error: deleteError } = await supabase.from('photo').delete().eq('id', id);
-		if (deleteError) {
-			toastStore.trigger({
-				message: deleteError.message,
-				hideDismiss: true,
-				background: 'variant-filled-error'
-			});
-		} else {
-			toastStore.trigger({
-				message: `成功删除摄影`,
-				hideDismiss: true,
-				background: 'variant-filled-success'
-			});
-		}
-		await invalidateAll();
+		const result = await callAction('?/delete', { id });
+
+		toastStore.trigger({
+			message: result.ok ? '成功删除相册' : result.message,
+			hideDismiss: true,
+			background: result.ok ? 'variant-filled-success' : 'variant-filled-error'
+		});
 	}
 
 	function switchSelectAll(): void {

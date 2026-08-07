@@ -1,6 +1,7 @@
-import type { PageServerLoad } from './$types';
-import { error } from '@sveltejs/kit';
+import type { Actions, PageServerLoad } from './$types';
+import { error, fail } from '@sveltejs/kit';
 import { getPagination } from '$lib/server/pagination';
+import { deleteRows, parseIds } from '$lib/server/actions';
 
 export const load: PageServerLoad = async ({ url, params: { page }, locals: { supabase } }) => {
 	const { page: pageNumber, limit, from, to, path } = getPagination(url, page);
@@ -31,4 +32,17 @@ export const load: PageServerLoad = async ({ url, params: { page }, locals: { su
 		limit,
 		path
 	};
+};
+
+export const actions: Actions = {
+	// 删除：id 可以出现多次，批量删除与单条删除走同一个 action
+	delete: async ({ request, locals: { supabase } }) => {
+		const ids = parseIds(await request.formData());
+
+		if (!ids) {
+			return fail(400, { message: '请求缺少有效的 id。' });
+		}
+
+		return deleteRows(supabase, 'message', ids, '留言');
+	}
 };

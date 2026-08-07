@@ -1,7 +1,8 @@
-import type { PageServerLoad } from './$types';
-import { error } from '@sveltejs/kit';
+import type { Actions, PageServerLoad } from './$types';
+import { error, fail } from '@sveltejs/kit';
 import { URL_PREFIX } from '$env/static/private';
 import { parseIdParam } from '$lib/server/params';
+import { deleteRows, parseIds } from '$lib/server/actions';
 import { toEditorContent } from '$lib/functions/editorContent';
 import type { AlbumPicture, PageData, PhotoContent } from '$lib/types/photo';
 
@@ -113,4 +114,16 @@ export const load: PageServerLoad = async ({ params, locals: { supabase } }) => 
 	};
 
 	return response;
+};
+
+export const actions: Actions = {
+	delete: async ({ request, locals: { supabase } }) => {
+		const ids = parseIds(await request.formData());
+
+		if (!ids) {
+			return fail(400, { message: '请求缺少有效的 id。' });
+		}
+
+		return deleteRows(supabase, 'photo', ids, '相册');
+	}
 };

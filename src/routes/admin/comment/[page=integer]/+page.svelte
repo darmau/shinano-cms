@@ -1,11 +1,9 @@
 <script lang="ts">
 	import { getToastStore } from '$lib/toast';
 	import Pagination from '$components/Pagination.svelte';
-	import { invalidateAll } from '$app/navigation';
 	import { localTime } from '$lib/functions/localTime';
 	import PageTitle from '$components/PageTitle.svelte';
-	import { browser } from '$app/environment';
-	import { getSupabaseBrowserClient } from '$lib/supabaseClient';
+	import { callAction } from '$lib/api/actions';
 	import { CountryChineseName, CountryFlagEmoji } from '$lib/types/country.js';
 
 	type LangRef = { lang: string };
@@ -37,104 +35,38 @@
 		path: string;
 		baseUrl: string;
 	};
-	const supabase = browser ? getSupabaseBrowserClient() : null;
 
 	const toastStore = getToastStore();
 
-	// 设为公开
-	async function setPublic(id: number) {
-		if (!supabase) return;
-		const { error: publicError } = await supabase
-			.from('comment')
-			.update({ is_public: true })
-			.eq('id', id);
-		if (publicError) {
-			toastStore.trigger({
-				message: publicError.message,
-				hideDismiss: true,
-				background: 'variant-filled-error'
-			});
-		} else {
-			toastStore.trigger({
-				message: '成功设为公开',
-				hideDismiss: true,
-				background: 'variant-filled-success'
-			});
-		}
-		await invalidateAll();
+	async function moderate(action: 'publish' | 'block' | 'unblock', id: number, done: string) {
+		const result = await callAction(`?/${action}`, { id });
+
+		toastStore.trigger({
+			message: result.ok ? done : result.message,
+			hideDismiss: true,
+			background: result.ok ? 'variant-filled-success' : 'variant-filled-error'
+		});
 	}
 
-	// 设为屏蔽
-	async function setBlock(id: number) {
-		if (!supabase) return;
-		const { error: blockError } = await supabase
-			.from('comment')
-			.update({ is_blocked: true })
-			.eq('id', id);
-		if (blockError) {
-			toastStore.trigger({
-				message: blockError.message,
-				hideDismiss: true,
-				background: 'variant-filled-error'
-			});
-		} else {
-			toastStore.trigger({
-				message: '成功封禁评论',
-				hideDismiss: true,
-				background: 'variant-filled-success'
-			});
-		}
-		await invalidateAll();
-	}
-
-	// 取消屏蔽
-	async function cancelBlock(id: number) {
-		if (!supabase) return;
-		const { error: cancelError } = await supabase
-			.from('comment')
-			.update({ is_blocked: false })
-			.eq('id', id);
-		if (cancelError) {
-			toastStore.trigger({
-				message: cancelError.message,
-				hideDismiss: true,
-				background: 'variant-filled-error'
-			});
-		} else {
-			toastStore.trigger({
-				message: '成功解封评论',
-				hideDismiss: true,
-				background: 'variant-filled-success'
-			});
-		}
-		await invalidateAll();
-	}
+	const setPublic = (id: number) => moderate('publish', id, '成功设为公开');
+	const setBlock = (id: number) => moderate('block', id, '成功封禁评论');
+	const cancelBlock = (id: number) => moderate('unblock', id, '成功解封评论');
 
 	// 删除评论（带确认）
 	async function deleteComment(id: number, content: string) {
 		const preview = content.length > 50 ? content.substring(0, 50) + '...' : content;
-		const confirmed = confirm(`确认删除这条评论吗？\n\n"${preview}"`);
 
-		if (!confirmed) return;
-		if (!supabase) return;
-
-		const { error: deleteError } = await supabase.from('comment').delete().eq('id', id);
-
-		if (deleteError) {
-			toastStore.trigger({
-				message: deleteError.message,
-				hideDismiss: true,
-				background: 'variant-filled-error'
-			});
-		} else {
-			toastStore.trigger({
-				message: '成功删除评论',
-				hideDismiss: true,
-				background: 'variant-filled-success'
-			});
+		if (!confirm(`确认删除这条评论吗？\n\n"${preview}"`)) {
+			return;
 		}
 
-		await invalidateAll();
+		const result = await callAction('?/delete', { id });
+
+		toastStore.trigger({
+			message: result.ok ? '成功删除评论' : result.message,
+			hideDismiss: true,
+			background: result.ok ? 'variant-filled-success' : 'variant-filled-error'
+		});
 	}
 </script>
 

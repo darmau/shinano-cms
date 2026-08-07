@@ -1,17 +1,13 @@
 <script lang="ts">
 	import Pagination from '$components/Pagination.svelte';
 	import PageTitle from '$components/PageTitle.svelte';
-	import { invalidateAll } from '$app/navigation';
 	import { getToastStore } from '$lib/toast';
 	import ArticleIcon from '$assets/icons/document-text.svelte';
 	import getDateFormat from '$lib/functions/dateFormat';
-	import { browser } from '$app/environment';
-	import { getSupabaseBrowserClient } from '$lib/supabaseClient';
-	import type { TypedSupabaseClient } from '$lib/supabaseClient';
+	import { callAction } from '$lib/api/actions';
 	import type { ThoughtListPageData } from '$lib/types/thought';
 
 	export let data: ThoughtListPageData;
-	const supabase: TypedSupabaseClient | null = browser ? getSupabaseBrowserClient() : null;
 
 	const toastStore = getToastStore();
 
@@ -19,52 +15,40 @@
 	let deletable = true;
 
 	async function deleteThoughts(): Promise<void> {
-		if (!supabase || !selectedThoughtList.length) {
+		if (!selectedThoughtList.length) {
 			return;
 		}
 
-		const { error } = await supabase.from('thought').delete().in('id', selectedThoughtList);
-
-		if (error) {
-			console.error('删除想法时出错:', error);
-			toastStore.trigger({
-				message: error.message,
-				hideDismiss: true,
-				background: 'variant-filled-error'
-			});
+		if (!confirm(`确认删除选中的 ${selectedThoughtList.length} 项想法吗？此操作不可撤销。`)) {
 			return;
 		}
 
-		selectedThoughtList = [];
-		deletable = true;
-		await invalidateAll();
+		const result = await callAction('?/delete', { id: selectedThoughtList });
+
+		if (result.ok) {
+			selectedThoughtList = [];
+			deletable = true;
+		}
+
 		toastStore.trigger({
-			message: `成功删除想法。`,
+			message: result.ok ? '成功删除想法。' : result.message,
 			hideDismiss: true,
-			background: 'variant-filled-success'
+			background: result.ok ? 'variant-filled-success' : 'variant-filled-error'
 		});
 	}
 
 	async function deleteThought(id: number): Promise<void> {
-		if (!supabase) {
+		if (!confirm(`确认删除这想法吗？此操作不可撤销。`)) {
 			return;
 		}
 
-		const { error: deleteError } = await supabase.from('thought').delete().eq('id', id);
-		if (deleteError) {
-			toastStore.trigger({
-				message: deleteError.message,
-				hideDismiss: true,
-				background: 'variant-filled-error'
-			});
-		} else {
-			toastStore.trigger({
-				message: `成功删除想法`,
-				hideDismiss: true,
-				background: 'variant-filled-success'
-			});
-		}
-		await invalidateAll();
+		const result = await callAction('?/delete', { id });
+
+		toastStore.trigger({
+			message: result.ok ? '成功删除想法' : result.message,
+			hideDismiss: true,
+			background: result.ok ? 'variant-filled-success' : 'variant-filled-error'
+		});
 	}
 
 	function switchSelectAll(): void {

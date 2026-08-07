@@ -3,60 +3,26 @@
 	import PageTitle from '$components/PageTitle.svelte';
 	import getDateFormat from '$lib/functions/dateFormat';
 	import { getToastStore } from '$lib/toast';
-	import { invalidateAll } from '$app/navigation';
-	import { browser } from '$app/environment';
-	import { getSupabaseBrowserClient } from '$lib/supabaseClient';
+	import { callAction } from '$lib/api/actions';
 
 	export let data;
-	const supabase = browser ? getSupabaseBrowserClient() : null;
 
 	const toastStore = getToastStore();
 
-	// 封禁用户
-	async function blockUser(id: number) {
-		if (!supabase) return;
-		const { error: blockError } = await supabase
-			.from('users')
-			.update({ role: 'banned' })
-			.eq('id', id);
-		if (blockError) {
-			toastStore.trigger({
-				message: blockError.message,
-				hideDismiss: true,
-				background: 'variant-filled-error'
-			});
-		} else {
-			toastStore.trigger({
-				message: `成功封禁用户`,
-				hideDismiss: true,
-				background: 'variant-filled-success'
-			});
-		}
-		await invalidateAll();
+	// 角色改动走服务端 action：那里只接受 reader / banned，
+	// 授予 admin 不是一个列表页按钮该做的事（数据库侧还有 P0-1 的触发器兜底）
+	async function setRole(id: number, role: 'reader' | 'banned', done: string) {
+		const result = await callAction('?/setRole', { id, role });
+
+		toastStore.trigger({
+			message: result.ok ? done : result.message,
+			hideDismiss: true,
+			background: result.ok ? 'variant-filled-success' : 'variant-filled-error'
+		});
 	}
 
-	// 解封用户
-	async function unBlockUser(id: number) {
-		if (!supabase) return;
-		const { error: unBlockError } = await supabase
-			.from('users')
-			.update({ role: 'reader' })
-			.eq('id', id);
-		if (unBlockError) {
-			toastStore.trigger({
-				message: unBlockError.message,
-				hideDismiss: true,
-				background: 'variant-filled-error'
-			});
-		} else {
-			toastStore.trigger({
-				message: `成功解封用户`,
-				hideDismiss: true,
-				background: 'variant-filled-success'
-			});
-		}
-		await invalidateAll();
-	}
+	const blockUser = (id: number) => setRole(id, 'banned', '成功封禁用户');
+	const unBlockUser = (id: number) => setRole(id, 'reader', '成功解封用户');
 </script>
 
 <svelte:head>

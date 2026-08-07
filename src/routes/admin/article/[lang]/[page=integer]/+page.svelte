@@ -1,12 +1,9 @@
 <script lang="ts">
 	import Pagination from '$components/Pagination.svelte';
 	import PageTitle from '$components/PageTitle.svelte';
-	import { invalidateAll } from '$app/navigation';
 	import { getToastStore } from '$lib/toast';
 	import ArticleIcon from '$assets/icons/document-text.svelte';
-	import { browser } from '$app/environment';
-	import { getSupabaseBrowserClient } from '$lib/supabaseClient';
-	import type { TypedSupabaseClient } from '$lib/supabaseClient';
+	import { callAction } from '$lib/api/actions';
 	import type { ArticleListPageData } from '$lib/types/article';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
@@ -15,7 +12,6 @@
 		allLanguages: Array<{ id: number; lang: string; locale: string }>;
 		currentLanguage: { id: number; lang: string; locale: string } | null;
 	};
-	const supabase: TypedSupabaseClient | null = browser ? getSupabaseBrowserClient() : null;
 
 	const toastStore = getToastStore();
 
@@ -24,57 +20,42 @@
 
 	// 删除选中文章
 	async function deleteArticles(): Promise<void> {
-		if (!supabase || !selectedArticleList.length) {
+		if (!selectedArticleList.length) {
 			return;
 		}
 
-		try {
-			const { error } = await supabase.from('article').delete().in('id', selectedArticleList);
-			if (error) {
-				throw error;
-			}
+		if (!confirm(`确认删除选中的 ${selectedArticleList.length} 篇文章吗？此操作不可撤销。`)) {
+			return;
+		}
 
+		const result = await callAction('?/delete', { id: selectedArticleList });
+
+		if (result.ok) {
 			selectedArticleList = [];
 			deletable = true;
-
-			toastStore.trigger({
-				message: `成功删除文章。`,
-				hideDismiss: true,
-				background: 'variant-filled-success'
-			});
-
-			await invalidateAll();
-		} catch (err) {
-			const message = err instanceof Error ? err.message : '删除文章失败。';
-			toastStore.trigger({
-				message,
-				hideDismiss: true,
-				background: 'variant-filled-error'
-			});
 		}
+
+		toastStore.trigger({
+			message: result.ok ? '成功删除文章。' : result.message,
+			hideDismiss: true,
+			background: result.ok ? 'variant-filled-success' : 'variant-filled-error'
+		});
 	}
 
 	// 直接删除文章
-	async function deleteArticle(id: number): Promise<void> {
-		if (!supabase) {
+	async function deleteArticle(id: number, title: string): Promise<void> {
+		// 文章是这个 CMS 里最贵的东西，而且没有回收站，误点一次就没了
+		if (!confirm(`确认删除《${title}》吗？此操作不可撤销。`)) {
 			return;
 		}
 
-		const { error: deleteError } = await supabase.from('article').delete().eq('id', id);
-		if (deleteError) {
-			toastStore.trigger({
-				message: deleteError.message,
-				hideDismiss: true,
-				background: 'variant-filled-error'
-			});
-		} else {
-			toastStore.trigger({
-				message: `成功删除文章`,
-				hideDismiss: true,
-				background: 'variant-filled-success'
-			});
-		}
-		await invalidateAll();
+		const result = await callAction('?/delete', { id });
+
+		toastStore.trigger({
+			message: result.ok ? '成功删除文章' : result.message,
+			hideDismiss: true,
+			background: result.ok ? 'variant-filled-success' : 'variant-filled-error'
+		});
 	}
 
 	// 选中所有文章并添加到selectedArticleList
@@ -284,7 +265,7 @@
 												class="break-keep text-cyan-600 hover:text-cyan-900">编辑</a
 											>
 											<button
-												on:click={() => deleteArticle(article.id)}
+												on:click={() => deleteArticle(article.id, article.title)}
 												class="break-keep text-red-600 hover:text-red-900"
 											>
 												删除

@@ -1,9 +1,10 @@
 import { URL_PREFIX } from '$env/static/private';
-import { error } from '@sveltejs/kit';
+import { error, fail } from '@sveltejs/kit';
 import type { ArticleListItem, ArticleListPageData } from '$lib/types/article';
 import type { Language } from '$lib/types/photo';
-import type { PageServerLoad } from './$types';
+import type { Actions, PageServerLoad } from './$types';
 import { getPagination } from '$lib/server/pagination';
+import { deleteRows, parseIds } from '$lib/server/actions';
 
 // 这里原本有 65 行手写的运行时规范化器（逐个字段 typeof 校验后重新组装）。
 // 客户端加上 Database 泛型之后，select 的返回值从源头就有类型，那些校验既多余
@@ -77,4 +78,17 @@ export const load: PageServerLoad = async ({
 		allLanguages: Language[];
 		currentLanguage: Language | null;
 	};
+};
+
+export const actions: Actions = {
+	// 删除：id 可以出现多次，批量删除与单条删除走同一个 action
+	delete: async ({ request, locals: { supabase } }) => {
+		const ids = parseIds(await request.formData());
+
+		if (!ids) {
+			return fail(400, { message: '请求缺少有效的 id。' });
+		}
+
+		return deleteRows(supabase, 'article', ids, '文章');
+	}
 };

@@ -12,6 +12,7 @@
 	import type { TypedSupabaseClient } from '$lib/supabaseClient';
 	import type { Content, JSONContent } from '@tiptap/core';
 	import { splitHtmlByTopLevelNodes } from '$lib/functions/htmlChunk';
+	import { callAction } from '$lib/api/actions';
 	import {
 		checkSlugAvailability,
 		requestAbstract,
@@ -288,25 +289,27 @@
 			return;
 		}
 
-		if (!supabase) {
-			console.error(supabaseUnavailableMessage);
+		// 删除走服务端 action（$lib/server/actions.ts），不再由浏览器直连数据库。
+		// 用绝对路径而不是 '?/delete'：编辑器也被 /admin/article/new 复用，
+		// 那条路由上没有这个 action。
+		const result = await callAction(`/admin/article/edit/${articleContent.id}?/delete`, {
+			id: articleContent.id
+		});
+
+		if (!result.ok) {
+			toastStore.trigger({
+				message: result.message,
+				background: 'variant-filled-error'
+			});
 			return;
 		}
 
-		const { error } = await supabase.from('article').delete().eq('id', articleContent.id).select();
-		if (error) {
-			console.error(error);
-			toastStore.trigger({
-				message: error.message,
-				background: 'variant-filled-error'
-			});
-		} else {
-			toastStore.trigger({
-				message: 'Article deleted successfully.',
-				background: 'variant-filled-success'
-			});
-			await goto('/admin/article/1');
-		}
+		toastStore.trigger({
+			message: '文章已删除。',
+			background: 'variant-filled-success'
+		});
+		isChanged = false;
+		await goto('/admin/article/1');
 	}
 
 	// 检测当前slug在相同语言下是否已存在

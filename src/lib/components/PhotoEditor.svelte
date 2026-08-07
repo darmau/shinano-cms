@@ -16,6 +16,7 @@
 	import { toJsonColumn } from '$lib/functions/editorContent';
 	import type { Content } from '@tiptap/core';
 	import { splitHtmlByTopLevelNodes } from '$lib/functions/htmlChunk';
+	import { callAction } from '$lib/api/actions';
 	import {
 		checkSlugAvailability,
 		requestAbstract,
@@ -343,20 +344,25 @@
 			return;
 		}
 
-		const { error } = await supabase.from('photo').delete().eq('id', photoContent.id).select();
-		if (error) {
-			console.error(error);
+		// 删除走服务端 action，理由同 ArticleEditor
+		const result = await callAction(`/admin/photo/edit/${photoContent.id}?/delete`, {
+			id: photoContent.id
+		});
+
+		if (!result.ok) {
 			toastStore.trigger({
-				message: error.message,
+				message: result.message,
 				background: 'variant-filled-error'
 			});
-		} else {
-			toastStore.trigger({
-				message: 'Article deleted successfully.',
-				background: 'variant-filled-success'
-			});
-			await goto('/admin/photo/1');
+			return;
 		}
+
+		toastStore.trigger({
+			message: '相册已删除。',
+			background: 'variant-filled-success'
+		});
+		isChanged = false;
+		await goto('/admin/photo/1');
 	}
 
 	// 找出当前摄影没有的语言
